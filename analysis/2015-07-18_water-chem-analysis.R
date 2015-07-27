@@ -62,4 +62,6 @@ file.out <- cbind(TN.out[,3], TP.out[,3])
 colnames(file.out) <- c("TN", "TP")
 rownames(file.out) <- TN.out[,1]
 
+read.csv('./data/')
+
 write.table(file.out, './analysis/2015-07-27_water-chem-table.txt', sep='\t')
