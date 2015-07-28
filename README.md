@@ -1,4 +1,4 @@
-# HJA-Streams: Environmental samples from H.J. Andrews Experimental Forest, Oregon
+# HJA-streams: Environmental samples from H.J. Andrews Experimental Forest, Oregon
 
 This repository contains data and code for a survey of bacterial diversity across two watersheds in the [H.J. Andrews (HJA) Experimental Forest](http://andrewsforest.oregonstate.edu/), an [NSF-LTER](http://www.lternet.edu/) site located in Oregon, USA. 
 
