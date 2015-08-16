@@ -1,6 +1,9 @@
 rm(list=ls())
 setwd("~/GitHub/HJA-Streams/")
 
+# This is a script to read in raw nutrient data from the HJ Andrews
+# 2015 trip, calculate a standard curve and TN/TP from env samples.
+
 # Import raw data
 tn.samples <- read.csv("./data/water_chemistry/2015-07-17_HJA-TN.csv")
 tn.stds <- read.csv("./data/water_chemistry/2015-07-17_HJA-TN_standards.csv")
