@@ -1,0 +1,290 @@
+---
+title: "HJA.Rmd"
+output: pdf_document
+---
+### Initial Setup
+```{r}
+rm(list=ls())
+setwd("~/GitHub/HJA-streams/")
+source("./analysis/MothurTools.R")
+require("vegan")
+se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
+```
+
+
+### Import Shared and Design Files
+```{r}
+# Define Inputs
+# Design = general design file for experiment
+# shared = OTU table from mothur with sequence similarity clustering
+# Taxonomy = Taxonomic information for each OTU
+design <- "./data/design.txt"
+shared <- "./data/hja_streams.final.shared"
+taxon  <- "./data/hja_streams.final.0.03.taxonomy"
+env    <- "./data/hja_env.csv"
+
+# Import Design
+design <- read.delim(design, header=T, row.names=1)
+
+# Import Shared Files
+OTUs <- read.otu(shared = shared, cutoff = "0.03")         # 97% Similarity
+
+# Import Taxonomy
+OTU.tax <- read.tax(taxonomy = taxon, format = "rdp")
+
+# Import Env
+env <- read.csv(env, header=T)
+```
+
+
+### Data Transormations
+```{r}
+# Remove OTUs with less than two occurances across all sites
+OTUs <- OTUs[, which(colSums(OTUs) >= 2)]
+
+# Sequencing an Good's Coverage
+# Sequencing Coverage
+coverage <- rowSums(OTUs)
+
+# Good's Coverage
+goods <- function(x = ""){
+  1 - (sum(x == 1) / rowSums(x))
+}
+goods.c <- goods(OTUs)
+
+# Remove Low Coverage Samples (This code removes two sites: Site 5DNA, Site 6cDNA)
+lows <- which(coverage < 7000)
+lows
+OTUs <- OTUs[-which(coverage < 7000), ]
+design <- design[-which(coverage < 7000), ]
+env <- env[-which(coverage < 7000), ]
+
+# Make Relative Abundence Matrices
+OTUsREL <- OTUs
+for(i in 1:dim(OTUs)[1]){
+  OTUsREL[i,]<- OTUs[i,]/sum(OTUs[i,])
+}
+
+# Log Transform Relative Abundances
+OTUsREL.log <- decostand(OTUs, method="log")
+
+```
+
+### Calculate Alpha Diversity
+```{r}
+# Observed Richness
+S.obs <- rowSums((OTUs > 0) * 1)
+
+# Simpson's Evenness
+SimpE <- function(x = ""){
+  x <- as.data.frame(x)
+  D <- diversity(x, "inv")
+  S <- sum((x > 0) * 1) 
+  E <- (D)/S 
+  return(E)
+}
+simpsE <- round(apply(OTUs, 1, SimpE), 3)
+
+# Shannon's Diversity
+H <- function(x = ""){
+  x <- x[x>0]
+  H = 0
+  for (n_i in x){
+    p = n_i / sum(x)
+    H = H - p*log(p) 
+  }
+  return(H)
+}
+
+shan <- round(apply(OTUs, 1, H), 2)
+shan2 <- diversity(OTUs, index = "shannon")
+
+# Rarefaction
+hja.S <- rowSums((OTUs > 0) * 1)
+min.N <- min(rowSums(OTUs))
+#S.rarefy <- rarefy(x = OTUs, sample = min.N, se = TRUE)
+#rarecurve(x = OTUs, step = 20, col = "blue", cex = 0.6, las = 1)
+#rared <- t(S.rarefy)
+
+alpha.div <- cbind(design, S.obs, simpsE, shan)
+```
+
+
+## Alpha Diversity Across Gradient
+```{r}
+# Seperate data based on water and sediment samples
+water <- alpha.div[alpha.div$habitat == "water",]
+sed <- alpha.div[alpha.div$habitat == "sediment", ]
+
+lc   <- alpha.div[alpha.div$watershed == "LC",]
+ws01 <- alpha.div[alpha.div$watershed == "WS01",]
+
+# Calculate Linear Model
+model.rich <- lm(alpha.div$S.obs ~ alpha.div$habitat)
+summary(model.rich)
+
+model.div <- lm(alpha.div$shan ~ alpha.div$habitat)
+summary(model.div)
+
+model.even <- lm(alpha.div$simpsE ~ alpha.div$habitat)
+summary(model.even)
+
+# Calculate Confidance Intervals of Model
+newdata.rich <- data.frame(alpha.div$habitat)
+conf95.rich <- predict(model.rich, newdata.rich, interval="confidence")
+```
+
+
+### PCoA Plots
+
+## HJA
+```{r}
+hja.db <- vegdist(OTUsREL, method = "bray", upper = TRUE, diag = TRUE)
+hja.pcoa <- cmdscale(hja.db, eig=TRUE, k=3)
+var1 <- round(hja.pcoa$eig[1] / sum(hja.pcoa$eig),3) * 100
+var2 <- round(hja.pcoa$eig[2] / sum(hja.pcoa$eig),3) * 100
+var3 <- round(hja.pcoa$eig[3] / sum(hja.pcoa$eig),3) * 100
+
+par(mar = c(5, 5, 1, 2) + 0.1)
+plot(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2], ylim = c(-0.5, 0.4),
+     xlab = paste("PCoA 1 (", var1, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", var2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="HJA")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2],
+       pch=19, cex=2, bg="gray", col="gray")
+text(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2],
+     cex = 0.5, labels = row.names(hja.pcoa$points))
+```
+
+# Sediments
+```{r}
+seds <- OTUsREL.log[which(design$habitat == "sediment"),]
+sediment.db <- vegdist(seds, method = "bray", diag = T)
+sediment.pcoa <- cmdscale(sediment.db, eig=TRUE, k=3)
+s.var1 <- round(sediment.pcoa$eig[1] / sum(sediment.pcoa$eig),3) * 100
+s.var2 <- round(sediment.pcoa$eig[2] / sum(sediment.pcoa$eig),3) * 100
+s.var3 <- round(sediment.pcoa$eig[3] / sum(sediment.pcoa$eig),3) * 100
+
+par(mar = c(5, 5, 1, 2) + 0.1)
+plot(sediment.pcoa$points[ ,1], sediment.pcoa$points[ ,2], ylim = c(-0.4, 0.5),
+     xlab = paste("PCoA 1 (", s.var1, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", s.var2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="Sediments")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(sediment.pcoa$points[ ,1], sediment.pcoa$points[ ,2],
+       pch=19, cex=2, bg="gray", col="gray")
+text(sediment.pcoa$points[ ,1], sediment.pcoa$points[ ,2],
+     cex=0.5, labels = row.names(sediment.pcoa$points))
+```
+
+# Water
+```{r}
+water <- OTUsREL.log[which(design$habitat == "water"),]
+water.db <- vegdist(water, method = "bray", diag = T)
+water.pcoa <- cmdscale(water.db, eig=TRUE, k=3)
+w.var1 <- round(water.pcoa$eig[1] / sum(water.pcoa$eig),3) * 100
+w.var2 <- round(water.pcoa$eig[2] / sum(water.pcoa$eig),3) * 100
+w.var3 <- round(water.pcoa$eig[3] / sum(water.pcoa$eig),3) * 100
+
+par(mar = c(5, 5, 1, 2) + 0.1)
+plot(water.pcoa$points[ ,1], water.pcoa$points[ ,2], ylim = c(-0.4, 0.35),
+     xlab = paste("PCoA 1 (", w.var1, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", w.var2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="Water")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(water.pcoa$points[ ,1], water.pcoa$points[ ,2],
+       pch=19, cex=2, bg="gray", col="gray")
+text(water.pcoa$points[ ,1], water.pcoa$points[ ,2],
+     cex=0.5, labels = row.names(water.pcoa$points))
+```
+
+# LC
+```{r}
+lc <- OTUsREL[which(design$watershed == "LC"),]
+lc.db <- vegdist(lc, method = "bray", diag = T)
+lc.pcoa <- cmdscale(lc.db, eig=TRUE, k=3)
+lc.var1 <- round(lc.pcoa$eig[1] / sum(lc.pcoa$eig),3) * 100
+lc.var2 <- round(lc.pcoa$eig[2] / sum(lc.pcoa$eig),3) * 100
+lc.var3 <- round(lc.pcoa$eig[3] / sum(lc.pcoa$eig),3) * 100
+
+par(mar = c(5, 5, 1, 2) + 0.1)
+plot(lc.pcoa$points[ ,1], lc.pcoa$points[ ,2], ylim = c(-0.4, 0.35),
+     xlab = paste("PCoA 1 (", lc.var1, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", lc.var2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="lc")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(lc.pcoa$points[ ,1], lc.pcoa$points[ ,2],
+       pch=19, cex=2, bg="gray", col="gray")
+text(lc.pcoa$points[ ,1], lc.pcoa$points[ ,2],
+     cex=0.5, labels = row.names(lc.pcoa$points))
+```
+
+# WS01
+```{r}
+w1 <- OTUsREL[which(design$watershed == "WS01"),]
+w1.db <- vegdist(w1, method = "bray", diag = T)
+w1.pcoa <- cmdscale(w1.db, eig=TRUE, k=3)
+w1.var1 <- round(w1.pcoa$eig[1] / sum(w1.pcoa$eig),3) * 100
+w1.var2 <- round(w1.pcoa$eig[2] / sum(w1.pcoa$eig),3) * 100
+w1.var3 <- round(w1.pcoa$eig[3] / sum(w1.pcoa$eig),3) * 100
+
+par(mar = c(5, 5, 1, 2) + 0.1)
+plot(w1.pcoa$points[ ,1], w1.pcoa$points[ ,2], ylim = c(-0.4, 0.35),
+     xlab = paste("PCoA 1 (", w1.var1, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", w1.var2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="w1")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(w1.pcoa$points[ ,1], w1.pcoa$points[ ,2],
+       pch=19, cex=2, bg="gray", col="gray")
+text(w1.pcoa$points[ ,1], w1.pcoa$points[ ,2],
+     cex=0.5, labels = row.names(w1.pcoa$points))
+```
+
+
+### CCA
+```{r, eval=FALSE}
+#env.mat <- as.matrix(env[which(env$habitat == "hja"),10:17])
+env.mat <- as.matrix(env[,10:17])
+#hja.cca <- vegan::cca(OTUs ~ env.mat) 
+#anova(hja.cca, by = "axis")
+cca.fit <- envfit(hja.cca, env.mat, perm = 999)
+cca.explainvar1 <- round(hja.cca$CCA$eig[1] /
+                           sum(c(hja.cca$CCA$eig, hja.cca$CA$eig)), 3) * 100
+cca.explainvar2 <- round(hja.cca$CCA$eig[2] /
+                           sum(c(hja.cca$CCA$eig, hja.cca$CA$eig)), 3) * 100
+
+par(mar = c(5, 5, 4, 4) + 0.1)
+plot(scores(hja.cca, display = "wa"), xlim = c(-2, 2.5), ylim = c(-4, 2),
+     xlab = paste("CCA 1 (", cca.explainvar1, "%)", sep = ""), 
+     ylab = paste("CCA 2 (", cca.explainvar2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+abline(h=0, v=0, lty=3)
+box(lwd=2)
+points(scores(hja.cca, display = "wa"),
+       pch=19, cex=3, bg="gray", col="gray")
+text(scores(hja.cca, display = "wa"),
+     labels = row.names(scores(hja.cca, display = "wa")))
+```

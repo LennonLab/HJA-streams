@@ -28,19 +28,19 @@
 
 # Setup Work Environment
 rm(list=ls())
-setwd("~/GitHub/Dimensions/Aim3/Mothur")
-source("../bin/MothurTools.R")
+setwd("~/GitHub/HJA-streams/")
+source("./analysis/MothurTools.R")
 require("vegan")
 se <- function(x, ...){sd(x, ...)/sqrt(length(na.omit(x)))}
 
 # Define Inputs
 # Design = general design file for experiment
 # shared = OTU table from mothur with sequence similarity clustering
-design <- ""
-shared <- "./INPonds.bac.final.shared"
+design <- "./data/design.txt"
+shared <- "./data/hja_streams.final.shared"
 
 # Import Design
-# design <- read.delim(design, header=T, row.names=1)
+design <- read.delim(design, header=T, row.names=1)
 
 # Import Shared Files
 Pond97 <- read.otu(shared = shared, cutoff = "0.03")         # 97% Similarity

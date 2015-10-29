@@ -11,7 +11,7 @@ import sys
 import glob
 
 # change these numbers
-start = 0 
+start = 0
 end = 250
 
 def trim_positions(records, start, end):
@@ -27,4 +27,3 @@ for x in files:
 	count = SeqIO.write(trimmed_seqs, output_handle, "fastq")
 	output_handle.close()
 	print "Trimmed %i reads in %s" % (count, x)
-
