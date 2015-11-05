@@ -215,8 +215,7 @@ points(hja.pcoa$points[which(design$habitat == "water"),1],
 text(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2],
      cex = 0.5, labels = row.names(hja.pcoa$points))
 
-require("BiodiversityR")
-fish.pcoa <-
+
 
 
 dev.off()
@@ -416,6 +415,60 @@ abline(model.sed)
 mtext("Sediments", side = 2, line = 3, cex = 1.5)
 mtext("Elevation (m)", side = 1, line = 3, cex = 1.5)
 
+dev.off()
+graphics.off()
+
+```
+
+# Bray-Curtis Similarity by Stream Order
+```{r}
+strahler.bray <- 1 - as.matrix(vegdist(OTUsREL.log, method = "bray"))
+order.1.bray <- strahler.bray[which(design$order==1),which(design$order==1)]
+order.2.bray <- strahler.bray[which(design$order==2),which(design$order==2)]
+order.3.bray <- strahler.bray[which(design$order==3),which(design$order==3)]
+order.4.bray <- strahler.bray[which(design$order==4),which(design$order==4)]
+order.5.bray <- strahler.bray[which(design$order==5),which(design$order==5)]
+
+order.1.bray.mean <- as.vector(round(apply(order.1.bray, 1, mean), 3))
+order.2.bray.mean <- as.vector(round(apply(order.2.bray, 1, mean), 3))
+order.3.bray.mean <- as.vector(round(apply(order.3.bray, 1, mean), 3))
+order.4.bray.mean <- as.vector(round(apply(order.4.bray, 1, mean), 3))
+order.5.bray.mean <- as.vector(round(apply(order.5.bray, 1, mean), 3))
+
+order.1.bray.se <- as.vector(round(apply(order.1.bray, 1, se), 3))
+order.2.bray.se <- as.vector(round(apply(order.2.bray, 1, se), 3))
+order.3.bray.se <- as.vector(round(apply(order.3.bray, 1, se), 3))
+order.4.bray.se <- as.vector(round(apply(order.4.bray, 1, se), 3))
+order.5.bray.se <- as.vector(round(apply(order.5.bray, 1, se), 3))
+
+orders.bray <- as.data.frame(cbind(c(rep(1, length(order.1.bray.mean)),
+        rep(2, length(order.2.bray.mean)),
+        rep(3, length(order.3.bray.mean)),
+        rep(4, length(order.4.bray.mean)),
+        rep(5, length(order.5.bray.mean))),
+      c(order.1.bray.mean, order.2.bray.mean, order.3.bray.mean,
+        order.4.bray.mean, order.5.bray.mean),
+      c(order.1.bray.se, order.2.bray.se, order.3.bray.se,
+        order.4.bray.se, order.5.bray.se)))
+colnames(orders.bray) <- c("order", "mean", "se")
+model.orders <- lm(orders.bray$mean ~ orders.bray$order)
+modsum <- summary(model.orders)
+
+
+png(filename = "./figures/Figure6.png",
+    width = 1200, height = 1200, res = 96*2)
+
+plot(orders.bray$mean ~ orders.bray$order, xlab="Strahler Order",
+     ylab = "Bray-Curtis Similarity")
+abline(model.orders)
+r2 <- modsum$adj.r.squared
+my.p <- modsum$coefficients[2,4]
+rp <- vector('expression',2)
+rp[1] <- substitute(expression(italic(R)^2 == MYVALUE),
+                    list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] <- substitute(expression(italic(p) == MYOTHERVALUE),
+                    list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('bottomright', legend = rp, bty = 'n')
 dev.off()
 graphics.off()
 ```
