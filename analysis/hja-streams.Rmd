@@ -45,6 +45,7 @@ OTU.tax <- read.tax(taxonomy = taxon, format = "rdp")
 
 # Import Env
 env.total <- read.csv(env, header=T)
+
 ```
 
 ### Data Transformations
@@ -68,6 +69,20 @@ lows
 OTUs <- OTUs[-which(coverage < 7000), ]
 design <- design[-which(coverage < 7000), ]
 env <- env.total[-which(coverage < 7000), ]
+
+# Remove orthogonal vectors
+env <- env[c(1:11, 13, 16, 18, 19)]
+env.mat <- as.matrix(env[10:15])
+for(i in nrow(env.mat)){
+  if(env.mat[i, 5] < 0){
+    env.mat[i, 5] <- 0
+  }
+}
+
+# Distance Matrix
+xy <- cbind(env$longitude, env$latitude)
+xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
+dist.mat <- as.matrix(dist(xy, method = "euclidean"))
 
 # Make Relative Abundence Matrices
 OTUsREL <- OTUs
@@ -562,9 +577,7 @@ dend.dist.mat <- dend.dist(graph = stream.network, dist.mat = euc.dist.mat)
 
 ### CCA
 ```{r, eval=FALSE}
-#env.mat <- as.matrix(env[which(env$habitat == "hja"),10:17])
-env.mat <- as.matrix(env[,10:17])
-hja.cca <- vegan::cca(OTUsREL.log ~ env.mat) 
+hja.cca <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)])
 #anova(hja.cca, by = "axis")
 #cca.fit <- envfit(hja.cca, env.mat, perm = 999)
 cca.explainvar1 <- round(hja.cca$CCA$eig[1] /
@@ -590,7 +603,7 @@ text(scores(hja.cca, display = "wa"),
 ```
 
 ```{r}
-env.mat <- as.matrix(env[,c(10:16)])
+
 
 # LC Watershed
 lc.cca <- vegan::cca(OTUsREL.log[which(design$watershed == "LC"),] ~ env.mat[which(design$watershed == "LC"),]) 
@@ -659,7 +672,7 @@ text(scores(lc.cca, display = "wa"), cex=0.5,
      labels = row.names(scores(lc.cca, display = "wa")))
 
 lc.vectors <- scores(lc.cca, display = "bp")
-row.names(lc.vectors) <- c("elev", "temp", "spC", "cond", "tds", "sal", "pH")
+row.names(lc.vectors) <- c("elev", "temp", "cond", "pH", "TN", "TP")
 arrows(0, 0, lc.vectors[, 1] * 2, lc.vectors[, 2]*2,
        lwd = 2, lty = 1, length = 0.2, col = "red")
 text(lc.vectors[, 1] * 2, lc.vectors[, 2] * 2, pos=3,
@@ -742,7 +755,7 @@ graphics.off()
 
 ### CCA by Order
 ```{r}
-env.mat <- as.matrix(env[,c(10:16)])
+env.mat <- as.matrix(env[,c(10:15)])
 
 # Order 1
 lc.1.cca <- vegan::cca(OTUsREL.log[
@@ -862,3 +875,35 @@ streams@data
 plot(streams, add = TRUE)
 summary(streams)
 ```
+
+```{r}
+dist.pcnm <- pcnm(dist(xy))
+ordisurf(xy, scores(dist.pcnm, choi=1), bubble = 4, main = "PCNM 1")
+ordisurf(xy, scores(dist.pcnm, choi=2), bubble = 4, main = "PCNM 2")
+ordisurf(xy, scores(dist.pcnm, choi=3), bubble = 4, main = "PCNM 3")
+ordisplom(dist.pcnm, choices = 1:4)
+rs <- rowSums(OTUsREL.log) / sum(OTUsREL.log)
+pcnmw <- pcnm(dist(xy), w = rs)
+spatial.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw))
+env.var <- hja.cca
+env.spat.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw) +
+                             Condition(env.mat[,c(1:4,6)]))
+spat.env.var <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)] +
+                             Condition(scores(pcnmw)))
+
+sum(env.var$CCA$eig)
+sum(spatial.var$CCA$eig)
+sum(env.spat.var$CCA$eig)
+sum(spat.env.var$CCA$eig)
+
+hja.ca <- vegan::cca(OTUsREL.log)
+sum(hja.cor$CA$eig)
+
+var.part.1 <- sum(env.var$CCA$eig) / sum(hja.ca$CA$eig)
+var.part.2 <- sum(spatial.var$CCA$eig) / sum(hja.ca$CA$eig)
+var.part.3 <- sum(spat.env.var$CCA$eig) / sum(hja.ca$CA$eig)
+var.part.4 <- sum(env.spat.var$CCA$eig) / sum(hja.ca$CA$eig)
+
+var.part.1 + var.part.4
+var.part.2 + var.part.3
+
