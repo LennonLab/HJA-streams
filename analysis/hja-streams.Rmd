@@ -15,6 +15,9 @@ source("./analysis/MothurTools.R")
 
 require("vegan")
 require("png")
+require("raster")
+require("sp")
+require("rgdal")
 
 se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
 ```
@@ -42,10 +45,10 @@ OTU.tax <- read.tax(taxonomy = taxon, format = "rdp")
 
 # Import Env
 env.total <- read.csv(env, header=T)
+
 ```
 
-
-### Data Transormations
+### Data Transformations
 ```{r}
 # Remove OTUs with less than two occurances across all sites
 OTUs <- OTUs[, which(colSums(OTUs) >= 2)]
@@ -66,6 +69,20 @@ lows
 OTUs <- OTUs[-which(coverage < 7000), ]
 design <- design[-which(coverage < 7000), ]
 env <- env.total[-which(coverage < 7000), ]
+
+# Remove orthogonal vectors
+env <- env[c(1:11, 13, 16, 18, 19)]
+env.mat <- as.matrix(env[10:15])
+for(i in nrow(env.mat)){
+  if(env.mat[i, 5] < 0){
+    env.mat[i, 5] <- 0
+  }
+}
+
+# Distance Matrix
+xy <- cbind(env$longitude, env$latitude)
+xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
+dist.mat <- as.matrix(dist(xy, method = "euclidean"))
 
 # Make Relative Abundence Matrices
 OTUsREL <- OTUs
@@ -322,6 +339,45 @@ dev.off()
 graphics.off()
 ```
 
+### PCoA by Stream Order
+```{r}
+png(filename = "./figures/Figure1.png",
+    width = 1200, height = 1200, res = 96*2)
+
+par(mar = c(5, 5, 3, 2) + 0.1)
+plot(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2], ylim = c(-0.5, 0.4),
+     xlab = paste("PCoA 1 (", var1, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", var2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="H.J. Andrews Catchment")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(hja.pcoa$points[which(design$order == 1),1], 
+       hja.pcoa$points[which(design$order == 1),2],
+       pch=19, cex=2, bg="lightskyblue", col="lightskyblue")
+points(hja.pcoa$points[which(design$order == 2),1], 
+       hja.pcoa$points[which(design$order == 2),2],
+       pch=19, cex=2, bg="lightskyblue1", col="lightskyblue1")
+points(hja.pcoa$points[which(design$order == 3),1], 
+       hja.pcoa$points[which(design$order == 3),2],
+       pch=19, cex=2, bg="lightskyblue2", col="lightskyblue2")
+points(hja.pcoa$points[which(design$order == 4),1], 
+       hja.pcoa$points[which(design$order == 4),2],
+       pch=19, cex=2, bg="lightskyblue3", col="lightskyblue3")
+points(hja.pcoa$points[which(design$order == 5),1], 
+       hja.pcoa$points[which(design$order == 5),2],
+       pch=19, cex=2, bg="lightskyblue4", col="lightskyblue4")
+text(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2],
+     cex = 0.5, labels = row.names(hja.pcoa$points))
+
+
+
+
+dev.off()
+graphics.off()
+```
 
 ### Distance Decay
 ```{r, eval=FALSE}
@@ -420,7 +476,7 @@ graphics.off()
 
 ```
 
-# Bray-Curtis Similarity by Stream Order
+### Bray-Curtis Similarity by Stream Order
 ```{r}
 strahler.bray <- 1 - as.matrix(vegdist(OTUsREL.log, method = "bray"))
 order.1.bray <- strahler.bray[which(design$order==1),which(design$order==1)]
@@ -519,12 +575,9 @@ dend.dist <- function(graph = "", dist.mat = ""){
 dend.dist.mat <- dend.dist(graph = stream.network, dist.mat = euc.dist.mat)
 ```
 
-
 ### CCA
 ```{r, eval=FALSE}
-#env.mat <- as.matrix(env[which(env$habitat == "hja"),10:17])
-env.mat <- as.matrix(env[,10:17])
-hja.cca <- vegan::cca(OTUsREL.log ~ env.mat) 
+hja.cca <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)])
 #anova(hja.cca, by = "axis")
 #cca.fit <- envfit(hja.cca, env.mat, perm = 999)
 cca.explainvar1 <- round(hja.cca$CCA$eig[1] /
@@ -550,7 +603,7 @@ text(scores(hja.cca, display = "wa"),
 ```
 
 ```{r}
-env.mat <- as.matrix(env[,c(10:16)])
+
 
 # LC Watershed
 lc.cca <- vegan::cca(OTUsREL.log[which(design$watershed == "LC"),] ~ env.mat[which(design$watershed == "LC"),]) 
@@ -619,7 +672,7 @@ text(scores(lc.cca, display = "wa"), cex=0.5,
      labels = row.names(scores(lc.cca, display = "wa")))
 
 lc.vectors <- scores(lc.cca, display = "bp")
-row.names(lc.vectors) <- c("elev", "temp", "spC", "cond", "tds", "sal", "pH")
+row.names(lc.vectors) <- c("elev", "temp", "cond", "pH", "TN", "TP")
 arrows(0, 0, lc.vectors[, 1] * 2, lc.vectors[, 2]*2,
        lwd = 2, lty = 1, length = 0.2, col = "red")
 text(lc.vectors[, 1] * 2, lc.vectors[, 2] * 2, pos=3,
@@ -700,8 +753,215 @@ dev.off()
 graphics.off()
 ```
 
+### CCA by Order
 ```{r}
-hja.dist <- vegdist(OTUsREL.log, method = "bray")
-env.dist <- vegdist(scale(env[,10:17]), method = "euclid")
-mantel(hja.dist, env.dist)
+env.mat <- as.matrix(env[,c(10:15)])
+
+# Order 1
+lc.1.cca <- vegan::cca(OTUsREL.log[
+  which(design$watershed == "LC" & design$order == 1),],
+  env.mat[which(design$watershed == "LC" & design$order == 1),]) 
+#anova(hja.cca, by = "axis")
+#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
+lc.1.cca.explainvar1 <- round(lc.1.cca$CCA$eig[1] /
+                           sum(c(lc.1.cca$CCA$eig, lc.1.cca$CA$eig)), 3) * 100
+lc.1.cca.explainvar2 <- round(lc.1.cca$CCA$eig[2] /
+                           sum(c(lc.1.cca$CCA$eig, lc.1.cca$CA$eig)), 3) * 100
+
+# Order 2
+lc.2.cca <- vegan::cca(OTUsREL.log[
+  which(design$watershed == "LC" & design$order == 2),],
+  env.mat[which(design$watershed == "LC" & design$order == 2),]) 
+#anova(hja.cca, by = "axis")
+#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
+lc.2.cca.explainvar1 <- round(lc.2.cca$CCA$eig[1] /
+                           sum(c(lc.2.cca$CCA$eig, lc.2.cca$CA$eig)), 3) * 100
+lc.2.cca.explainvar2 <- round(lc.2.cca$CCA$eig[2] /
+                           sum(c(lc.2.cca$CCA$eig, lc.2.cca$CA$eig)), 3) * 100
+
+# Order 3
+lc.3.cca <- vegan::cca(OTUsREL.log[
+  which(design$watershed == "LC" & design$order == 3),],
+  env.mat[which(design$watershed == "LC" & design$order == 3),]) 
+#anova(hja.cca, by = "axis")
+#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
+lc.3.cca.explainvar1 <- round(lc.3.cca$CCA$eig[1] /
+                           sum(c(lc.3.cca$CCA$eig, lc.3.cca$CA$eig)), 3) * 100
+lc.3.cca.explainvar2 <- round(lc.3.cca$CCA$eig[2] /
+                           sum(c(lc.3.cca$CCA$eig, lc.3.cca$CA$eig)), 3) * 100
+
+# Order 4
+lc.4.cca <- vegan::cca(OTUsREL.log[
+  which(design$watershed == "LC" & design$order == 4),],
+  env.mat[which(design$watershed == "LC" & design$order == 4),]) 
+#anova(hja.cca, by = "axis")
+#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
+lc.4.cca.explainvar1 <- round(lc.4.cca$CCA$eig[1] /
+                           sum(c(lc.4.cca$CCA$eig, lc.4.cca$CA$eig)), 3) * 100
+lc.4.cca.explainvar2 <- round(lc.4.cca$CCA$eig[2] /
+                           sum(c(lc.4.cca$CCA$eig, lc.4.cca$CA$eig)), 3) * 100
+
+# Order 5
+lc.5.cca <- vegan::cca(OTUsREL.log[
+  which(design$watershed == "LC" & design$order == 5),],
+  env.mat[which(design$watershed == "LC" & design$order == 5),]) 
+#anova(hja.cca, by = "axis")
+#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
+lc.5.cca.explainvar1 <- round(lc.5.cca$CCA$eig[1] /
+                           sum(c(lc.5.cca$CCA$eig, lc.5.cca$CA$eig)), 3) * 100
+lc.5.cca.explainvar2 <- round(lc.5.cca$CCA$eig[2] /
+                           sum(c(lc.5.cca$CCA$eig, lc.5.cca$CA$eig)), 3) * 100
+
+par(mar = c(5, 5, 4, 4) + 0.1)
+plot(scores(lc.1.cca, display = "wa"), xlim = c(-2, 3), ylim = c(-2, 2),
+     xlab = paste("CCA 1 (", lc.1.cca.explainvar1, "%)", sep = ""), 
+     ylab = paste("CCA 2 (", lc.1.cca.explainvar2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+abline(h=0, v=0, lty=3)
+box(lwd=2)
+points(scores(lc.1.cca, display = "wa"),
+       pch=19, cex=2, bg="gray", col="gray")
+text(scores(lc.1.cca, display = "wa"), cex = 0.5,
+     labels = row.names(scores(lc.1.cca, display = "wa")))
+lc.1.cca.vectors <- scores(lc.1.cca, display = "bp")
+row.names(lc.1.cca.vectors) <- c("elev", "temp")
+arrows(0, 0, lc.1.cca.vectors[, 1] * 2, lc.1.cca.vectors[, 2]*2,
+       lwd = 2, lty = 1, length = 0.2, col = "red")
+text(lc.1.cca.vectors[, 1] * 2, lc.1.cca.vectors[, 2] * 2, pos=3,
+     labels = row.names(lc.1.cca.vectors), col = "red")
+
+par(mar = c(5, 5, 4, 4) + 0.1)
+plot(scores(lc.2.cca, display = "wa"), xlim = c(-2, 3), ylim = c(-2, 2),
+     xlab = paste("CCA 1 (", lc.2.cca.explainvar1, "%)", sep = ""), 
+     ylab = paste("CCA 2 (", lc.2.cca.explainvar2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+abline(h=0, v=0, lty=3)
+box(lwd=2)
+points(scores(lc.2.cca, display = "wa"),
+       pch=19, cex=2, bg="gray", col="gray")
+text(scores(lc.2.cca, display = "wa"), cex = 0.5,
+     labels = row.names(scores(lc.2.cca, display = "wa")))
+lc.2.cca.vectors <- scores(lc.2.cca, display = "bp")
+row.names(lc.2.cca.vectors) <- c("elev", "temp")
+arrows(0, 0, lc.2.cca.vectors[, 1] * 2, lc.2.cca.vectors[, 2]*2,
+       lwd = 2, lty = 1, length = 0.2, col = "red")
+text(lc.2.cca.vectors[, 1] * 2, lc.2.cca.vectors[, 2] * 2, pos=3,
+     labels = row.names(lc.2.cca.vectors), col = "red")
+```
+
+### Organismal analysis
+```{r}
+top.taxa = matrix(nrow = nrow(OTUsREL), ncol = 5)
+rownames(top.taxa) <- rownames(OTUsREL)
+for(i in 1:nrow(OTUsREL)){
+  top.taxa[i,] <- names(sort(tail(sort(OTUsREL[i,]),5), decreasing = T))
+}
+
+OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[,1])),]
+```
+
+
+### GIS and Imagery
+```{r}
+DEM <- raster("~/GitHub/HJA-streams/imagery/bare_earth_DEM_1m/gi01001.e00")
+DEM
+image(DEM, col=terrain.colors(1000))
+streams <- readOGR(dsn = "./imagery/stream_network_2008/", layer = "lidar_stream")
+streams@data
+plot(streams, add = TRUE)
+summary(streams)
+```
+
+### Variance Partitioning
+
+#### HJA Catchment
+```{r}
+dist.pcnm <- pcnm(dist(xy))
+ordisurf(xy, scores(dist.pcnm, choi=1), bubble = 4, main = "PCNM 1")
+ordisurf(xy, scores(dist.pcnm, choi=2), bubble = 4, main = "PCNM 2")
+ordisurf(xy, scores(dist.pcnm, choi=3), bubble = 4, main = "PCNM 3")
+ordisplom(dist.pcnm, choices = 1:4)
+rs <- rowSums(OTUsREL.log) / sum(OTUsREL.log)
+pcnmw <- pcnm(dist(xy), w = rs)
+
+spatial.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw))
+env.var <- hja.cca
+env.spat.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw) +
+                             Condition(env.mat[,c(1:4,6)]))
+spat.env.var <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)] +
+                             Condition(scores(pcnmw)))
+
+sum(env.var$CCA$eig)
+sum(spatial.var$CCA$eig)
+sum(env.spat.var$CCA$eig)
+sum(spat.env.var$CCA$eig)
+
+hja.ca <- vegan::cca(OTUsREL.log)
+sum(hja.cor$CA$eig)
+
+var.part.1 <- sum(env.var$CCA$eig) / sum(hja.ca$CA$eig)
+var.part.2 <- sum(spatial.var$CCA$eig) / sum(hja.ca$CA$eig)
+var.part.3 <- sum(spat.env.var$CCA$eig) / sum(hja.ca$CA$eig)
+var.part.4 <- sum(env.spat.var$CCA$eig) / sum(hja.ca$CA$eig)
+```
+
+#### Surface Water
+```{r}
+env.mat <- env.mat[,c(1:4,6)]
+water.dist.pcnm <- pcnm(dist(xy[which(design$habitat == "water"),]))
+water.rs <- rowSums(OTUsREL.log[which(design$habitat == "water"),]) / 
+  sum(OTUsREL.log[which(design$habitat == "water"),])
+water.pcnmw <- pcnm(dist(xy[which(design$habitat == "water"),]), w = water.rs)
+
+water.spatial.var <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),] ~ scores(water.pcnmw))
+water.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),] ~ env.mat[which(design$habitat == "water"),])
+water.env.spat.var <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),] ~
+      scores(water.pcnmw) + Condition(env.mat[which(design$habitat == "water"),]))
+water.spat.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),] ~ 
+      env.mat[which(design$habitat == "water"),] + Condition(scores(water.pcnmw)))
+
+sum(water.env.var$CCA$eig)
+sum(water.spatial.var$CCA$eig)
+sum(water.env.spat.var$CCA$eig)
+sum(water.spat.env.var$CCA$eig)
+
+water.ca <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),])
+sum(water.ca$CA$eig)
+
+water.var.part.1 <- sum(water.env.var$CCA$eig) / sum(water.ca$CA$eig)
+water.var.part.2 <- sum(water.spatial.var$CCA$eig) / sum(water.ca$CA$eig)
+water.var.part.3 <- sum(water.spat.env.var$CCA$eig) / sum(water.ca$CA$eig)
+water.var.part.4 <- sum(water.env.spat.var$CCA$eig) / sum(water.ca$CA$eig)
+```
+
+#### Sediments Only
+```{r}
+sediment.dist.pcnm <- pcnm(dist(xy[which(design$habitat == "sediment"),]))
+sediment.rs <- rowSums(OTUsREL.log[which(design$habitat == "sediment"),]) / 
+  sum(OTUsREL.log[which(design$habitat == "sediment"),])
+sediment.pcnmw <- pcnm(dist(xy[which(design$habitat == "sediment"),]), w = sediment.rs)
+
+sediment.spatial.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ scores(sediment.pcnmw))
+sediment.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ env.mat[which(design$habitat == "sediment"),])
+sediment.env.spat.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~
+      scores(sediment.pcnmw) + Condition(env.mat[which(design$habitat == "sediment"),]))
+sediment.spat.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ 
+      env.mat[which(design$habitat == "sediment"),] + Condition(scores(sediment.pcnmw)))
+
+sum(sediment.env.var$CCA$eig)
+sum(sediment.spatial.var$CCA$eig)
+sum(sediment.env.spat.var$CCA$eig)
+sum(sediment.spat.env.var$CCA$eig)
+
+sediment.ca <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),])
+sum(sediment.ca$CA$eig)
+
+sediment.var.part.1 <- sum(sediment.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
+sediment.var.part.2 <- sum(sediment.spatial.var$CCA$eig) / sum(sediment.ca$CA$eig)
+sediment.var.part.3 <- sum(sediment.spat.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
+sediment.var.part.4 <- sum(sediment.env.spat.var$CCA$eig) / sum(sediment.ca$CA$eig)
 ```
