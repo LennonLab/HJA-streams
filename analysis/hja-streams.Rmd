@@ -876,6 +876,9 @@ plot(streams, add = TRUE)
 summary(streams)
 ```
 
+### Variance Partitioning
+
+#### HJA Catchment
 ```{r}
 dist.pcnm <- pcnm(dist(xy))
 ordisurf(xy, scores(dist.pcnm, choi=1), bubble = 4, main = "PCNM 1")
@@ -884,6 +887,7 @@ ordisurf(xy, scores(dist.pcnm, choi=3), bubble = 4, main = "PCNM 3")
 ordisplom(dist.pcnm, choices = 1:4)
 rs <- rowSums(OTUsREL.log) / sum(OTUsREL.log)
 pcnmw <- pcnm(dist(xy), w = rs)
+
 spatial.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw))
 env.var <- hja.cca
 env.spat.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw) +
@@ -903,7 +907,61 @@ var.part.1 <- sum(env.var$CCA$eig) / sum(hja.ca$CA$eig)
 var.part.2 <- sum(spatial.var$CCA$eig) / sum(hja.ca$CA$eig)
 var.part.3 <- sum(spat.env.var$CCA$eig) / sum(hja.ca$CA$eig)
 var.part.4 <- sum(env.spat.var$CCA$eig) / sum(hja.ca$CA$eig)
+```
 
-var.part.1 + var.part.4
-var.part.2 + var.part.3
+#### Surface Water
+```{r}
+env.mat <- env.mat[,c(1:4,6)]
+water.dist.pcnm <- pcnm(dist(xy[which(design$habitat == "water"),]))
+water.rs <- rowSums(OTUsREL.log[which(design$habitat == "water"),]) / 
+  sum(OTUsREL.log[which(design$habitat == "water"),])
+water.pcnmw <- pcnm(dist(xy[which(design$habitat == "water"),]), w = water.rs)
 
+water.spatial.var <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),] ~ scores(water.pcnmw))
+water.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),] ~ env.mat[which(design$habitat == "water"),])
+water.env.spat.var <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),] ~
+      scores(water.pcnmw) + Condition(env.mat[which(design$habitat == "water"),]))
+water.spat.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),] ~ 
+      env.mat[which(design$habitat == "water"),] + Condition(scores(water.pcnmw)))
+
+sum(water.env.var$CCA$eig)
+sum(water.spatial.var$CCA$eig)
+sum(water.env.spat.var$CCA$eig)
+sum(water.spat.env.var$CCA$eig)
+
+water.ca <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),])
+sum(water.ca$CA$eig)
+
+water.var.part.1 <- sum(water.env.var$CCA$eig) / sum(water.ca$CA$eig)
+water.var.part.2 <- sum(water.spatial.var$CCA$eig) / sum(water.ca$CA$eig)
+water.var.part.3 <- sum(water.spat.env.var$CCA$eig) / sum(water.ca$CA$eig)
+water.var.part.4 <- sum(water.env.spat.var$CCA$eig) / sum(water.ca$CA$eig)
+```
+
+#### Sediments Only
+```{r}
+sediment.dist.pcnm <- pcnm(dist(xy[which(design$habitat == "sediment"),]))
+sediment.rs <- rowSums(OTUsREL.log[which(design$habitat == "sediment"),]) / 
+  sum(OTUsREL.log[which(design$habitat == "sediment"),])
+sediment.pcnmw <- pcnm(dist(xy[which(design$habitat == "sediment"),]), w = sediment.rs)
+
+sediment.spatial.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ scores(sediment.pcnmw))
+sediment.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ env.mat[which(design$habitat == "sediment"),])
+sediment.env.spat.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~
+      scores(sediment.pcnmw) + Condition(env.mat[which(design$habitat == "sediment"),]))
+sediment.spat.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ 
+      env.mat[which(design$habitat == "sediment"),] + Condition(scores(sediment.pcnmw)))
+
+sum(sediment.env.var$CCA$eig)
+sum(sediment.spatial.var$CCA$eig)
+sum(sediment.env.spat.var$CCA$eig)
+sum(sediment.spat.env.var$CCA$eig)
+
+sediment.ca <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),])
+sum(sediment.ca$CA$eig)
+
+sediment.var.part.1 <- sum(sediment.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
+sediment.var.part.2 <- sum(sediment.spatial.var$CCA$eig) / sum(sediment.ca$CA$eig)
+sediment.var.part.3 <- sum(sediment.spat.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
+sediment.var.part.4 <- sum(sediment.env.spat.var$CCA$eig) / sum(sediment.ca$CA$eig)
+```
