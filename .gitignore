@@ -4,3 +4,4 @@ analysis/.Rapp.history
 HJAMap.png.rda
 ./analysis/wisnoski@mason.uits.iu.edu
 ./imagery/bare_earth_DEM_1m/gi01001.e00
+./imagery/*
