@@ -230,10 +230,10 @@ points(hja.pcoa$points[which(design$habitat == "sediment"),1],
 points(hja.pcoa$points[which(design$habitat == "water"),1], 
        hja.pcoa$points[which(design$habitat == "water"),2],
        pch=17, cex=2, bg="skyblue", col="skyblue")
-text(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2],
-     cex = 0.5, labels = row.names(hja.pcoa$points))
+# text(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2],
+#      cex = 0.5, labels = row.names(hja.pcoa$points))
 legend("topleft", c("Sediment", "Water"), col = c("wheat", "skyblue"),
-         pt.bg = c("wheat", "skyblue"), pch = c(19,17), cex = 1, bty = "n")
+         pt.bg = c("wheat", "skyblue"), pch = c(19,17), cex = 1.5, bty = "n")
 
 dev.off()
 graphics.off()
@@ -265,10 +265,10 @@ points(sediment.pcoa$points[which(sed.design$watershed == "LC"),1],
 points(sediment.pcoa$points[which(sed.design$watershed == "WS01"),1], 
        sediment.pcoa$points[which(sed.design$watershed == "WS01"),2],
        pch=17, cex=2, bg="yellowgreen", col="yellowgreen")
-text(sediment.pcoa$points[ ,1], sediment.pcoa$points[ ,2],
-     cex=0.5, labels = row.names(sediment.pcoa$points))
+# text(sediment.pcoa$points[ ,1], sediment.pcoa$points[ ,2],
+#      cex=0.5, labels = row.names(sediment.pcoa$points))
 legend("topleft", c("Lookout Creek", "Watershed 01"), col = c("slategray2", "yellowgreen"),
-       pt.bg = c("slategray2", "yellowgreen"), pch = c(19,17), cex = 1, bty = "n")
+       pt.bg = c("slategray2", "yellowgreen"), pch = c(19,17), cex = 1.5, bty = "n")
 
 # Water Only PCoA
 par(mar = c(5, 5, 3, 2) + 0.1)
@@ -289,15 +289,15 @@ points(water.pcoa$points[which(water.design$watershed == "LC"),1],
 points(water.pcoa$points[which(water.design$watershed == "WS01"),1], 
        water.pcoa$points[which(water.design$watershed == "WS01"),2],
        pch=17, cex=2, bg="yellowgreen", col="yellowgreen")
-text(water.pcoa$points[ ,1], water.pcoa$points[ ,2],
-     cex=0.5, labels = row.names(water.pcoa$points))
+# text(water.pcoa$points[ ,1], water.pcoa$points[ ,2],
+#      cex=0.5, labels = row.names(water.pcoa$points))
 
 dev.off()
 graphics.off()
 
 ```
 
-### Figure 3: Bray-Curtis Similarity increases with increasing stream order
+### Calculate Bray-Curtis across stream orders
 ```{r}
 strahler.bray <- 1 - as.matrix(vegdist(OTUsREL.log, method = "bray"))
 order.1.bray <- strahler.bray[which(design$order==1),which(design$order==1)]
@@ -330,15 +330,20 @@ orders.bray <- as.data.frame(cbind(c(rep(1, length(order.1.bray.mean)),
 colnames(orders.bray) <- c("order", "mean", "se")
 model.orders <- lm(orders.bray$mean ~ orders.bray$order)
 modsum <- summary(model.orders)
+```
 
+### Figure 3: Bray-Curtis Similarity increases with increasing stream order
+```{r}
 png(filename = "./figures/Figure3.png",
     width = 1200, height = 1200, res = 96*2)
-
+par(mar = c(5, 5, 2, 2) + 0.1)
 plot(orders.bray$mean ~ orders.bray$order, xaxt = "n", yaxt = "n",
-     xlab = "", ylab = "", ylim = c(0.2, 0.7),
-     pch = 19)
+     xlab = "Stream Order", ylab = "Mean Bray-Curtis Similarity", ylim = c(0.2, 0.7),
+     pch = 19, cex.lab =1.5)
 axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd=2)
 
 error.bar(orders.bray$order, orders.bray$mean, orders.bray$se)
@@ -365,9 +370,10 @@ for(i in 1:nrow(OTUsREL)){
   top.taxa[i,] <- names(sort(tail(sort(OTUsREL[i,]),5), decreasing = T))
 }
 
-OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[,1])),]
+OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[,5])),]
 
-
+OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[which(design$habitat == "water")])),]
+OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[which(design$habitat == "sediment")])),]
 
 ```
 
