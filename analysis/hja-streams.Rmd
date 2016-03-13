@@ -7,6 +7,7 @@ output: pdf_document
 ```{r}
 rm(list=ls())
 setwd("~/GitHub/HJA-streams/")
+opar <- par()
 ```
 
 ### Import Source Files and Packages
@@ -20,6 +21,13 @@ require("sp")
 require("rgdal")
 
 se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
+
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+  if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+    stop("vectors must be same length")
+  arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+}
+
 ```
 
 
@@ -63,7 +71,7 @@ goods <- function(x = ""){
 }
 goods.c <- goods(OTUs)
 
-# Remove Low Coverage Samples (This code removes two sites: Site 5DNA, Site 6cDNA)
+# Remove Low Coverage Samples
 lows <- which(coverage < 7000)
 lows
 OTUs <- OTUs[-which(coverage < 7000), ]
@@ -73,7 +81,7 @@ env <- env.total[-which(coverage < 7000), ]
 # Remove orthogonal vectors
 env <- env[c(1:11, 13, 16, 18, 19)]
 env.mat <- as.matrix(env[10:15])
-for(i in nrow(env.mat)){
+for(i in 1:nrow(env.mat)){
   if(env.mat[i, 5] < 0){
     env.mat[i, 5] <- 0
   }
@@ -92,6 +100,8 @@ for(i in 1:dim(OTUs)[1]){
 
 # Log Transform Relative Abundances
 OTUsREL.log <- decostand(OTUs, method="log")
+
+OTUs.PA <- (OTUs > 0) * 1
 
 ```
 
@@ -144,21 +154,10 @@ sed <- alpha.div[alpha.div$habitat == "sediment", ]
 lc   <- alpha.div[alpha.div$watershed == "LC",]
 ws01 <- alpha.div[alpha.div$watershed == "WS01",]
 
-# Calculate Linear Model
-model.rich <- lm(alpha.div$S.obs ~ alpha.div$habitat)
-summary(model.rich)
+t.test(alpha.div$S.obs ~ alpha.div$habitat)
 
-model.div <- lm(alpha.div$shan ~ alpha.div$habitat)
-summary(model.div)
-
-model.even <- lm(alpha.div$simpsE ~ alpha.div$habitat)
-summary(model.even)
-
-# Calculate Confidance Intervals of Model
-newdata.rich <- data.frame(alpha.div$habitat)
-conf95.rich <- predict(model.rich, newdata.rich, interval="confidence")
+cor.test(alpha.div$S.obs, alpha.div$simpsE)
 ```
-
 
 ### Ordination
 
@@ -208,19 +207,21 @@ w1.var2 <- round(w1.pcoa$eig[2] / sum(w1.pcoa$eig),3) * 100
 w1.var3 <- round(w1.pcoa$eig[3] / sum(w1.pcoa$eig),3) * 100
 ```
 
-#### Plot HJA PCoA Figure
+#### Figure 1: Sediments & Water Communities PCoA
 ```{r}
 png(filename = "./figures/Figure1.png",
     width = 1200, height = 1200, res = 96*2)
 
 par(mar = c(5, 5, 3, 2) + 0.1)
-plot(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2], ylim = c(-0.5, 0.4),
+plot(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2], ylim = c(-0.5, 0.4), xlim = c(-.35, .35),
      xlab = paste("PCoA 1 (", var1, "%)", sep = ""),
      ylab = paste("PCoA 2 (", var2, "%)", sep = ""), 
-     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     pch = 19, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
      main="H.J. Andrews Catchment")
-axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 1, labels = T, at = c(-0.3,-.15,0,.15,.3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, at = c(-0.3,-.15,0,.15,.3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 abline(h = 0, v = 0, lty = 3)
 box(lwd = 2)
 points(hja.pcoa$points[which(design$habitat == "sediment"),1], 
@@ -228,20 +229,18 @@ points(hja.pcoa$points[which(design$habitat == "sediment"),1],
        pch=19, cex=2, bg="wheat", col="wheat")
 points(hja.pcoa$points[which(design$habitat == "water"),1], 
        hja.pcoa$points[which(design$habitat == "water"),2],
-       pch=19, cex=2, bg="skyblue", col="skyblue")
-text(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2],
-     cex = 0.5, labels = row.names(hja.pcoa$points))
-
-
-
+       pch=17, cex=2, bg="skyblue", col="skyblue")
+# text(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2],
+#      cex = 0.5, labels = row.names(hja.pcoa$points))
+legend("topleft", c("Sediment", "Water"), col = c("wheat", "skyblue"),
+         pt.bg = c("wheat", "skyblue"), pch = c(19,17), cex = 1.5, bty = "n")
 
 dev.off()
 graphics.off()
 ```
 
-#### Plot other PCoA figures
+#### Figure 2: Surface Water vs. Sediment Communities
 ```{r}
-opar <- par()
 
 png(filename = "./figures/Figure2.png",
     width = 2400, height = 1200, res = 96*2)
@@ -249,234 +248,56 @@ par(mfrow = c(1,2))
 
 # Sediments Only PCoA
 par(mar = c(5, 5, 3, 2) + 0.1)
-plot(sediment.pcoa$points[ ,1], sediment.pcoa$points[ ,2], ylim = c(-0.4, 0.5),
+plot(sediment.pcoa$points[ ,1], sediment.pcoa$points[ ,2], ylim = c(-0.4, 0.4), xlim = c(-.4,.4),
      xlab = paste("PCoA 1 (", s.var1, "%)", sep = ""),
      ylab = paste("PCoA 2 (", s.var2, "%)", sep = ""), 
-     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     pch = 19, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
      main="Sediments")
 axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 abline(h = 0, v = 0, lty = 3)
 box(lwd = 2)
 points(sediment.pcoa$points[which(sed.design$watershed == "LC"),1], 
        sediment.pcoa$points[which(sed.design$watershed == "LC"),2],
-       pch=19, cex=2, bg="orchid", col="orchid")
+       pch=19, cex=2, bg="slategray2", col="slategray2")
 points(sediment.pcoa$points[which(sed.design$watershed == "WS01"),1], 
        sediment.pcoa$points[which(sed.design$watershed == "WS01"),2],
-       pch=19, cex=2, bg="yellowgreen", col="yellowgreen")
-text(sediment.pcoa$points[ ,1], sediment.pcoa$points[ ,2],
-     cex=0.5, labels = row.names(sediment.pcoa$points))
+       pch=17, cex=2, bg="yellowgreen", col="yellowgreen")
+# text(sediment.pcoa$points[ ,1], sediment.pcoa$points[ ,2],
+#      cex=0.5, labels = row.names(sediment.pcoa$points))
+legend("topleft", c("Lookout Creek", "Watershed 01"), col = c("slategray2", "yellowgreen"),
+       pt.bg = c("slategray2", "yellowgreen"), pch = c(19,17), cex = 1.5, bty = "n")
 
 # Water Only PCoA
-par(xpd=True, mar = c(5, 5, 3, 2) + 0.1)
-plot(water.pcoa$points[ ,1], water.pcoa$points[ ,2], ylim = c(-0.4, 0.35),
+par(mar = c(5, 5, 3, 2) + 0.1)
+plot(water.pcoa$points[ ,1], water.pcoa$points[ ,2], ylim = c(-0.4, 0.4), xlim = c(-.5,.4),
      xlab = paste("PCoA 1 (", w.var1, "%)", sep = ""),
      ylab = paste("PCoA 2 (", w.var2, "%)", sep = ""), 
      pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
      main="Water")
 axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 abline(h = 0, v = 0, lty = 3)
 box(lwd = 2)
 points(water.pcoa$points[which(water.design$watershed == "LC"),1], 
        water.pcoa$points[which(water.design$watershed == "LC"),2],
-       pch=19, cex=2, bg="orchid", col="orchid")
+       pch=19, cex=2, bg="slategray2", col="slategray2")
 points(water.pcoa$points[which(water.design$watershed == "WS01"),1], 
        water.pcoa$points[which(water.design$watershed == "WS01"),2],
-       pch=19, cex=2, bg="yellowgreen", col="yellowgreen")
-text(water.pcoa$points[ ,1], water.pcoa$points[ ,2],
-     cex=0.5, labels = row.names(water.pcoa$points))
-
-dev.off()
-graphics.off()
-
-
-png(filename = "./figures/Figure3.png",
-    width = 2400, height = 1200, res = 96*2)
-par(mfrow = c(1,2))
-
-# Lookout Creek PCoA
-par(mar = c(5, 5, 3, 2) + 0.1)
-plot(lc.pcoa$points[ ,1], lc.pcoa$points[ ,2], ylim = c(-0.4, 0.35),
-     xlab = paste("PCoA 1 (", lc.var1, "%)", sep = ""),
-     ylab = paste("PCoA 2 (", lc.var2, "%)", sep = ""), 
-     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
-     main="Lookout Creen Watershed")
-axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-abline(h = 0, v = 0, lty = 3)
-box(lwd = 2)
-points(lc.pcoa$points[which(lc.design$habitat == "water"),1], 
-       lc.pcoa$points[which(lc.design$habitat == "water"),2],
-       pch=19, cex=2, bg="skyblue", col="skyblue")
-points(lc.pcoa$points[which(lc.design$habitat == "sediment"),1], 
-       lc.pcoa$points[which(lc.design$habitat == "sediment"),2],
-       pch=19, cex=2, bg="wheat", col="wheat")
-text(lc.pcoa$points[ ,1], lc.pcoa$points[ ,2],
-     cex=0.5, labels = row.names(lc.pcoa$points))
-
-# WS01 PCoA
-par(mar = c(5, 5, 3, 2) + 0.1)
-plot(w1.pcoa$points[ ,1], w1.pcoa$points[ ,2], ylim = c(-0.4, 0.35),
-     xlab = paste("PCoA 1 (", w1.var1, "%)", sep = ""),
-     ylab = paste("PCoA 2 (", w1.var2, "%)", sep = ""), 
-     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
-     main="Watershed 01")
-axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-abline(h = 0, v = 0, lty = 3)
-box(lwd = 2)
-points(w1.pcoa$points[which(w1.design$habitat == "water"),1], 
-       w1.pcoa$points[which(w1.design$habitat == "water"),2],
-       pch=19, cex=2, bg="skyblue", col="skyblue")
-points(w1.pcoa$points[which(w1.design$habitat == "sediment"),1], 
-       w1.pcoa$points[which(w1.design$habitat == "sediment"),2],
-       pch=19, cex=2, bg="wheat", col="wheat")
-text(w1.pcoa$points[ ,1], w1.pcoa$points[ ,2],
-     cex=0.5, labels = row.names(w1.pcoa$points))
-
-dev.off()
-graphics.off()
-```
-
-### PCoA by Stream Order
-```{r}
-png(filename = "./figures/Figure1.png",
-    width = 1200, height = 1200, res = 96*2)
-
-par(mar = c(5, 5, 3, 2) + 0.1)
-plot(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2], ylim = c(-0.5, 0.4),
-     xlab = paste("PCoA 1 (", var1, "%)", sep = ""),
-     ylab = paste("PCoA 2 (", var2, "%)", sep = ""), 
-     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
-     main="H.J. Andrews Catchment")
-axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-abline(h = 0, v = 0, lty = 3)
-box(lwd = 2)
-points(hja.pcoa$points[which(design$order == 1),1], 
-       hja.pcoa$points[which(design$order == 1),2],
-       pch=19, cex=2, bg="lightskyblue", col="lightskyblue")
-points(hja.pcoa$points[which(design$order == 2),1], 
-       hja.pcoa$points[which(design$order == 2),2],
-       pch=19, cex=2, bg="lightskyblue1", col="lightskyblue1")
-points(hja.pcoa$points[which(design$order == 3),1], 
-       hja.pcoa$points[which(design$order == 3),2],
-       pch=19, cex=2, bg="lightskyblue2", col="lightskyblue2")
-points(hja.pcoa$points[which(design$order == 4),1], 
-       hja.pcoa$points[which(design$order == 4),2],
-       pch=19, cex=2, bg="lightskyblue3", col="lightskyblue3")
-points(hja.pcoa$points[which(design$order == 5),1], 
-       hja.pcoa$points[which(design$order == 5),2],
-       pch=19, cex=2, bg="lightskyblue4", col="lightskyblue4")
-text(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2],
-     cex = 0.5, labels = row.names(hja.pcoa$points))
-
-
-
-
-dev.off()
-graphics.off()
-```
-
-### Distance Decay
-```{r, eval=FALSE}
-require("simba")
-
-#png(filename="./figures/Figure4.png", width=1200, height=1200, res=96*2)
-#par(mfrow=c(2,1))
-
-# Water Distance Decay
-water.lat <- as.numeric(env$latitude[which(design$habitat == "water")])
-water.lon <- as.numeric(env$longitude[which(design$habitat == "water")])
-
-water.struc.dist <- 1 - vegdist(OTUs.REL.log[which(design$habitat == "water"),])
-water.coord.dist <- dist(as.matrix(water.lat, water.lon))
-water.env.dist <- 1 - vegdist(env[which(design$habitat == "water"), 10:16])
-
-water.struc.dist.ls <- liste(water.struc.dist, entry = "struc")
-water.env.dist.ls <- liste(water.env.dist, entry = "env")
-water.coord.dist.ls <- liste(water.coord.dist, entry = "dist")
-
-water.distances <- data.frame(water.coord.dist.ls, water.env.dist.ls[,3], water.struc.dist.ls[,3])
-names(water.distances)[4:5] <- c("env", "struc")
-
-plot(water.distances$dist, water.distances$struc, xlab="Geographic Distance", 
-     ylab = "Bray-Curtis Similarity", main = "Water Distance-Decay")
-water.lm <- abline(lm(water.distances$struc ~ water.distances$dist))
-
-
-# Sediment Distance Decay
-sed.lat <- as.numeric(env$latitude[which(design$habitat == "sediment")])
-sed.lon <- as.numeric(env$longitude[which(design$habitat == "sediment")])
-
-sed.struc.dist <- 1 - vegdist(OTUsREL.log[which(design$habitat == "sediment"),])
-sed.coord.dist <- dist(as.matrix(sed.lat, sed.lon))
-sed.env.dist <- 1 - vegdist(env[which(design$habitat == "sediment"), 10:16])
-
-sed.struc.dist.ls <- liste(sed.struc.dist, entry = "struc")
-sed.env.dist.ls <- liste(sed.env.dist, entry = "env")
-sed.coord.dist.ls <- liste(sed.coord.dist, entry = "dist")
-
-sed.distances <- data.frame(sed.coord.dist.ls, sed.env.dist.ls[,3], sed.struc.dist.ls[,3])
-names(sed.distances)[4:5] <- c("env", "struc")
-
-plot(sed.distances$dist, sed.distances$struc, xlab="Geographic Distance", 
-     ylab = "Bray-Curtis Similarity", main = "Sediment Distance-Decay")
-sed.lm <- abline(lm(sed.distances$struc ~ sed.distances$dist))
-
-dev.off()
-graphics.off()
-
-diffslope(sed.distances$dist, sed.distances$struc, water.distances$dist, water.distances$struc)
-```
-
-
-### Bray-Curtis Similarity by Elevation
-```{r}
-hja.bray <- 1 - as.matrix(vegdist(OTUsREL.log, method = "bray"))
-hja.bray.mean <- round(apply(hja.bray, 1, mean), 3)
-hja.bray.se <- round(apply(hja.bray, 1, se), 3)
-hja.sim <- cbind(design, hja.bray.mean, hja.bray.se)
-model.hja <- lm(hja.sim$hja.bray.mean ~ hja.sim$elev * hja.sim$habitat)
-summary(model.hja)
-plot(hja.sim$hja.bray.mean ~ hja.sim$elev, main = "HJA Catchment",
-     ylab = "Bray-Curtis Similarity", xlab = "Elevation")
-abline(model.hja)
-
-png(filename = "./figures/Figure4.png", 
-    width = 1200, height = 1200, res = 96*2)
-par(mfrow = c(2, 1), mar = c(5, 5, 2, 3) + 0.1)
-water.bray <- 1 - as.matrix(vegdist(OTUsREL.log[which(design$habitat=="water"),], method = "bray"))
-water.bray.mean <- round(apply(water.bray, 1, mean), 3)
-water.bray.se <- round(apply(water.bray, 1, se), 3)
-water.sim <- cbind(water.design, water.bray.mean, water.bray.se)
-model.water <- lm(water.sim$water.bray.mean ~ water.sim$elev)
-summary(model.water)
-plot(water.sim$water.bray.mean ~ water.sim$elev, xlab="",
-     ylab = "", main="Bray-Curtis Similarity")
-mtext("Surface Water", side = 2, line = 3, cex = 1.5)
-mtext("Bray-Curtis Similarity", side=3, line=3, cex=1.5)
-abline(model.water)
-
-sed.bray <- 1 - as.matrix(vegdist(OTUsREL.log[which(design$habitat=="sediment"),], method = "bray"))
-sed.bray.mean <- round(apply(sed.bray, 1, mean), 3)
-sed.bray.se <- round(apply(sed.bray, 1, se), 3)
-sed.sim <- cbind(sed.design, sed.bray.mean, sed.bray.se)
-model.sed <- lm(sed.sim$sed.bray.mean ~ sed.sim$elev)
-summary(model.sed)
-plot(sed.sim$sed.bray.mean ~ sed.sim$elev, xlab="",
-     ylab = "")
-abline(model.sed)
-mtext("Sediments", side = 2, line = 3, cex = 1.5)
-mtext("Elevation (m)", side = 1, line = 3, cex = 1.5)
+       pch=17, cex=2, bg="yellowgreen", col="yellowgreen")
+# text(water.pcoa$points[ ,1], water.pcoa$points[ ,2],
+#      cex=0.5, labels = row.names(water.pcoa$points))
 
 dev.off()
 graphics.off()
 
 ```
 
-### Bray-Curtis Similarity by Stream Order
+### Calculate Bray-Curtis across stream orders
 ```{r}
 strahler.bray <- 1 - as.matrix(vegdist(OTUsREL.log, method = "bray"))
 order.1.bray <- strahler.bray[which(design$order==1),which(design$order==1)]
@@ -485,17 +306,17 @@ order.3.bray <- strahler.bray[which(design$order==3),which(design$order==3)]
 order.4.bray <- strahler.bray[which(design$order==4),which(design$order==4)]
 order.5.bray <- strahler.bray[which(design$order==5),which(design$order==5)]
 
-order.1.bray.mean <- as.vector(round(apply(order.1.bray, 1, mean), 3))
-order.2.bray.mean <- as.vector(round(apply(order.2.bray, 1, mean), 3))
-order.3.bray.mean <- as.vector(round(apply(order.3.bray, 1, mean), 3))
-order.4.bray.mean <- as.vector(round(apply(order.4.bray, 1, mean), 3))
-order.5.bray.mean <- as.vector(round(apply(order.5.bray, 1, mean), 3))
+order.1.bray.mean <- mean(as.vector(round(apply(order.1.bray, 1, mean), 3)))
+order.2.bray.mean <- mean(as.vector(round(apply(order.2.bray, 1, mean), 3)))
+order.3.bray.mean <- mean(as.vector(round(apply(order.3.bray, 1, mean), 3)))
+order.4.bray.mean <- mean(as.vector(round(apply(order.4.bray, 1, mean), 3)))
+order.5.bray.mean <- mean(as.vector(round(apply(order.5.bray, 1, mean), 3)))
 
-order.1.bray.se <- as.vector(round(apply(order.1.bray, 1, se), 3))
-order.2.bray.se <- as.vector(round(apply(order.2.bray, 1, se), 3))
-order.3.bray.se <- as.vector(round(apply(order.3.bray, 1, se), 3))
-order.4.bray.se <- as.vector(round(apply(order.4.bray, 1, se), 3))
-order.5.bray.se <- as.vector(round(apply(order.5.bray, 1, se), 3))
+order.1.bray.se <- mean(as.vector(round(apply(order.1.bray, 1, se), 3)))
+order.2.bray.se <- mean(as.vector(round(apply(order.2.bray, 1, se), 3)))
+order.3.bray.se <- mean(as.vector(round(apply(order.3.bray, 1, se), 3)))
+order.4.bray.se <- mean(as.vector(round(apply(order.4.bray, 1, se), 3)))
+order.5.bray.se <- mean(as.vector(round(apply(order.5.bray, 1, se), 3)))
 
 orders.bray <- as.data.frame(cbind(c(rep(1, length(order.1.bray.mean)),
         rep(2, length(order.2.bray.mean)),
@@ -509,13 +330,24 @@ orders.bray <- as.data.frame(cbind(c(rep(1, length(order.1.bray.mean)),
 colnames(orders.bray) <- c("order", "mean", "se")
 model.orders <- lm(orders.bray$mean ~ orders.bray$order)
 modsum <- summary(model.orders)
+```
 
-
-png(filename = "./figures/Figure6.png",
+### Figure 3: Bray-Curtis Similarity increases with increasing stream order
+```{r}
+png(filename = "./figures/Figure3.png",
     width = 1200, height = 1200, res = 96*2)
+par(mar = c(5, 5, 2, 2) + 0.1)
+plot(orders.bray$mean ~ orders.bray$order, xaxt = "n", yaxt = "n",
+     xlab = "Stream Order", ylab = "Mean Bray-Curtis Similarity", ylim = c(0.2, 0.7),
+     pch = 19, cex.lab =1.5)
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+box(lwd=2)
 
-plot(orders.bray$mean ~ orders.bray$order, xlab="Strahler Order",
-     ylab = "Bray-Curtis Similarity")
+error.bar(orders.bray$order, orders.bray$mean, orders.bray$se)
+
 abline(model.orders)
 r2 <- modsum$adj.r.squared
 my.p <- modsum$coefficients[2,4]
@@ -530,81 +362,157 @@ graphics.off()
 ```
 
 
-### Calculate Dendritic Distances
+### Organismal analysis
 ```{r}
-require('igraph')
-adj.mat <- as.matrix(read.csv("./data/undirected-matrix.csv", header=T))
-row.names(adj.mat) <- adj.mat[,1]
-adj.mat <- adj.mat[,-1]
-adj.mat <- (adj.mat == 1) * 1
-
-stream.network <- graph_from_adjacency_matrix(adjmatrix = adj.mat)
-plot.igraph(stream.network)
-
-# Create Dist Matrix
-euc.dist.mat <- as.matrix(dist(as.matrix(env.total$latitude, env.total$longitude)))
-rownames(euc.dist.mat) <- env.total$sample
-colnames(euc.dist.mat) <- env.total$sample
-
-# Function to find paths along the network.
-dend.dist <- function(graph = "", dist.mat = ""){
-
-  dend.dist.mat <- matrix(data = NA, nrow = length(env.total$sample), 
-                          ncol = length(env.total$sample))
-  rownames(dend.dist.mat) <- env.total$sample
-  colnames(dend.dist.mat) <- env.total$sample
-  
-  for(row in rownames(dend.dist.mat)){
-    for(col in colnames(dend.dist.mat)){
-      path.dist <- 0
-      path <- shortest_paths(graph = graph, from = row, to = col)$vpath[[1]]
-      
-      if(length(path) > 1){
-        for(i in 1:(length(path) - 1)){
-          path.dist <- path.dist + dist.mat[path[[i]]$name, path[[i+1]]$name]
-        }
-      }
-      
-      dend.dist.mat[row,col] <- path.dist
-    }
-  }
-  
-  return(dend.dist.mat)
+top.taxa = matrix(nrow = nrow(OTUsREL), ncol = 5)
+rownames(top.taxa) <- rownames(OTUsREL)
+for(i in 1:nrow(OTUsREL)){
+  top.taxa[i,] <- names(sort(tail(sort(OTUsREL[i,]),5), decreasing = T))
 }
 
-dend.dist.mat <- dend.dist(graph = stream.network, dist.mat = euc.dist.mat)
+boxplot(alpha.div$shan ~ alpha.div$habitat)
+
+OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[,5])),]
+
+OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[which(design$habitat == "water")])),]
+OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[which(design$habitat == "sediment")])),]
+
+sediment.only <- OTUs[, which(colSums(OTUs[which(design$habitat == "water"),]) == 0)]
+water.only <- OTUs[, which(colSums(OTUs[which(design$habitat == "sediment"),]) == 0)]
+water.sed <- OTUs[, which(colSums(OTUs[which(design$habitat == "sediment"),]) > 1 & 
+                            colSums(OTUs[which(design$habitat == "water"),]) > 1)]
+in.water <- OTUs[, which(colSums(OTUs[which(design$habitat == "water"),]) > 1)]
+in.water.pa <- (in.water > 0) * 1
+in.sediment <- OTUs[, which(colSums(OTUs[which(design$habitat == "sediment"),]) > 1)]
+in.sediment.pa <- (in.sediment > 0) * 1
+
+taxa.summary <- as.data.frame(cbind(rowSums(sediment.only > 1), rowSums(water.only > 1), 
+                       rowSums(water.sed > 1), rowSums(in.sediment > 1),
+                       rowSums(in.water > 1), rowSums(OTUs.PA)))
+colnames(taxa.summary) <- c("sediments.only", "water.only", "shared", "in.sediment", "in.water", "total")
+
+taxa.summary$water.only[which(design$habitat == "water")] / taxa.summary$total[which(design$habitat == "water")]
+taxa.summary$sediments.only[which(design$habitat == "sediment")] / taxa.summary$total[which(design$habitat == "sediment")]
+taxa.summary$shared / taxa.summary$total
 ```
 
-### CCA
-```{r, eval=FALSE}
-hja.cca <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)])
-#anova(hja.cca, by = "axis")
-#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
-cca.explainvar1 <- round(hja.cca$CCA$eig[1] /
-                           sum(c(hja.cca$CCA$eig, hja.cca$CA$eig)), 3) * 100
-cca.explainvar2 <- round(hja.cca$CCA$eig[2] /
-                           sum(c(hja.cca$CCA$eig, hja.cca$CA$eig)), 3) * 100
+### Figure 4: Proportion unique taxa
+```{r}
+water.frac <- as.vector(rowSums(in.water.pa[which(design$habitat == "water"), which(colSums(in.water.pa[which(design$habitat == "sediment"),]) > 0)]) / rowSums(in.water.pa[which(design$habitat == "water"),]))
+se(rowSums(in.water[which(design$habitat == "water"), which(colSums(in.water[which(design$habitat == "sediment"),]) > 1)]) / rowSums(in.water[which(design$habitat == "water"),]))
 
-par(mar = c(5, 5, 4, 4) + 0.1)
-plot(scores(hja.cca, display = "wa"), xlim = c(-5, 5), ylim = c(-4, 2),
-     xlab = paste("CCA 1 (", cca.explainvar1, "%)", sep = ""), 
-     ylab = paste("CCA 2 (", cca.explainvar2, "%)", sep = ""), 
-     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE)
-axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
-axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
-abline(h=0, v=0, lty=3)
+sed.frac <- as.vector(rowSums(in.sediment.pa[which(design$habitat == "sediment"), which(colSums(in.sediment.pa[which(design$habitat == "water"),]) > 1)]) / rowSums(in.sediment.pa[which(design$habitat == "sediment"),]))
+se(rowSums(in.sediment[which(design$habitat == "sediment"), which(colSums(in.sediment[which(design$habitat == "water"),]) > 1)]) / rowSums(in.sediment[which(design$habitat == "sediment"),]))
+
+
+png(filename = "./figures/Figure4.png",
+    width = 1200, height = 1200, res = 96*2)
+par(mar = c(5, 5, 2, 2) + 0.1)
+boxplot((1-water.frac), (1-sed.frac), names = c("Water", "Sediments"), yaxt = "n", cex.axis = 1.5)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd=2)
-points(scores(hja.cca, display = "wa"),
-       pch=19, cex=3, bg="gray", col="gray")
-text(scores(hja.cca, display = "wa"),
-     labels = row.names(scores(hja.cca, display = "wa")))
+mtext("Proportion Unique Taxa", side = 2, line = 3.5, cex = 1.5)
+text(x = 2, y = 0.25, "*", cex = 2)
+dev.off()
+graphics.off()
 
-
+t.test(water.frac, sed.frac)
 ```
 
 ```{r}
+rowSums(in.sediment[which(design$habitat == "sediment"), which(colSums(in.sediment[which(design$habitat == "water"),]) == 0)]) / rowSums(in.sediment[which(design$habitat == "sediment"),])
+
+pres.abs.list[which(design$habitat == "water"), 2] / pres.abs.list[which(design$habitat == "water"), 6]
+pres.abs.list[which(design$habitat == "sediment"), 1] / pres.abs.list[which(design$habitat == "sediment"), 6]
+
+plot(pres.abs.list[which(design$habitat == "water"),4],
+     (pres.abs.list[which(design$habitat == "water"), 2] / pres.abs.list[which(design$habitat == "water"), 3]))
+
+plot(pres.abs.list[which(design$habitat == "sediment"),4],
+     (pres.abs.list[which(design$habitat == "sediment"), 1] / pres.abs.list[which(design$habitat == "sediment"), 3]))
+```
+
+Mantel Test
+```{r}
+
+# Water Distance Decay
+water.lat <- as.numeric(env$latitude[which(design$habitat == "water")])
+water.lon <- as.numeric(env$longitude[which(design$habitat == "water")])
+
+water.struc.dist <- as.matrix(1 - vegdist(OTUsREL.log[which(design$habitat == "water"),]))
+water.coord.dist <- as.matrix(dist(as.matrix(water.lat, water.lon)))
+
+mantel(water.struc.dist, water.coord.dist, method = "pearson", permutations = 999)
+
+# Sediment Distance Decay
+sed.lat <- as.numeric(env$latitude[which(design$habitat == "sediment")])
+sed.lon <- as.numeric(env$longitude[which(design$habitat == "sediment")])
+
+sed.struc.dist <- as.matrix(1 - vegdist(OTUsREL.log[which(design$habitat == "sediment"),]))
+sed.coord.dist <- as.matrix(dist(as.matrix(sed.lat, sed.lon)))
+
+mantel(sed.struc.dist, sed.coord.dist, method = "pearson", permutations = 999)
 
 
+```
+
+#### Figure S1: Surface-water / Sediment differences are robust across scales
+```{r}
+
+png(filename = "./figures/FigureS1.png",
+    width = 2400, height = 1200, res = 96*2)
+par(mfrow = c(1,2))
+
+# Lookout Creek PCoA
+par(mar = c(5, 5, 3, 2) + 0.1)
+plot(lc.pcoa$points[ ,1], lc.pcoa$points[ ,2], ylim = c(-0.4, 0.35),
+     xlab = paste("PCoA 1 (", lc.var1, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", lc.var2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="Lookout Creek Watershed")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(lc.pcoa$points[which(lc.design$habitat == "water"),1], 
+       lc.pcoa$points[which(lc.design$habitat == "water"),2],
+       pch=17, cex=2, bg="skyblue", col="skyblue")
+points(lc.pcoa$points[which(lc.design$habitat == "sediment"),1], 
+       lc.pcoa$points[which(lc.design$habitat == "sediment"),2],
+       pch=19, cex=2, bg="wheat", col="wheat")
+text(lc.pcoa$points[ ,1], lc.pcoa$points[ ,2],
+     cex=0.5, labels = row.names(lc.pcoa$points))
+legend("topleft", c("Sediment", "Water"), col = c("wheat", "skyblue"),
+         pt.bg = c("wheat", "skyblue"), pch = c(19,17), cex = 1.5, bty = "n")
+
+
+# WS01 PCoA
+par(mar = c(5, 5, 3, 2) + 0.1)
+plot(w1.pcoa$points[ ,1], w1.pcoa$points[ ,2], ylim = c(-0.4, 0.35),
+     xlab = paste("PCoA 1 (", w1.var1, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", w1.var2, "%)", sep = ""), 
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="Watershed 01")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(w1.pcoa$points[which(w1.design$habitat == "water"),1], 
+       w1.pcoa$points[which(w1.design$habitat == "water"),2],
+       pch=17, cex=2, bg="skyblue", col="skyblue")
+points(w1.pcoa$points[which(w1.design$habitat == "sediment"),1], 
+       w1.pcoa$points[which(w1.design$habitat == "sediment"),2],
+       pch=19, cex=2, bg="wheat", col="wheat")
+text(w1.pcoa$points[ ,1], w1.pcoa$points[ ,2],
+     cex=0.5, labels = row.names(w1.pcoa$points))
+
+dev.off()
+graphics.off()
+```
+
+### CCA across watersheds and habitats
+```{r, eval=FALSE}
 # LC Watershed
 lc.cca <- vegan::cca(OTUsREL.log[which(design$watershed == "LC"),] ~ env.mat[which(design$watershed == "LC"),]) 
 #anova(hja.cca, by = "axis")
@@ -613,10 +521,6 @@ lc.cca.explainvar1 <- round(lc.cca$CCA$eig[1] /
                            sum(c(lc.cca$CCA$eig, lc.cca$CA$eig)), 3) * 100
 lc.cca.explainvar2 <- round(lc.cca$CCA$eig[2] /
                            sum(c(lc.cca$CCA$eig, lc.cca$CA$eig)), 3) * 100
-
-
-
-
 
 # WS01
 w1.cca <- vegan::cca(OTUsREL.log[which(design$watershed == "WS01"),] ~ env.mat[which(design$watershed == "WS01"),]) 
@@ -627,7 +531,6 @@ w1.cca.explainvar1 <- round(w1.cca$CCA$eig[1] /
 w1.cca.explainvar2 <- round(w1.cca$CCA$eig[2] /
                            sum(c(w1.cca$CCA$eig, w1.cca$CA$eig)), 3) * 100
 
-
 # Water Only
 water.cca <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),] ~ env.mat[which(design$habitat == "water"),]) 
 #anova(hja.cca, by = "axis")
@@ -636,7 +539,6 @@ water.cca.explainvar1 <- round(water.cca$CCA$eig[1] /
                            sum(c(water.cca$CCA$eig, water.cca$CA$eig)), 3) * 100
 water.cca.explainvar2 <- round(water.cca$CCA$eig[2] /
                            sum(c(water.cca$CCA$eig, water.cca$CA$eig)), 3) * 100
-
 
 # Sediments Only
 sediment.cca <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ env.mat[which(design$habitat == "sediment"),]) 
@@ -649,9 +551,9 @@ sediment.cca.explainvar2 <- round(sediment.cca$CCA$eig[2] /
 
 ```
 
-
-```{r}
-png(filename = "./figures/Figure5.png",
+#### Figure S2: Environmental variables explain little variation in structure. Elevation seems important.
+```{r, eval=FALSE}
+png(filename = "./figures/FigureS2.png",
     width = 2400, height = 1800, res=96*2)
 par(mfrow=c(2,2))
 
@@ -753,118 +655,144 @@ dev.off()
 graphics.off()
 ```
 
-### CCA by Order
-```{r}
-env.mat <- as.matrix(env[,c(10:15)])
+### Distance Decay
+```{r,eval=FALSE}
+require("simba")
 
-# Order 1
-lc.1.cca <- vegan::cca(OTUsREL.log[
-  which(design$watershed == "LC" & design$order == 1),],
-  env.mat[which(design$watershed == "LC" & design$order == 1),]) 
-#anova(hja.cca, by = "axis")
-#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
-lc.1.cca.explainvar1 <- round(lc.1.cca$CCA$eig[1] /
-                           sum(c(lc.1.cca$CCA$eig, lc.1.cca$CA$eig)), 3) * 100
-lc.1.cca.explainvar2 <- round(lc.1.cca$CCA$eig[2] /
-                           sum(c(lc.1.cca$CCA$eig, lc.1.cca$CA$eig)), 3) * 100
+# Water Distance Decay
+water.lat <- as.numeric(env$latitude[which(design$habitat == "water")])
+water.lon <- as.numeric(env$longitude[which(design$habitat == "water")])
 
-# Order 2
-lc.2.cca <- vegan::cca(OTUsREL.log[
-  which(design$watershed == "LC" & design$order == 2),],
-  env.mat[which(design$watershed == "LC" & design$order == 2),]) 
-#anova(hja.cca, by = "axis")
-#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
-lc.2.cca.explainvar1 <- round(lc.2.cca$CCA$eig[1] /
-                           sum(c(lc.2.cca$CCA$eig, lc.2.cca$CA$eig)), 3) * 100
-lc.2.cca.explainvar2 <- round(lc.2.cca$CCA$eig[2] /
-                           sum(c(lc.2.cca$CCA$eig, lc.2.cca$CA$eig)), 3) * 100
+water.struc.dist <- 1 - vegdist(OTUs.REL.log[which(design$habitat == "water"),])
+water.coord.dist <- dist(as.matrix(water.lat, water.lon))
+water.env.dist <- 1 - vegdist(env[which(design$habitat == "water"), 10:16])
 
-# Order 3
-lc.3.cca <- vegan::cca(OTUsREL.log[
-  which(design$watershed == "LC" & design$order == 3),],
-  env.mat[which(design$watershed == "LC" & design$order == 3),]) 
-#anova(hja.cca, by = "axis")
-#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
-lc.3.cca.explainvar1 <- round(lc.3.cca$CCA$eig[1] /
-                           sum(c(lc.3.cca$CCA$eig, lc.3.cca$CA$eig)), 3) * 100
-lc.3.cca.explainvar2 <- round(lc.3.cca$CCA$eig[2] /
-                           sum(c(lc.3.cca$CCA$eig, lc.3.cca$CA$eig)), 3) * 100
+water.struc.dist.ls <- liste(water.struc.dist, entry = "struc")
+water.env.dist.ls <- liste(water.env.dist, entry = "env")
+water.coord.dist.ls <- liste(water.coord.dist, entry = "dist")
 
-# Order 4
-lc.4.cca <- vegan::cca(OTUsREL.log[
-  which(design$watershed == "LC" & design$order == 4),],
-  env.mat[which(design$watershed == "LC" & design$order == 4),]) 
-#anova(hja.cca, by = "axis")
-#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
-lc.4.cca.explainvar1 <- round(lc.4.cca$CCA$eig[1] /
-                           sum(c(lc.4.cca$CCA$eig, lc.4.cca$CA$eig)), 3) * 100
-lc.4.cca.explainvar2 <- round(lc.4.cca$CCA$eig[2] /
-                           sum(c(lc.4.cca$CCA$eig, lc.4.cca$CA$eig)), 3) * 100
+water.distances <- data.frame(water.coord.dist.ls, water.env.dist.ls[,3], water.struc.dist.ls[,3])
+names(water.distances)[4:5] <- c("env", "struc")
 
-# Order 5
-lc.5.cca <- vegan::cca(OTUsREL.log[
-  which(design$watershed == "LC" & design$order == 5),],
-  env.mat[which(design$watershed == "LC" & design$order == 5),]) 
-#anova(hja.cca, by = "axis")
-#cca.fit <- envfit(hja.cca, env.mat, perm = 999)
-lc.5.cca.explainvar1 <- round(lc.5.cca$CCA$eig[1] /
-                           sum(c(lc.5.cca$CCA$eig, lc.5.cca$CA$eig)), 3) * 100
-lc.5.cca.explainvar2 <- round(lc.5.cca$CCA$eig[2] /
-                           sum(c(lc.5.cca$CCA$eig, lc.5.cca$CA$eig)), 3) * 100
+plot(water.distances$dist, water.distances$struc, xlab="Geographic Distance", 
+     ylab = "Bray-Curtis Similarity", main = "Water Distance-Decay")
+water.lm <- abline(lm(water.distances$struc ~ water.distances$dist))
 
-par(mar = c(5, 5, 4, 4) + 0.1)
-plot(scores(lc.1.cca, display = "wa"), xlim = c(-2, 3), ylim = c(-2, 2),
-     xlab = paste("CCA 1 (", lc.1.cca.explainvar1, "%)", sep = ""), 
-     ylab = paste("CCA 2 (", lc.1.cca.explainvar2, "%)", sep = ""), 
-     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE)
-axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
-axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
-abline(h=0, v=0, lty=3)
-box(lwd=2)
-points(scores(lc.1.cca, display = "wa"),
-       pch=19, cex=2, bg="gray", col="gray")
-text(scores(lc.1.cca, display = "wa"), cex = 0.5,
-     labels = row.names(scores(lc.1.cca, display = "wa")))
-lc.1.cca.vectors <- scores(lc.1.cca, display = "bp")
-row.names(lc.1.cca.vectors) <- c("elev", "temp")
-arrows(0, 0, lc.1.cca.vectors[, 1] * 2, lc.1.cca.vectors[, 2]*2,
-       lwd = 2, lty = 1, length = 0.2, col = "red")
-text(lc.1.cca.vectors[, 1] * 2, lc.1.cca.vectors[, 2] * 2, pos=3,
-     labels = row.names(lc.1.cca.vectors), col = "red")
 
-par(mar = c(5, 5, 4, 4) + 0.1)
-plot(scores(lc.2.cca, display = "wa"), xlim = c(-2, 3), ylim = c(-2, 2),
-     xlab = paste("CCA 1 (", lc.2.cca.explainvar1, "%)", sep = ""), 
-     ylab = paste("CCA 2 (", lc.2.cca.explainvar2, "%)", sep = ""), 
-     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE)
-axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
-axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
-abline(h=0, v=0, lty=3)
-box(lwd=2)
-points(scores(lc.2.cca, display = "wa"),
-       pch=19, cex=2, bg="gray", col="gray")
-text(scores(lc.2.cca, display = "wa"), cex = 0.5,
-     labels = row.names(scores(lc.2.cca, display = "wa")))
-lc.2.cca.vectors <- scores(lc.2.cca, display = "bp")
-row.names(lc.2.cca.vectors) <- c("elev", "temp")
-arrows(0, 0, lc.2.cca.vectors[, 1] * 2, lc.2.cca.vectors[, 2]*2,
-       lwd = 2, lty = 1, length = 0.2, col = "red")
-text(lc.2.cca.vectors[, 1] * 2, lc.2.cca.vectors[, 2] * 2, pos=3,
-     labels = row.names(lc.2.cca.vectors), col = "red")
+# Sediment Distance Decay
+sed.lat <- as.numeric(env$latitude[which(design$habitat == "sediment")])
+sed.lon <- as.numeric(env$longitude[which(design$habitat == "sediment")])
+
+sed.struc.dist <- 1 - vegdist(OTUsREL.log[which(design$habitat == "sediment"),])
+sed.coord.dist <- dist(as.matrix(sed.lat, sed.lon))
+sed.env.dist <- 1 - vegdist(env[which(design$habitat == "sediment"), 10:16])
+
+sed.struc.dist.ls <- liste(sed.struc.dist, entry = "struc")
+sed.env.dist.ls <- liste(sed.env.dist, entry = "env")
+sed.coord.dist.ls <- liste(sed.coord.dist, entry = "dist")
+
+sed.distances <- data.frame(sed.coord.dist.ls, sed.env.dist.ls[,3], sed.struc.dist.ls[,3])
+names(sed.distances)[4:5] <- c("env", "struc")
+
+plot(sed.distances$dist, sed.distances$struc, xlab="Geographic Distance", 
+     ylab = "Bray-Curtis Similarity", main = "Sediment Distance-Decay")
+sed.lm <- abline(lm(sed.distances$struc ~ sed.distances$dist))
+
+dev.off()
+graphics.off()
+
+diffslope(sed.distances$dist, sed.distances$struc, water.distances$dist, water.distances$struc)
 ```
 
-### Organismal analysis
+### Figure S3: Bray-Curtis Similarity by Elevation
 ```{r}
-top.taxa = matrix(nrow = nrow(OTUsREL), ncol = 5)
-rownames(top.taxa) <- rownames(OTUsREL)
-for(i in 1:nrow(OTUsREL)){
-  top.taxa[i,] <- names(sort(tail(sort(OTUsREL[i,]),5), decreasing = T))
-}
+# hja.bray <- 1 - as.matrix(vegdist(OTUsREL.log, method = "bray"))
+# hja.bray.mean <- round(apply(hja.bray, 1, mean), 3)
+# hja.bray.se <- round(apply(hja.bray, 1, se), 3)
+# hja.sim <- cbind(design, hja.bray.mean, hja.bray.se)
+# model.hja <- lm(hja.sim$hja.bray.mean ~ hja.sim$elev * hja.sim$habitat)
+# summary(model.hja)
+# plot(hja.sim$hja.bray.mean ~ hja.sim$elev, main = "HJA Catchment",
+#      ylab = "Bray-Curtis Similarity", xlab = "Elevation")
+# abline(model.hja)
 
-OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[,1])),]
+png(filename = "./figures/FigureS3.png", 
+    width = 1200, height = 1200, res = 96*2)
+par(mfrow = c(2, 1))
+par(mar = c(1, 5, 3, 3) + 0.1)
+water.bray <- 1 - as.matrix(vegdist(OTUsREL.log[which(design$habitat=="water"),], method = "bray"))
+water.bray.mean <- round(apply(water.bray, 1, mean), 3)
+water.bray.se <- round(apply(water.bray, 1, se), 3)
+water.sim <- cbind(water.design, water.bray.mean, water.bray.se)
+model.water <- lm(water.sim$water.bray.mean ~ water.sim$elev)
+summary(model.water)
+plot(water.sim$water.bray.mean ~ water.sim$elev, xlim = c(400,1300), ylim = c(.2,.5), xlab="",
+     ylab = "", xaxt = "n", yaxt = "n")
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, at = c(.2,.3,.4,.5), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at = c(.2,.3,.4,.5), lwd.ticks=2, cex.axis=1.2, las=1)
+mtext("Surface Water", side = 2, line = 3, cex = 1.2)
+mtext("Bray-Curtis Similarity", side=3, line=1, cex=1.5)
+abline(model.water)
+
+par(mar = c(5, 5, 1, 3) + 0.1)
+sed.bray <- 1 - as.matrix(vegdist(OTUsREL.log[which(design$habitat=="sediment"),], method = "bray"))
+sed.bray.mean <- round(apply(sed.bray, 1, mean), 3)
+sed.bray.se <- round(apply(sed.bray, 1, se), 3)
+sed.sim <- cbind(sed.design, sed.bray.mean, sed.bray.se)
+model.sed <- lm(sed.sim$sed.bray.mean ~ sed.sim$elev)
+summary(model.sed)
+plot(sed.sim$sed.bray.mean ~ sed.sim$elev, 
+     xlim = c(400,1300), ylim = c(.2,.5), xlab="",
+     ylab = "", xaxt = "n", yaxt = "n")
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, at = c(.2,.3,.4,.5), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at = c(.2,.3,.4,.5), lwd.ticks=2, cex.axis=1.2, las=1)
+mtext("Sediment", side = 2, line = 3, cex = 1.2)
+mtext("Elevation (m)", side = 1, line = 3, cex = 1.5)
+abline(model.sed)
+
+dev.off()
+graphics.off()
+
 ```
 
+### Figure S4: Bray-Curtis Similarity by Elevation - Same Plot
+```{r}
 
+png(filename = "./figures/FigureS4.png", 
+    width = 1200, height = 1200, res = 96*2)
+par(mar = c(5, 5, 3, 3) + 0.1)
+water.bray <- 1 - as.matrix(vegdist(OTUsREL.log[which(design$habitat=="water"),], method = "bray"))
+water.bray.mean <- round(apply(water.bray, 1, mean), 3)
+water.bray.se <- round(apply(water.bray, 1, se), 3)
+water.sim <- cbind(water.design, water.bray.mean, water.bray.se)
+model.water <- lm(water.sim$water.bray.mean ~ water.sim$elev)
+summary(model.water)
+plot(water.sim$water.bray.mean ~ water.sim$elev, xlim = c(400,1300), ylim = c(.2,.5), xlab="",
+     ylab = "", xaxt = "n", yaxt = "n", pch = 21)
+points(sed.sim$sed.bray.mean ~ sed.sim$elev, pch = 20)
+
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, at = c(.2,.3,.4,.5), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at = c(.2,.3,.4,.5), lwd.ticks=2, cex.axis=1.2, las=1)
+
+mtext("Bray-Curtis Similarity", side = 2, line = 3.5, cex = 1.5)
+mtext("Elevation (m)", side = 1, line = 3, cex = 1.5)
+
+abline(model.water, lty = 1)
+abline(model.sed, lty = 2)
+
+legend("bottomright", c("Water", "Sediment"), pch = c(21,20), cex = 1.5, bty = "n")
+
+
+dev.off()
+graphics.off()
+
+```
 ### GIS and Imagery
 ```{r}
 DEM <- raster("~/GitHub/HJA-streams/imagery/bare_earth_DEM_1m/gi01001.e00")
@@ -878,7 +806,7 @@ summary(streams)
 
 ### Variance Partitioning
 
-#### HJA Catchment
+#### Var Part - HJA Catchment
 ```{r}
 dist.pcnm <- pcnm(dist(xy))
 ordisurf(xy, scores(dist.pcnm, choi=1), bubble = 4, main = "PCNM 1")
@@ -909,7 +837,7 @@ var.part.3 <- sum(spat.env.var$CCA$eig) / sum(hja.ca$CA$eig)
 var.part.4 <- sum(env.spat.var$CCA$eig) / sum(hja.ca$CA$eig)
 ```
 
-#### Surface Water
+#### Var Part - Surface Water
 ```{r}
 env.mat <- env.mat[,c(1:4,6)]
 water.dist.pcnm <- pcnm(dist(xy[which(design$habitat == "water"),]))
@@ -938,7 +866,7 @@ water.var.part.3 <- sum(water.spat.env.var$CCA$eig) / sum(water.ca$CA$eig)
 water.var.part.4 <- sum(water.env.spat.var$CCA$eig) / sum(water.ca$CA$eig)
 ```
 
-#### Sediments Only
+#### Var Part - Sediments Only
 ```{r}
 sediment.dist.pcnm <- pcnm(dist(xy[which(design$habitat == "sediment"),]))
 sediment.rs <- rowSums(OTUsREL.log[which(design$habitat == "sediment"),]) / 
@@ -964,4 +892,136 @@ sediment.var.part.1 <- sum(sediment.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
 sediment.var.part.2 <- sum(sediment.spatial.var$CCA$eig) / sum(sediment.ca$CA$eig)
 sediment.var.part.3 <- sum(sediment.spat.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
 sediment.var.part.4 <- sum(sediment.env.spat.var$CCA$eig) / sum(sediment.ca$CA$eig)
+```
+
+```{r}
+habitat <- (env[,8] == "sediment") * 1
+env.dummy <- as.matrix(cbind(habitat, env[,c(10, 11, 12, 13, 15)]))
+
+d.spatial.var <- spatial.var
+d.env.var <- vegan::cca(OTUsREL.log ~ env.dummy)
+d.env.spat.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw) +
+                             Condition(env.dummy))
+d.spat.env.var <- vegan::cca(OTUsREL.log ~ env.dummy +
+                             Condition(scores(pcnmw)))
+
+sum(d.env.var$CCA$eig)
+sum(d.spatial.var$CCA$eig)
+sum(d.env.spat.var$CCA$eig)
+sum(d.spat.env.var$CCA$eig)
+
+d.var.part.1 <- sum(d.env.var$CCA$eig) / sum(hja.ca$CA$eig)
+d.var.part.2 <- sum(d.spatial.var$CCA$eig) / sum(hja.ca$CA$eig)
+d.var.part.3 <- sum(d.spat.env.var$CCA$eig) / sum(hja.ca$CA$eig)
+d.var.part.4 <- sum(d.env.spat.var$CCA$eig) / sum(hja.ca$CA$eig)
+```
+
+
+### Calculate Dendritic Distances
+```{r}
+require('igraph')
+adj.mat <- as.matrix(read.csv("./data/undirected-matrix.csv", header=T))
+row.names(adj.mat) <- adj.mat[,1]
+adj.mat <- adj.mat[,-1]
+adj.mat <- (adj.mat == 1) * 1
+
+stream.network <- graph_from_adjacency_matrix(adjmatrix = adj.mat)
+plot.igraph(stream.network)
+
+# Create Dist Matrix
+euc.dist.mat <- as.matrix(dist(as.matrix(env.total$latitude, env.total$longitude)))
+rownames(euc.dist.mat) <- env.total$sample
+colnames(euc.dist.mat) <- env.total$sample
+
+# Function to find paths along the network.
+dend.dist <- function(graph = "", dist.mat = ""){
+
+  dend.dist.mat <- matrix(data = NA, nrow = length(env.total$sample), 
+                          ncol = length(env.total$sample))
+  rownames(dend.dist.mat) <- env.total$sample
+  colnames(dend.dist.mat) <- env.total$sample
+  
+  for(row in rownames(dend.dist.mat)){
+    for(col in colnames(dend.dist.mat)){
+      path.dist <- 0
+      path <- shortest_paths(graph = graph, from = row, to = col)$vpath[[1]]
+      
+      if(length(path) > 1){
+        for(i in 1:(length(path) - 1)){
+          path.dist <- path.dist + dist.mat[path[[i]]$name, path[[i+1]]$name]
+        }
+      }
+      
+      dend.dist.mat[row,col] <- path.dist
+    }
+  }
+  
+  return(dend.dist.mat)
+}
+
+dend.dist.mat <- dend.dist(graph = stream.network, dist.mat = euc.dist.mat)
+```
+
+```{r}
+# sediments
+hja.pa.db <- vegdist(OTUs.PA[which(design$habitat == "sediment"),], method = "bray", upper = TRUE, diag = TRUE)
+hja.pa.pcoa <- cmdscale(hja.pa.db, eig=TRUE, k=3)
+var1.pa <- round(hja.pa.pcoa$eig[1] / sum(hja.pa.pcoa$eig),3) * 100
+var2.pa <- round(hja.pa.pcoa$eig[2] / sum(hja.pa.pcoa$eig),3) * 100
+var3.pa <- round(hja.pa.pcoa$eig[3] / sum(hja.pa.pcoa$eig),3) * 100
+
+par(mar = c(5, 5, 3, 2) + 0.1)
+plot(hja.pa.pcoa$points[ ,1], hja.pa.pcoa$points[ ,2],
+     xlab = paste("PCoA 1 (", var1.pa, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", var2.pa, "%)", sep = ""), 
+     pch = 19, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="sediment")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(hja.pa.pcoa$points[which(sed.design$watershed == "LC"),1], 
+       hja.pa.pcoa$points[which(sed.design$watershed == "LC"),2],
+       pch=19, cex=2, bg="wheat", col="wheat")
+points(hja.pa.pcoa$points[which(sed.design$watershed == "WS01"),1], 
+       hja.pa.pcoa$points[which(sed.design$watershed == "WS01"),2],
+       pch=17, cex=2, bg="skyblue", col="skyblue")
+text(hja.pa.pcoa$points[ ,1], hja.pa.pcoa$points[ ,2],
+      cex = 0.5, labels = row.names(hja.pa.pcoa$points))
+legend("topleft", c("lookout", "ws01"), col = c("wheat", "skyblue"),
+         pt.bg = c("wheat", "skyblue"), pch = c(19,17), cex = 1.5, bty = "n")
+
+# water
+hja.pa.db <- vegdist(OTUs.PA[which(design$habitat == "water"),], method = "bray", upper = TRUE, diag = TRUE)
+hja.pa.pcoa <- cmdscale(hja.pa.db, eig=TRUE, k=3)
+var1.pa <- round(hja.pa.pcoa$eig[1] / sum(hja.pa.pcoa$eig),3) * 100
+var2.pa <- round(hja.pa.pcoa$eig[2] / sum(hja.pa.pcoa$eig),3) * 100
+var3.pa <- round(hja.pa.pcoa$eig[3] / sum(hja.pa.pcoa$eig),3) * 100
+
+par(mar = c(5, 5, 3, 2) + 0.1)
+plot(hja.pa.pcoa$points[ ,1], hja.pa.pcoa$points[ ,2],
+     xlab = paste("PCoA 1 (", var1.pa, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", var2.pa, "%)", sep = ""), 
+     pch = 19, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
+     main="water")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(hja.pa.pcoa$points[which(water.design$watershed == "LC"),1], 
+       hja.pa.pcoa$points[which(water.design$watershed == "LC"),2],
+       pch=19, cex=2, bg="wheat", col="wheat")
+points(hja.pa.pcoa$points[which(water.design$watershed == "WS01"),1], 
+       hja.pa.pcoa$points[which(water.design$watershed == "WS01"),2],
+       pch=17, cex=2, bg="skyblue", col="skyblue")
+text(hja.pa.pcoa$points[ ,1], hja.pa.pcoa$points[ ,2],
+      cex = 0.5, labels = row.names(hja.pa.pcoa$points))
+legend("topleft", c("lookout", "ws01"), col = c("wheat", "skyblue"),
+         pt.bg = c("wheat", "skyblue"), pch = c(19,17), cex = 1.5, bty = "n")
+
+
 ```

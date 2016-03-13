@@ -18,3 +18,5 @@ This respository currently contains the following folders:
 
 * `./data/` : This folder contains data from a spring 2015 trip to HJA.
 * `./analysis/` : This folder contains scripts that run analyses on files from the `data` folder.
+* `./figures/` : This folder contains figure output from analyses.
+* `./imagery/` : This folder contains GIS and map images.

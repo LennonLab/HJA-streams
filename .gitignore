@@ -4,3 +4,9 @@ analysis/.Rapp.history
 HJAMap.png.rda
 ./analysis/wisnoski@mason.uits.iu.edu
 ./imagery/bare_earth_DEM_1m/gi01001.e00
+./imagery/
+bare_earth_DEM_1m
+flow_accumulation
+plant_comm_2009
+stream_network_1976
+stream_network_2008
