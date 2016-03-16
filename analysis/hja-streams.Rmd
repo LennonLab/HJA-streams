@@ -133,15 +133,23 @@ H <- function(x = ""){
 
 shan <- round(apply(OTUs, 1, H), 2)
 shan2 <- diversity(OTUs, index = "shannon")
+simpsD <- diversity(OTUs, index = "invsimpson")
+
 
 # Rarefaction
 hja.S <- rowSums((OTUs > 0) * 1)
 min.N <- min(rowSums(OTUs))
-#S.rarefy <- rarefy(x = OTUs, sample = min.N, se = TRUE)
+S.rarefy <- rarefy(x = OTUs, sample = min.N, se = TRUE)
 #rarecurve(x = OTUs, step = 20, col = "blue", cex = 0.6, las = 1)
-#rared <- t(S.rarefy)
+rared <- t(S.rarefy)
+colnames(rared) <- c("S.rare", "se.rare")
 
-alpha.div <- cbind(design, S.obs, simpsE, shan)
+shan <- round(apply(OTUs, 1, H), 2)
+shan2 <- diversity(OTUs, index = "shannon")
+simpsD <- diversity(OTUs, index = "invsimpson")
+
+
+alpha.div <- cbind(design, S.obs, simpsE, shan, shan2, simpsD, rared)
 ```
 
 
@@ -155,8 +163,34 @@ lc   <- alpha.div[alpha.div$watershed == "LC",]
 ws01 <- alpha.div[alpha.div$watershed == "WS01",]
 
 t.test(alpha.div$S.obs ~ alpha.div$habitat)
+t.test(alpha.div$shan2 ~ alpha.div$habitat)
+plot(alpha.div$shan2 ~ alpha.div$habitat)
+
+
 
 cor.test(alpha.div$S.obs, alpha.div$simpsE)
+#plot(alpha.div$S.obs, alpha.div$simpsE)
+```
+
+### Figure 1: Rarefied diversity in sediment and surface-water communities
+```{r}
+t.test(alpha.div$S.rare ~ alpha.div$habitat)
+
+png(filename = "./figures/Figure1.png",
+    width = 1200, height = 1200, res = 96*2)
+par(mar = c(5, 5, 3, 2) + 0.3)
+plot(alpha.div$S.rare ~ alpha.div$habitat, 
+     names = c("Sediment", "Water"), 
+     yaxt = "n", ylab = "", xlab = "", cex.axis = 1.2)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 1, labels = F, at = c(1,2), lwd.ticks = 2, cex.axis = 1.2, las = 1)
+box(lwd = 2)
+text(1, 2500, "*", cex = 2)
+mtext("Habitat type", side = 1, line = 3, cex = 1.5)
+mtext("Rarefied species richness", side = 2, line = 4, cex = 1.5)
+dev.off()
+graphics.off()
+
 ```
 
 ### Ordination
@@ -207,9 +241,9 @@ w1.var2 <- round(w1.pcoa$eig[2] / sum(w1.pcoa$eig),3) * 100
 w1.var3 <- round(w1.pcoa$eig[3] / sum(w1.pcoa$eig),3) * 100
 ```
 
-#### Figure 1: Sediments & Water Communities PCoA
+#### Figure 2: Sediments & Water Communities PCoA
 ```{r}
-png(filename = "./figures/Figure1.png",
+png(filename = "./figures/Figure2.png",
     width = 1200, height = 1200, res = 96*2)
 
 par(mar = c(5, 5, 3, 2) + 0.1)
@@ -239,10 +273,10 @@ dev.off()
 graphics.off()
 ```
 
-#### Figure 2: Surface Water vs. Sediment Communities
+#### Figure 3: Surface Water vs. Sediment Communities
 ```{r}
 
-png(filename = "./figures/Figure2.png",
+png(filename = "./figures/Figure3.png",
     width = 2400, height = 1200, res = 96*2)
 par(mfrow = c(1,2))
 
@@ -332,9 +366,9 @@ model.orders <- lm(orders.bray$mean ~ orders.bray$order)
 modsum <- summary(model.orders)
 ```
 
-### Figure 3: Bray-Curtis Similarity increases with increasing stream order
+### Figure 4: Bray-Curtis Similarity increases with increasing stream order
 ```{r}
-png(filename = "./figures/Figure3.png",
+png(filename = "./figures/Figure4.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
 plot(orders.bray$mean ~ orders.bray$order, xaxt = "n", yaxt = "n",
@@ -396,7 +430,7 @@ taxa.summary$sediments.only[which(design$habitat == "sediment")] / taxa.summary$
 taxa.summary$shared / taxa.summary$total
 ```
 
-### Figure 4: Proportion unique taxa
+### Figure 5: Proportion unique taxa
 ```{r}
 water.frac <- as.vector(rowSums(in.water.pa[which(design$habitat == "water"), which(colSums(in.water.pa[which(design$habitat == "sediment"),]) > 0)]) / rowSums(in.water.pa[which(design$habitat == "water"),]))
 se(rowSums(in.water[which(design$habitat == "water"), which(colSums(in.water[which(design$habitat == "sediment"),]) > 1)]) / rowSums(in.water[which(design$habitat == "water"),]))
@@ -405,12 +439,12 @@ sed.frac <- as.vector(rowSums(in.sediment.pa[which(design$habitat == "sediment")
 se(rowSums(in.sediment[which(design$habitat == "sediment"), which(colSums(in.sediment[which(design$habitat == "water"),]) > 1)]) / rowSums(in.sediment[which(design$habitat == "sediment"),]))
 
 
-png(filename = "./figures/Figure4.png",
+png(filename = "./figures/Figure5.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
 boxplot((1-water.frac), (1-sed.frac), names = c("Water", "Sediments"), yaxt = "n", cex.axis = 1.5)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 1, labels = F, at = c(1,2), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd=2)
 mtext("Proportion Unique Taxa", side = 2, line = 3.5, cex = 1.5)
 text(x = 2, y = 0.25, "*", cex = 2)
@@ -420,7 +454,7 @@ graphics.off()
 t.test(water.frac, sed.frac)
 ```
 
-```{r}
+```{r, eval = F}
 rowSums(in.sediment[which(design$habitat == "sediment"), which(colSums(in.sediment[which(design$habitat == "water"),]) == 0)]) / rowSums(in.sediment[which(design$habitat == "sediment"),])
 
 pres.abs.list[which(design$habitat == "water"), 2] / pres.abs.list[which(design$habitat == "water"), 6]
@@ -436,7 +470,7 @@ plot(pres.abs.list[which(design$habitat == "sediment"),4],
 Mantel Test
 ```{r}
 
-# Water Distance Decay
+# Water Distances
 water.lat <- as.numeric(env$latitude[which(design$habitat == "water")])
 water.lon <- as.numeric(env$longitude[which(design$habitat == "water")])
 
@@ -445,7 +479,7 @@ water.coord.dist <- as.matrix(dist(as.matrix(water.lat, water.lon)))
 
 mantel(water.struc.dist, water.coord.dist, method = "pearson", permutations = 999)
 
-# Sediment Distance Decay
+# Sediment Distances
 sed.lat <- as.numeric(env$latitude[which(design$habitat == "sediment")])
 sed.lon <- as.numeric(env$longitude[which(design$habitat == "sediment")])
 
