@@ -19,6 +19,7 @@ require("png")
 require("raster")
 require("sp")
 require("rgdal")
+require("SoDA")
 
 se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
 
@@ -83,14 +84,24 @@ env <- env[c(1:11, 13, 16, 18, 19)]
 env.mat <- as.matrix(env[10:15])
 for(i in 1:nrow(env.mat)){
   if(env.mat[i, 5] < 0){
-    env.mat[i, 5] <- 0
+    env.mat[i, 5] <- 0.0001
   }
 }
+env.mat[51,5] <- 150
+env.mat[52,5] <- 150
 
 # Distance Matrix
 xy <- cbind(env$longitude, env$latitude)
+geo.dists <- geoXY(env$latitude, env$longitude)
 xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
 dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+
+# Connectivity Matrix 
+adj.mat <- as.matrix(read.csv("./data/undirected-matrix.csv", header=T))
+row.names(adj.mat) <- adj.mat[,1]
+adj.mat <- adj.mat[,-1]
+adj.mat <- (adj.mat == 1) * 1
+adj.mat <- adj.mat[-which(coverage < 7000), -which(coverage < 7000)]
 
 # Make Relative Abundence Matrices
 OTUsREL <- OTUs
@@ -842,20 +853,23 @@ summary(streams)
 
 #### Var Part - HJA Catchment
 ```{r}
-dist.pcnm <- pcnm(dist(xy))
-ordisurf(xy, scores(dist.pcnm, choi=1), bubble = 4, main = "PCNM 1")
-ordisurf(xy, scores(dist.pcnm, choi=2), bubble = 4, main = "PCNM 2")
-ordisurf(xy, scores(dist.pcnm, choi=3), bubble = 4, main = "PCNM 3")
+trunc.dist <- as.matrix(dist(geo.dists)) * adj.mat
+dist.pcnm <- pcnm(trunc.dist)
+ordisurf(geo.dists, scores(dist.pcnm, choi=1), bubble = 4, main = "PCNM 1")
+ordisurf(geo.dists, scores(dist.pcnm, choi=2), bubble = 4, main = "PCNM 2")
+ordisurf(geo.dists, scores(dist.pcnm, choi=3), bubble = 4, main = "PCNM 3")
 ordisplom(dist.pcnm, choices = 1:4)
 rs <- rowSums(OTUsREL.log) / sum(OTUsREL.log)
-pcnmw <- pcnm(dist(xy), w = rs)
+pcnmw <- pcnm(trunc.dist, w = rs)
 
 spatial.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw))
-env.var <- hja.cca
+env.var <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)])
 env.spat.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw) +
                              Condition(env.mat[,c(1:4,6)]))
 spat.env.var <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)] +
                              Condition(scores(pcnmw)))
+
+
 
 sum(env.var$CCA$eig)
 sum(spatial.var$CCA$eig)
@@ -863,7 +877,7 @@ sum(env.spat.var$CCA$eig)
 sum(spat.env.var$CCA$eig)
 
 hja.ca <- vegan::cca(OTUsREL.log)
-sum(hja.cor$CA$eig)
+sum(hja.ca$CA$eig)
 
 var.part.1 <- sum(env.var$CCA$eig) / sum(hja.ca$CA$eig)
 var.part.2 <- sum(spatial.var$CCA$eig) / sum(hja.ca$CA$eig)
