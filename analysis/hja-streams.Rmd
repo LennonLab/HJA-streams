@@ -344,64 +344,61 @@ graphics.off()
 
 ### Calculate Bray-Curtis across stream orders
 ```{r}
-strahler.bray <- 1 - as.matrix(vegdist(OTUsREL.log, method = "bray"))
-order.1.bray <- strahler.bray[which(design$order==1),which(design$order==1)]
-order.2.bray <- strahler.bray[which(design$order==2),which(design$order==2)]
-order.3.bray <- strahler.bray[which(design$order==3),which(design$order==3)]
-order.4.bray <- strahler.bray[which(design$order==4),which(design$order==4)]
-order.5.bray <- strahler.bray[which(design$order==5),which(design$order==5)]
+order.1.bray <- vegdist(OTUsREL.log[which(design$order==1),which(design$order==1)], method = "bray")
+order.2.bray <- vegdist(OTUsREL.log[which(design$order==2),which(design$order==2)], method = "bray")
+order.3.bray <- vegdist(OTUsREL.log[which(design$order==3),which(design$order==3)], method = "bray")
+order.4.bray <- vegdist(OTUsREL.log[which(design$order==4),which(design$order==4)], method = "bray")
+order.5.bray <- vegdist(OTUsREL.log[which(design$order==5),which(design$order==5)], method = "bray")
 
-order.1.bray.mean <- mean(as.vector(round(apply(order.1.bray, 1, mean), 3)))
-order.2.bray.mean <- mean(as.vector(round(apply(order.2.bray, 1, mean), 3)))
-order.3.bray.mean <- mean(as.vector(round(apply(order.3.bray, 1, mean), 3)))
-order.4.bray.mean <- mean(as.vector(round(apply(order.4.bray, 1, mean), 3)))
-order.5.bray.mean <- mean(as.vector(round(apply(order.5.bray, 1, mean), 3)))
+order.1.dists <- as.vector(unlist(list(order.1.bray)))
+order.2.dists <- as.vector(unlist(list(order.2.bray)))
+order.3.dists <- as.vector(unlist(list(order.3.bray)))
+order.4.dists <- as.vector(unlist(list(order.4.bray)))
+order.5.dists <- as.vector(unlist(list(order.5.bray)))
 
-order.1.bray.se <- mean(as.vector(round(apply(order.1.bray, 1, se), 3)))
-order.2.bray.se <- mean(as.vector(round(apply(order.2.bray, 1, se), 3)))
-order.3.bray.se <- mean(as.vector(round(apply(order.3.bray, 1, se), 3)))
-order.4.bray.se <- mean(as.vector(round(apply(order.4.bray, 1, se), 3)))
-order.5.bray.se <- mean(as.vector(round(apply(order.5.bray, 1, se), 3)))
+order.1.se <- se(order.1.bray)
+order.2.se <- se(order.2.bray)
+order.3.se <- se(order.3.bray)
+order.4.se <- se(order.4.bray)
+order.5.bray.se <- se(order.5.bray)
 
-orders.bray <- as.data.frame(cbind(c(rep(1, length(order.1.bray.mean)),
-        rep(2, length(order.2.bray.mean)),
-        rep(3, length(order.3.bray.mean)),
-        rep(4, length(order.4.bray.mean)),
-        rep(5, length(order.5.bray.mean))),
-      c(order.1.bray.mean, order.2.bray.mean, order.3.bray.mean,
-        order.4.bray.mean, order.5.bray.mean),
-      c(order.1.bray.se, order.2.bray.se, order.3.bray.se,
-        order.4.bray.se, order.5.bray.se)))
-colnames(orders.bray) <- c("order", "mean", "se")
-model.orders <- lm(orders.bray$mean ~ orders.bray$order)
+orders.bray <- as.data.frame(cbind(c(rep(1, length(order.1.dists)),
+        rep(2, length(order.2.dists)),
+        rep(3, length(order.3.dists)),
+        rep(4, length(order.4.dists)),
+        rep(5, length(order.5.dists))),
+      c(order.1.dists, order.2.dists, order.3.dists,
+        order.4.dists, order.5.dists)))
+colnames(orders.bray) <- c("order", "dist")
+model.orders <- lm(orders.bray$dist ~ orders.bray$order)
 modsum <- summary(model.orders)
 ```
 
-### Figure 4: Bray-Curtis Similarity increases with increasing stream order
+### Figure 4: No relationship between beta-diversity and stream order
 ```{r}
 png(filename = "./figures/Figure4.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
-plot(orders.bray$mean ~ orders.bray$order, xaxt = "n", yaxt = "n",
-     xlab = "Stream Order", ylab = "Mean Bray-Curtis Similarity", ylim = c(0.2, 0.7),
+plot(orders.bray$dist ~ orders.bray$order, xaxt = "n", yaxt = "n",
+     xlab = "", ylab = "", ylim = c(0, 0.5),
      pch = 19, cex.lab =1.5)
 axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd=2)
+mtext(side = 2, cex = 1.5, line = 3.5, expression(paste(beta,"-diversity")))
+mtext(side = 1, cex = 1.5, line = 3, "Stream Order")
 
-error.bar(orders.bray$order, orders.bray$mean, orders.bray$se)
-
-abline(model.orders)
-r2 <- modsum$adj.r.squared
-my.p <- modsum$coefficients[2,4]
-rp <- vector('expression',2)
-rp[1] <- substitute(expression(italic(R)^2 == MYVALUE),
-                    list(MYVALUE = format(r2,dig=3)))[2]
-rp[2] <- substitute(expression(italic(p) == MYOTHERVALUE),
-                    list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
-legend('bottomright', legend = rp, bty = 'n')
+# abline(model.orders)
+# r2 <- modsum$adj.r.squared
+# my.p <- modsum$coefficients[2,4]
+# rp <- vector('expression',2)
+# rp[1] <- substitute(expression(italic(R)^2 == MYVALUE),
+#                     list(MYVALUE = format(r2,dig=3)))[2]
+# rp[2] <- substitute(expression(italic(p) == MYOTHERVALUE),
+#                     list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+# legend('bottomright', legend = rp, bty = 'n')
 dev.off()
 graphics.off()
 ```
@@ -500,6 +497,46 @@ sed.coord.dist <- as.matrix(dist(as.matrix(sed.lat, sed.lon)))
 mantel(sed.struc.dist, sed.coord.dist, method = "pearson", permutations = 999)
 
 
+```
+
+#### Sed-water comparisons within sites
+```{r}
+paired.div <- alpha.div
+paired.OTUsREL.log <- OTUsREL.log
+remove.sites <- 0
+for(site in unique(paired.div$site)){
+  if(sum(paired.div$site == site) < 2){
+    paired.div <- paired.div[-which(paired.div$site == site),]
+    remove.sites <- c(remove.sites, which(design$site == site))
+  }
+}
+paired.OTUsREL.log <- paired.OTUsREL.log[-remove.sites,]
+
+plot((paired.div$S.rare[which(paired.div$habitat == "water")] -
+        paired.div$S.rare[which(paired.div$habitat == "sediment")]) ~ unique(paired.div$site))
+abline(h=0)
+
+paired.div.difs <- (paired.div$S.rare[which(paired.div$habitat == "water")] -
+        paired.div$S.rare[which(paired.div$habitat == "sediment")])
+paired.div
+```
+
+#### Figure 6: Water vs. Sed. diversity
+```{r}
+png(filename = "./figures/Figure6.png",
+    width = 1200, height = 1200, res = 96*2)
+par(c(5,5,3,2) + 0.3)
+barplot(height = paired.div.difs, names.arg = unique(paired.div$site),
+        horiz = TRUE, yaxt = "n", xaxt = "n", xlim = c(-2000,2000),
+        col = "black", border = NA)
+axis(side = 1, labels = T, lwd = 2, lwd.ticks = 2)
+axis(side = 3, labels = F, lwd = 2, tck = 0)
+mtext(side = 1, line = 3, cex = 1.5, expression(paste("Difference in ",alpha,"-diversity")))
+mtext(side = 3, line = 0.5, at = c(-2000), adj = 0, "Higher in\nsediment")
+mtext(side = 3, line = 0.5, at = c(2000), adj = 1, "Higher in\nwater")
+#mtext(side = 2, line = 2.5, cex = 1.2, "Site")
+dev.off()
+graphics.off()
 ```
 
 #### Figure S1: Surface-water / Sediment differences are robust across scales
