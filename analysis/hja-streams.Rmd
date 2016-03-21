@@ -19,6 +19,7 @@ require("png")
 require("raster")
 require("sp")
 require("rgdal")
+require("SoDA")
 
 se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
 
@@ -83,14 +84,24 @@ env <- env[c(1:11, 13, 16, 18, 19)]
 env.mat <- as.matrix(env[10:15])
 for(i in 1:nrow(env.mat)){
   if(env.mat[i, 5] < 0){
-    env.mat[i, 5] <- 0
+    env.mat[i, 5] <- 0.0001
   }
 }
+env.mat[51,5] <- 150
+env.mat[52,5] <- 150
 
 # Distance Matrix
 xy <- cbind(env$longitude, env$latitude)
+geo.dists <- geoXY(env$latitude, env$longitude)
 xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
 dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+
+# Connectivity Matrix 
+adj.mat <- as.matrix(read.csv("./data/undirected-matrix.csv", header=T))
+row.names(adj.mat) <- adj.mat[,1]
+adj.mat <- adj.mat[,-1]
+adj.mat <- (adj.mat == 1) * 1
+adj.mat <- adj.mat[-which(coverage < 7000), -which(coverage < 7000)]
 
 # Make Relative Abundence Matrices
 OTUsREL <- OTUs
@@ -179,15 +190,15 @@ t.test(alpha.div$S.rare ~ alpha.div$habitat)
 png(filename = "./figures/Figure1.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 3, 2) + 0.3)
-plot(alpha.div$S.rare ~ alpha.div$habitat, 
-     names = c("Sediment", "Water"), 
+boxplot(S.rare ~ habitat, data = alpha.div, at = c(1,3),
+     names = c("Sediment", "Water"), xlim = c(0,4),
      yaxt = "n", ylab = "", xlab = "", cex.axis = 1.2)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-axis(side = 1, labels = F, at = c(1,2), lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 1, labels = F, at = c(1,3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd = 2)
 text(1, 2500, "*", cex = 2)
-mtext("Habitat type", side = 1, line = 3, cex = 1.5)
-mtext("Rarefied species richness", side = 2, line = 4, cex = 1.5)
+mtext("Habitat Type", side = 1, line = 3, cex = 1.5)
+mtext("Species Richness", side = 2, line = 4, cex = 1.5)
 dev.off()
 graphics.off()
 
@@ -333,68 +344,144 @@ graphics.off()
 
 ### Calculate Bray-Curtis across stream orders
 ```{r}
-strahler.bray <- 1 - as.matrix(vegdist(OTUsREL.log, method = "bray"))
-order.1.bray <- strahler.bray[which(design$order==1),which(design$order==1)]
-order.2.bray <- strahler.bray[which(design$order==2),which(design$order==2)]
-order.3.bray <- strahler.bray[which(design$order==3),which(design$order==3)]
-order.4.bray <- strahler.bray[which(design$order==4),which(design$order==4)]
-order.5.bray <- strahler.bray[which(design$order==5),which(design$order==5)]
+order.1.bray.w <- vegdist(OTUsREL.log[which(design$order==1 & design$habitat == "water"),], method = "bray")
+order.2.bray.w <- vegdist(OTUsREL.log[which(design$order==2 & design$habitat == "water"),], method = "bray")
+order.3.bray.w <- vegdist(OTUsREL.log[which(design$order==3 & design$habitat == "water"),], method = "bray")
+order.4.bray.w <- vegdist(OTUsREL.log[which(design$order==4 & design$habitat == "water"),], method = "bray")
+order.5.bray.w <- vegdist(OTUsREL.log[which(design$order==5 & design$habitat == "water"),], method = "bray")
 
-order.1.bray.mean <- mean(as.vector(round(apply(order.1.bray, 1, mean), 3)))
-order.2.bray.mean <- mean(as.vector(round(apply(order.2.bray, 1, mean), 3)))
-order.3.bray.mean <- mean(as.vector(round(apply(order.3.bray, 1, mean), 3)))
-order.4.bray.mean <- mean(as.vector(round(apply(order.4.bray, 1, mean), 3)))
-order.5.bray.mean <- mean(as.vector(round(apply(order.5.bray, 1, mean), 3)))
+order.1.bray.s <- vegdist(OTUsREL.log[which(design$order==1 & design$habitat == "sediment"),], method = "bray")
+order.2.bray.s <- vegdist(OTUsREL.log[which(design$order==2 & design$habitat == "sediment"),], method = "bray")
+order.3.bray.s <- vegdist(OTUsREL.log[which(design$order==3 & design$habitat == "sediment"),], method = "bray")
+order.4.bray.s <- vegdist(OTUsREL.log[which(design$order==4 & design$habitat == "sediment"),], method = "bray")
+order.5.bray.s <- vegdist(OTUsREL.log[which(design$order==5 & design$habitat == "sediment"),], method = "bray")
 
-order.1.bray.se <- mean(as.vector(round(apply(order.1.bray, 1, se), 3)))
-order.2.bray.se <- mean(as.vector(round(apply(order.2.bray, 1, se), 3)))
-order.3.bray.se <- mean(as.vector(round(apply(order.3.bray, 1, se), 3)))
-order.4.bray.se <- mean(as.vector(round(apply(order.4.bray, 1, se), 3)))
-order.5.bray.se <- mean(as.vector(round(apply(order.5.bray, 1, se), 3)))
+order.1.dists.w <- as.vector(unlist(list(order.1.bray.w)))
+order.2.dists.w <- as.vector(unlist(list(order.2.bray.w)))
+order.3.dists.w <- as.vector(unlist(list(order.3.bray.w)))
+order.4.dists.w <- as.vector(unlist(list(order.4.bray.w)))
+order.5.dists.w <- as.vector(unlist(list(order.5.bray.w)))
 
-orders.bray <- as.data.frame(cbind(c(rep(1, length(order.1.bray.mean)),
-        rep(2, length(order.2.bray.mean)),
-        rep(3, length(order.3.bray.mean)),
-        rep(4, length(order.4.bray.mean)),
-        rep(5, length(order.5.bray.mean))),
-      c(order.1.bray.mean, order.2.bray.mean, order.3.bray.mean,
-        order.4.bray.mean, order.5.bray.mean),
-      c(order.1.bray.se, order.2.bray.se, order.3.bray.se,
-        order.4.bray.se, order.5.bray.se)))
-colnames(orders.bray) <- c("order", "mean", "se")
-model.orders <- lm(orders.bray$mean ~ orders.bray$order)
-modsum <- summary(model.orders)
+order.1.dists.s <- as.vector(unlist(list(order.1.bray.s)))
+order.2.dists.s <- as.vector(unlist(list(order.2.bray.s)))
+order.3.dists.s <- as.vector(unlist(list(order.3.bray.s)))
+order.4.dists.s <- as.vector(unlist(list(order.4.bray.s)))
+order.5.dists.s <- as.vector(unlist(list(order.5.bray.s)))
+
+order.1.se <- se(order.1.bray)
+order.2.se <- se(order.2.bray)
+order.3.se <- se(order.3.bray)
+order.4.se <- se(order.4.bray)
+order.5.se <- se(order.5.bray)
+
+orders.bray.w <- as.data.frame(cbind(c(
+        rep(1, length(order.1.dists.w)),
+        rep(2, length(order.2.dists.w)),
+        rep(3, length(order.3.dists.w))),
+      c(order.1.dists.w, order.2.dists.w, order.3.dists.w)))
+colnames(orders.bray.w) <- c("order", "dist")
+model.orders.w <- lm(orders.bray.w$dist ~ orders.bray.w$order)
+model.orders.w <- aov(orders.bray.w$dist ~ as.factor(orders.bray.w$order))
+(modsum.w <- summary(model.orders.w))
+TukeyHSD(model.orders.w)
+boxplot(dist ~ order, data = orders.bray.w)
+
+orders.bray.s <- as.data.frame(cbind(c(
+        rep(1, length(order.1.dists.s)),
+        rep(2, length(order.2.dists.s)),
+        rep(3, length(order.3.dists.s))),
+      c(order.1.dists.s, order.2.dists.s, order.3.dists.s)))
+colnames(orders.bray.s) <- c("order", "dist")
+model.orders.s <- lm(orders.bray.s$dist ~ orders.bray.s$order)
+model.orders.s <- aov(orders.bray.s$dist ~ as.factor(orders.bray.s$order))
+(modsum.s <- summary(model.orders.s))
+TukeyHSD(model.orders.s)
+boxplot(dist ~ order, data = orders.bray.s)
 ```
 
-### Figure 4: Bray-Curtis Similarity increases with increasing stream order
-```{r}
+### Figure 4: Beta-diversity is highest among headwater streams
+```{r, eval=F}
 png(filename = "./figures/Figure4.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
-plot(orders.bray$mean ~ orders.bray$order, xaxt = "n", yaxt = "n",
-     xlab = "Stream Order", ylab = "Mean Bray-Curtis Similarity", ylim = c(0.2, 0.7),
-     pch = 19, cex.lab =1.5)
-axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+boxplot(dist ~ order, data = orders.bray.w, at = c(1,4,7), xlim = c(0,9), ylim = c(0.4, 0.9), 
+        col = "skyblue", xlab = "", xaxt = "n", yaxt = "n")
+boxplot(dist ~ order, data = orders.bray.s, at = c(2,5,8), add = T, col = "wheat",
+        xlab = "", xaxt = "n", yaxt = "n")
+axis(side = 1, labels = F, at = c(1.5, 4.5, 7.5), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd=2)
+mtext(side = 2, cex = 1.5, line = 3.5, expression(paste(beta,"-diversity")))
+mtext(side = 1, cex = 1.5, line = 3, "Stream Order")
+mtext(side = 1, at = c(1.5,4.5,7.5), line = 1, c("1","2","3"), cex = 1.2)
 
-error.bar(orders.bray$order, orders.bray$mean, orders.bray$se)
+legend("topright", c("Water", "Sediment"), col = c("skyblue", "wheat"),
+         pt.bg = c("skyblue", "wheat"), pch = c(15,15), cex = 1.5, bty = "n")
 
-abline(model.orders)
-r2 <- modsum$adj.r.squared
-my.p <- modsum$coefficients[2,4]
-rp <- vector('expression',2)
-rp[1] <- substitute(expression(italic(R)^2 == MYVALUE),
-                    list(MYVALUE = format(r2,dig=3)))[2]
-rp[2] <- substitute(expression(italic(p) == MYOTHERVALUE),
-                    list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
-legend('bottomright', legend = rp, bty = 'n')
 dev.off()
 graphics.off()
 ```
 
+# Figure 4: Beta-diversity is higher among headwaters than among higher order streams.
+```{r}
+orders.bray.w <- as.data.frame(cbind(c(
+        rep(1, length(order.1.dists.w)),
+        rep(2, length(order.2.dists.w)),
+        rep(2, length(order.3.dists.w)),
+        rep(2, length(order.4.dists.w)),
+        rep(2, length(order.5.dists.w))),
+      c(order.1.dists.w, order.2.dists.w, order.3.dists.w,
+        order.4.dists.w, order.5.dists.w)))
+colnames(orders.bray.w) <- c("order", "dist")
+model.orders.w <- lm(orders.bray.w$dist ~ orders.bray.w$order)
+modsum.w <- summary(model.orders.w)
+
+orders.bray.s <- as.data.frame(cbind(c(
+        rep(1, length(order.1.dists.s)),
+        rep(2, length(order.2.dists.s)),
+        rep(2, length(order.3.dists.s)),
+        rep(2, length(order.4.dists.s)),
+        rep(2, length(order.5.dists.s))),
+      c(order.1.dists.s, order.2.dists.s, order.3.dists.s,
+        order.4.dists.s, order.5.dists.s)))
+colnames(orders.bray.s) <- c("order", "dist")
+model.orders.s <- lm(orders.bray.s$dist ~ orders.bray.s$order)
+modsum.s <- summary(model.orders.s)
+
+model.orders.w <- aov(orders.bray.w$dist ~ as.factor(orders.bray.w$order))
+(modsum.w <- summary(model.orders.w))
+TukeyHSD(model.orders.w)
+boxplot(dist ~ order, data = orders.bray.w)
+
+model.orders.s <- aov(orders.bray.s$dist ~ as.factor(orders.bray.s$order))
+(modsum.s <- summary(model.orders.s))
+TukeyHSD(model.orders.s)
+boxplot(dist ~ order, data = orders.bray.s)
+
+png(filename = "./figures/Figure4b.png",
+    width = 1200, height = 1200, res = 96*2)
+par(mar = c(5, 5, 2, 2) + 0.1)
+boxplot(dist ~ order, data = orders.bray.w, at = c(1,4), xlim = c(0,6), ylim = c(0.4, 0.9), 
+        col = "skyblue", xlab = "", xaxt = "n", yaxt = "n")
+boxplot(dist ~ order, data = orders.bray.s, at = c(2,5), add = T, col = "wheat",
+        xlab = "", xaxt = "n", yaxt = "n")
+axis(side = 1, labels = F, at = c(1.5, 4.5), lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+box(lwd=2)
+mtext(side = 2, cex = 1.5, line = 3.5, expression(paste(beta,"-diversity")))
+mtext(side = 1, cex = 1.5, line = 3, "Stream Order")
+mtext(side = 1, at = c(1.5,4.5), line = 1, c("Headwaters","Higher-order"), cex = 1.2)
+
+legend("topright", c("Water", "Sediment"), col = c("skyblue", "wheat"),
+         pt.bg = c("skyblue", "wheat"), pch = c(15,15), cex = 1.5, bty = "n")
+
+dev.off()
+graphics.off()
+```
 
 ### Organismal analysis
 ```{r}
@@ -404,7 +491,6 @@ for(i in 1:nrow(OTUsREL)){
   top.taxa[i,] <- names(sort(tail(sort(OTUsREL[i,]),5), decreasing = T))
 }
 
-boxplot(alpha.div$shan ~ alpha.div$habitat)
 
 OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[,5])),]
 
@@ -428,6 +514,20 @@ colnames(taxa.summary) <- c("sediments.only", "water.only", "shared", "in.sedime
 taxa.summary$water.only[which(design$habitat == "water")] / taxa.summary$total[which(design$habitat == "water")]
 taxa.summary$sediments.only[which(design$habitat == "sediment")] / taxa.summary$total[which(design$habitat == "sediment")]
 taxa.summary$shared / taxa.summary$total
+
+# Unique to stream order
+order.1.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "1"),]) == 0)]
+order.2.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "2"),]) == 0)]
+order.3.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "3"),]) == 0)]
+order.4.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "4"),]) == 0)]
+order.5.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "5"),]) == 0)]
+
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.1.OTUs))),]$Order)
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.2.OTUs))),]$Order)
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.3.OTUs))),]$Order)
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.4.OTUs))),]$Order)
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.5.OTUs))),]$Order)
+
 ```
 
 ### Figure 5: Proportion unique taxa
@@ -442,12 +542,14 @@ se(rowSums(in.sediment[which(design$habitat == "sediment"), which(colSums(in.sed
 png(filename = "./figures/Figure5.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
-boxplot((1-water.frac), (1-sed.frac), names = c("Water", "Sediments"), yaxt = "n", cex.axis = 1.5)
+boxplot((1-water.frac), (1-sed.frac), names = c("Water", "Sediments"), 
+        at = c(1,3), xlim = c(0,4), yaxt = "n", cex.axis = 1.2)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-axis(side = 1, labels = F, at = c(1,2), lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 1, labels = F, at = c(1,3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd=2)
 mtext("Proportion Unique Taxa", side = 2, line = 3.5, cex = 1.5)
-text(x = 2, y = 0.25, "*", cex = 2)
+mtext("Habitat Type", side = 1, line = 3, cex = 1.5)
+text(x = 3, y = 0.25, "*", cex = 2)
 dev.off()
 graphics.off()
 
@@ -489,6 +591,47 @@ sed.coord.dist <- as.matrix(dist(as.matrix(sed.lat, sed.lon)))
 mantel(sed.struc.dist, sed.coord.dist, method = "pearson", permutations = 999)
 
 
+```
+
+#### Sed-water comparisons within sites
+```{r}
+paired.div <- alpha.div
+paired.OTUsREL.log <- OTUsREL.log
+remove.sites <- 0
+for(site in unique(paired.div$site)){
+  if(sum(paired.div$site == site) < 2){
+    paired.div <- paired.div[-which(paired.div$site == site),]
+    remove.sites <- c(remove.sites, which(design$site == site))
+  }
+}
+paired.OTUsREL.log <- paired.OTUsREL.log[-remove.sites,]
+
+plot((paired.div$S.rare[which(paired.div$habitat == "water")] -
+        paired.div$S.rare[which(paired.div$habitat == "sediment")]) ~ unique(paired.div$site))
+abline(h=0)
+
+paired.div.difs <- (paired.div$S.rare[which(paired.div$habitat == "water")] -
+        paired.div$S.rare[which(paired.div$habitat == "sediment")])
+paired.div
+```
+
+#### Figure 6: Water vs. Sed. diversity
+```{r}
+png(filename = "./figures/Figure6.png",
+    width = 1200, height = 1200, res = 96*2)
+par(c(5,5,3,2) + 0.3)
+barplot(height = paired.div.difs, names.arg = unique(paired.div$site),
+        horiz = TRUE, yaxt = "n", xaxt = "n", xlim = c(-2000,2000),
+        col = "black", border = NA)
+axis(side = 1, labels = T, lwd = 2, lwd.ticks = 2)
+axis(side = 3, labels = F, lwd = 2, tck = 0)
+abline(v = 0, lty = 3)
+mtext(side = 1, line = 3, cex = 1.5, expression(paste("Difference in ",alpha,"-diversity")))
+mtext(side = 3, line = 0.5, at = c(-2000), adj = 0, "Higher in\nsediment")
+mtext(side = 3, line = 0.5, at = c(2000), adj = 1, "Higher in\nwater")
+#mtext(side = 2, line = 2.5, cex = 1.2, "Site")
+dev.off()
+graphics.off()
 ```
 
 #### Figure S1: Surface-water / Sediment differences are robust across scales
@@ -842,20 +985,23 @@ summary(streams)
 
 #### Var Part - HJA Catchment
 ```{r}
-dist.pcnm <- pcnm(dist(xy))
-ordisurf(xy, scores(dist.pcnm, choi=1), bubble = 4, main = "PCNM 1")
-ordisurf(xy, scores(dist.pcnm, choi=2), bubble = 4, main = "PCNM 2")
-ordisurf(xy, scores(dist.pcnm, choi=3), bubble = 4, main = "PCNM 3")
+trunc.dist <- as.matrix(dist(geo.dists)) * adj.mat
+dist.pcnm <- pcnm(trunc.dist)
+ordisurf(geo.dists, scores(dist.pcnm, choi=1), bubble = 4, main = "PCNM 1")
+ordisurf(geo.dists, scores(dist.pcnm, choi=2), bubble = 4, main = "PCNM 2")
+ordisurf(geo.dists, scores(dist.pcnm, choi=3), bubble = 4, main = "PCNM 3")
 ordisplom(dist.pcnm, choices = 1:4)
 rs <- rowSums(OTUsREL.log) / sum(OTUsREL.log)
-pcnmw <- pcnm(dist(xy), w = rs)
+pcnmw <- pcnm(trunc.dist, w = rs)
 
 spatial.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw))
-env.var <- hja.cca
+env.var <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)])
 env.spat.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw) +
                              Condition(env.mat[,c(1:4,6)]))
 spat.env.var <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)] +
                              Condition(scores(pcnmw)))
+
+
 
 sum(env.var$CCA$eig)
 sum(spatial.var$CCA$eig)
@@ -863,7 +1009,7 @@ sum(env.spat.var$CCA$eig)
 sum(spat.env.var$CCA$eig)
 
 hja.ca <- vegan::cca(OTUsREL.log)
-sum(hja.cor$CA$eig)
+sum(hja.ca$CA$eig)
 
 var.part.1 <- sum(env.var$CCA$eig) / sum(hja.ca$CA$eig)
 var.part.2 <- sum(spatial.var$CCA$eig) / sum(hja.ca$CA$eig)
