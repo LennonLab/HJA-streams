@@ -344,65 +344,144 @@ graphics.off()
 
 ### Calculate Bray-Curtis across stream orders
 ```{r}
-order.1.bray <- vegdist(OTUsREL.log[which(design$order==1),which(design$order==1)], method = "bray")
-order.2.bray <- vegdist(OTUsREL.log[which(design$order==2),which(design$order==2)], method = "bray")
-order.3.bray <- vegdist(OTUsREL.log[which(design$order==3),which(design$order==3)], method = "bray")
-order.4.bray <- vegdist(OTUsREL.log[which(design$order==4),which(design$order==4)], method = "bray")
-order.5.bray <- vegdist(OTUsREL.log[which(design$order==5),which(design$order==5)], method = "bray")
+order.1.bray.w <- vegdist(OTUsREL.log[which(design$order==1 & design$habitat == "water"),], method = "bray")
+order.2.bray.w <- vegdist(OTUsREL.log[which(design$order==2 & design$habitat == "water"),], method = "bray")
+order.3.bray.w <- vegdist(OTUsREL.log[which(design$order==3 & design$habitat == "water"),], method = "bray")
+order.4.bray.w <- vegdist(OTUsREL.log[which(design$order==4 & design$habitat == "water"),], method = "bray")
+order.5.bray.w <- vegdist(OTUsREL.log[which(design$order==5 & design$habitat == "water"),], method = "bray")
 
-order.1.dists <- as.vector(unlist(list(order.1.bray)))
-order.2.dists <- as.vector(unlist(list(order.2.bray)))
-order.3.dists <- as.vector(unlist(list(order.3.bray)))
-order.4.dists <- as.vector(unlist(list(order.4.bray)))
-order.5.dists <- as.vector(unlist(list(order.5.bray)))
+order.1.bray.s <- vegdist(OTUsREL.log[which(design$order==1 & design$habitat == "sediment"),], method = "bray")
+order.2.bray.s <- vegdist(OTUsREL.log[which(design$order==2 & design$habitat == "sediment"),], method = "bray")
+order.3.bray.s <- vegdist(OTUsREL.log[which(design$order==3 & design$habitat == "sediment"),], method = "bray")
+order.4.bray.s <- vegdist(OTUsREL.log[which(design$order==4 & design$habitat == "sediment"),], method = "bray")
+order.5.bray.s <- vegdist(OTUsREL.log[which(design$order==5 & design$habitat == "sediment"),], method = "bray")
+
+order.1.dists.w <- as.vector(unlist(list(order.1.bray.w)))
+order.2.dists.w <- as.vector(unlist(list(order.2.bray.w)))
+order.3.dists.w <- as.vector(unlist(list(order.3.bray.w)))
+order.4.dists.w <- as.vector(unlist(list(order.4.bray.w)))
+order.5.dists.w <- as.vector(unlist(list(order.5.bray.w)))
+
+order.1.dists.s <- as.vector(unlist(list(order.1.bray.s)))
+order.2.dists.s <- as.vector(unlist(list(order.2.bray.s)))
+order.3.dists.s <- as.vector(unlist(list(order.3.bray.s)))
+order.4.dists.s <- as.vector(unlist(list(order.4.bray.s)))
+order.5.dists.s <- as.vector(unlist(list(order.5.bray.s)))
 
 order.1.se <- se(order.1.bray)
 order.2.se <- se(order.2.bray)
 order.3.se <- se(order.3.bray)
 order.4.se <- se(order.4.bray)
-order.5.bray.se <- se(order.5.bray)
+order.5.se <- se(order.5.bray)
 
-orders.bray <- as.data.frame(cbind(c(rep(1, length(order.1.dists)),
-        rep(2, length(order.2.dists)),
-        rep(3, length(order.3.dists)),
-        rep(4, length(order.4.dists)),
-        rep(5, length(order.5.dists))),
-      c(order.1.dists, order.2.dists, order.3.dists,
-        order.4.dists, order.5.dists)))
-colnames(orders.bray) <- c("order", "dist")
-model.orders <- lm(orders.bray$dist ~ orders.bray$order)
-modsum <- summary(model.orders)
+orders.bray.w <- as.data.frame(cbind(c(
+        rep(1, length(order.1.dists.w)),
+        rep(2, length(order.2.dists.w)),
+        rep(3, length(order.3.dists.w))),
+      c(order.1.dists.w, order.2.dists.w, order.3.dists.w)))
+colnames(orders.bray.w) <- c("order", "dist")
+model.orders.w <- lm(orders.bray.w$dist ~ orders.bray.w$order)
+model.orders.w <- aov(orders.bray.w$dist ~ as.factor(orders.bray.w$order))
+(modsum.w <- summary(model.orders.w))
+TukeyHSD(model.orders.w)
+boxplot(dist ~ order, data = orders.bray.w)
+
+orders.bray.s <- as.data.frame(cbind(c(
+        rep(1, length(order.1.dists.s)),
+        rep(2, length(order.2.dists.s)),
+        rep(3, length(order.3.dists.s))),
+      c(order.1.dists.s, order.2.dists.s, order.3.dists.s)))
+colnames(orders.bray.s) <- c("order", "dist")
+model.orders.s <- lm(orders.bray.s$dist ~ orders.bray.s$order)
+model.orders.s <- aov(orders.bray.s$dist ~ as.factor(orders.bray.s$order))
+(modsum.s <- summary(model.orders.s))
+TukeyHSD(model.orders.s)
+boxplot(dist ~ order, data = orders.bray.s)
 ```
 
-### Figure 4: No relationship between beta-diversity and stream order
-```{r}
+### Figure 4: Beta-diversity is highest among headwater streams
+```{r, eval=F}
 png(filename = "./figures/Figure4.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
-plot(orders.bray$dist ~ orders.bray$order, xaxt = "n", yaxt = "n",
-     xlab = "", ylab = "", ylim = c(0, 0.5),
-     pch = 19, cex.lab =1.5)
-axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+boxplot(dist ~ order, data = orders.bray.w, at = c(1,4,7), xlim = c(0,9), ylim = c(0.4, 0.9), 
+        col = "skyblue", xlab = "", xaxt = "n", yaxt = "n")
+boxplot(dist ~ order, data = orders.bray.s, at = c(2,5,8), add = T, col = "wheat",
+        xlab = "", xaxt = "n", yaxt = "n")
+axis(side = 1, labels = F, at = c(1.5, 4.5, 7.5), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd=2)
 mtext(side = 2, cex = 1.5, line = 3.5, expression(paste(beta,"-diversity")))
 mtext(side = 1, cex = 1.5, line = 3, "Stream Order")
+mtext(side = 1, at = c(1.5,4.5,7.5), line = 1, c("1","2","3"), cex = 1.2)
 
-# abline(model.orders)
-# r2 <- modsum$adj.r.squared
-# my.p <- modsum$coefficients[2,4]
-# rp <- vector('expression',2)
-# rp[1] <- substitute(expression(italic(R)^2 == MYVALUE),
-#                     list(MYVALUE = format(r2,dig=3)))[2]
-# rp[2] <- substitute(expression(italic(p) == MYOTHERVALUE),
-#                     list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
-# legend('bottomright', legend = rp, bty = 'n')
+legend("topright", c("Water", "Sediment"), col = c("skyblue", "wheat"),
+         pt.bg = c("skyblue", "wheat"), pch = c(15,15), cex = 1.5, bty = "n")
+
 dev.off()
 graphics.off()
 ```
 
+# Figure 4: Beta-diversity is higher among headwaters than among higher order streams.
+```{r}
+orders.bray.w <- as.data.frame(cbind(c(
+        rep(1, length(order.1.dists.w)),
+        rep(2, length(order.2.dists.w)),
+        rep(2, length(order.3.dists.w)),
+        rep(2, length(order.4.dists.w)),
+        rep(2, length(order.5.dists.w))),
+      c(order.1.dists.w, order.2.dists.w, order.3.dists.w,
+        order.4.dists.w, order.5.dists.w)))
+colnames(orders.bray.w) <- c("order", "dist")
+model.orders.w <- lm(orders.bray.w$dist ~ orders.bray.w$order)
+modsum.w <- summary(model.orders.w)
+
+orders.bray.s <- as.data.frame(cbind(c(
+        rep(1, length(order.1.dists.s)),
+        rep(2, length(order.2.dists.s)),
+        rep(2, length(order.3.dists.s)),
+        rep(2, length(order.4.dists.s)),
+        rep(2, length(order.5.dists.s))),
+      c(order.1.dists.s, order.2.dists.s, order.3.dists.s,
+        order.4.dists.s, order.5.dists.s)))
+colnames(orders.bray.s) <- c("order", "dist")
+model.orders.s <- lm(orders.bray.s$dist ~ orders.bray.s$order)
+modsum.s <- summary(model.orders.s)
+
+model.orders.w <- aov(orders.bray.w$dist ~ as.factor(orders.bray.w$order))
+(modsum.w <- summary(model.orders.w))
+TukeyHSD(model.orders.w)
+boxplot(dist ~ order, data = orders.bray.w)
+
+model.orders.s <- aov(orders.bray.s$dist ~ as.factor(orders.bray.s$order))
+(modsum.s <- summary(model.orders.s))
+TukeyHSD(model.orders.s)
+boxplot(dist ~ order, data = orders.bray.s)
+
+png(filename = "./figures/Figure4b.png",
+    width = 1200, height = 1200, res = 96*2)
+par(mar = c(5, 5, 2, 2) + 0.1)
+boxplot(dist ~ order, data = orders.bray.w, at = c(1,4), xlim = c(0,6), ylim = c(0.4, 0.9), 
+        col = "skyblue", xlab = "", xaxt = "n", yaxt = "n")
+boxplot(dist ~ order, data = orders.bray.s, at = c(2,5), add = T, col = "wheat",
+        xlab = "", xaxt = "n", yaxt = "n")
+axis(side = 1, labels = F, at = c(1.5, 4.5), lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+box(lwd=2)
+mtext(side = 2, cex = 1.5, line = 3.5, expression(paste(beta,"-diversity")))
+mtext(side = 1, cex = 1.5, line = 3, "Stream Order")
+mtext(side = 1, at = c(1.5,4.5), line = 1, c("Headwaters","Higher-order"), cex = 1.2)
+
+legend("topright", c("Water", "Sediment"), col = c("skyblue", "wheat"),
+         pt.bg = c("skyblue", "wheat"), pch = c(15,15), cex = 1.5, bty = "n")
+
+dev.off()
+graphics.off()
+```
 
 ### Organismal analysis
 ```{r}
@@ -412,7 +491,6 @@ for(i in 1:nrow(OTUsREL)){
   top.taxa[i,] <- names(sort(tail(sort(OTUsREL[i,]),5), decreasing = T))
 }
 
-boxplot(alpha.div$shan ~ alpha.div$habitat)
 
 OTU.tax[OTU.tax$OTU %in% unique(as.vector(top.taxa[,5])),]
 
@@ -436,6 +514,20 @@ colnames(taxa.summary) <- c("sediments.only", "water.only", "shared", "in.sedime
 taxa.summary$water.only[which(design$habitat == "water")] / taxa.summary$total[which(design$habitat == "water")]
 taxa.summary$sediments.only[which(design$habitat == "sediment")] / taxa.summary$total[which(design$habitat == "sediment")]
 taxa.summary$shared / taxa.summary$total
+
+# Unique to stream order
+order.1.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "1"),]) == 0)]
+order.2.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "2"),]) == 0)]
+order.3.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "3"),]) == 0)]
+order.4.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "4"),]) == 0)]
+order.5.OTUs <- OTUs[, which(colSums(OTUs[which(design$order != "5"),]) == 0)]
+
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.1.OTUs))),]$Order)
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.2.OTUs))),]$Order)
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.3.OTUs))),]$Order)
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.4.OTUs))),]$Order)
+unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.5.OTUs))),]$Order)
+
 ```
 
 ### Figure 5: Proportion unique taxa
@@ -531,6 +623,7 @@ barplot(height = paired.div.difs, names.arg = unique(paired.div$site),
         col = "black", border = NA)
 axis(side = 1, labels = T, lwd = 2, lwd.ticks = 2)
 axis(side = 3, labels = F, lwd = 2, tck = 0)
+abline(v = 0, lty = 3)
 mtext(side = 1, line = 3, cex = 1.5, expression(paste("Difference in ",alpha,"-diversity")))
 mtext(side = 3, line = 0.5, at = c(-2000), adj = 0, "Higher in\nsediment")
 mtext(side = 3, line = 0.5, at = c(2000), adj = 1, "Higher in\nwater")
