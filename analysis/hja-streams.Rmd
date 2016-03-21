@@ -542,12 +542,14 @@ se(rowSums(in.sediment[which(design$habitat == "sediment"), which(colSums(in.sed
 png(filename = "./figures/Figure5.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
-boxplot((1-water.frac), (1-sed.frac), names = c("Water", "Sediments"), yaxt = "n", cex.axis = 1.5)
+boxplot((1-water.frac), (1-sed.frac), names = c("Water", "Sediments"), 
+        at = c(1,3), xlim = c(0,4), yaxt = "n", cex.axis = 1.2)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-axis(side = 1, labels = F, at = c(1,2), lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 1, labels = F, at = c(1,3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd=2)
 mtext("Proportion Unique Taxa", side = 2, line = 3.5, cex = 1.5)
-text(x = 2, y = 0.25, "*", cex = 2)
+mtext("Habitat Type", side = 1, line = 3, cex = 1.5)
+text(x = 3, y = 0.25, "*", cex = 2)
 dev.off()
 graphics.off()
 
