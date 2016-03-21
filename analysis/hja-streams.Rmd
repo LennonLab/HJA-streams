@@ -190,15 +190,15 @@ t.test(alpha.div$S.rare ~ alpha.div$habitat)
 png(filename = "./figures/Figure1.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 3, 2) + 0.3)
-plot(alpha.div$S.rare ~ alpha.div$habitat, 
-     names = c("Sediment", "Water"), 
+boxplot(S.rare ~ habitat, data = alpha.div, at = c(1,3),
+     names = c("Sediment", "Water"), xlim = c(0,4),
      yaxt = "n", ylab = "", xlab = "", cex.axis = 1.2)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
-axis(side = 1, labels = F, at = c(1,2), lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 1, labels = F, at = c(1,3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd = 2)
 text(1, 2500, "*", cex = 2)
-mtext("Habitat type", side = 1, line = 3, cex = 1.5)
-mtext("Rarefied species richness", side = 2, line = 4, cex = 1.5)
+mtext("Habitat Type", side = 1, line = 3, cex = 1.5)
+mtext("Species Richness", side = 2, line = 4, cex = 1.5)
 dev.off()
 graphics.off()
 
