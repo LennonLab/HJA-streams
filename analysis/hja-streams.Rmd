@@ -399,9 +399,9 @@ TukeyHSD(model.orders.s)
 boxplot(dist ~ order, data = orders.bray.s)
 ```
 
-### Figure 4: Beta-diversity is highest among headwater streams
+### Figure 4a: Beta-diversity is highest among headwater streams
 ```{r, eval=F}
-png(filename = "./figures/Figure4.png",
+png(filename = "./figures/Figure4a.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
 boxplot(dist ~ order, data = orders.bray.w, at = c(1,4,7), xlim = c(0,9), ylim = c(0.4, 0.9), 
@@ -460,7 +460,7 @@ model.orders.s <- aov(orders.bray.s$dist ~ as.factor(orders.bray.s$order))
 TukeyHSD(model.orders.s)
 boxplot(dist ~ order, data = orders.bray.s)
 
-png(filename = "./figures/Figure4b.png",
+png(filename = "./figures/Figure4.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
 boxplot(dist ~ order, data = orders.bray.w, at = c(1,4), xlim = c(0,6), ylim = c(0.4, 0.9), 
@@ -528,6 +528,22 @@ unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.3.OTUs))),]$Orde
 unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.4.OTUs))),]$Order)
 unique(OTU.tax[OTU.tax$OTU %in% unique(as.vector(colnames(order.5.OTUs))),]$Order)
 
+
+# Taxonomic Analysis
+for(site in 1:length(rownames(OTUsREL))){
+  comm <- OTUsREL[site,]
+  taxa.present <- rownames(as.matrix(comm))
+  phyla.present <- (OTU.tax[OTU.tax$OTU %in% taxa.present,]$Phylum)
+  
+  site.by.phylum <- matrix(nrow = length(rownames(OTUsREL)), ncol = length(unique(phyla.present)))
+  rownames(site.by.phylum) <- rownames(OTUsREL)
+  colnames(site.by.phylum) <- unique(phyla.present)
+  
+  for(phylum in unique(phyla.present)){
+    site.by.phylum[site,phylum] <- sum(phyla.present == phylum) / length(phyla.present)
+  }
+  rownames(OTUsREL)[site]
+}
 ```
 
 ### Figure 5: Proportion unique taxa
