@@ -671,9 +671,11 @@ grid.raster(img)
 
 ### CCA across watersheds and habitats
 ```{r, eval=FALSE}
+
+
 # LC Watershed
 lc.cca <- vegan::cca(OTUsREL.log[which(design$watershed == "LC"),] ~ env.mat[which(design$watershed == "LC"),]) 
-anova(lc.cca, by = "axis")
+#anova(lc.cca, by = "axis")
 lc.cca.fit <- envfit(lc.cca, env.mat[which(design$watershed == "LC"),], perm = 999)
 lc.cca.explainvar1 <- round(lc.cca$CCA$eig[1] /
                            sum(c(lc.cca$CCA$eig, lc.cca$CA$eig)), 3) * 100
@@ -706,7 +708,6 @@ sediment.cca.explainvar1 <- round(sediment.cca$CCA$eig[1] /
                            sum(c(sediment.cca$CCA$eig, sediment.cca$CA$eig)), 3) * 100
 sediment.cca.explainvar2 <- round(sediment.cca$CCA$eig[2] /
                            sum(c(sediment.cca$CCA$eig, sediment.cca$CA$eig)), 3) * 100
-
 ```
 
 #### Figure S2: Environmental variables explain little variation in structure. Elevation seems important.
@@ -740,7 +741,7 @@ text(lc.vectors[, 1] * 2, lc.vectors[, 2] * 2, pos=3,
 
 # WS01 Plot
 par(mar = c(5, 5, 4, 4) + 0.1)
-plot(scores(w1.cca, display = "wa"), xlim = c(-3,3), ylim = c(-3, 2),
+plot(scores(w1.cca, display = "wa"), xlim = c(-1,3), ylim = c(-3, 2),
      xlab = paste("CCA 1 (", w1.cca.explainvar1, "%)", sep = ""), 
      ylab = paste("CCA 2 (", w1.cca.explainvar2, "%)", sep = ""), 
      pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE,
@@ -755,7 +756,7 @@ text(scores(w1.cca, display = "wa"), cex = 0.5,
      labels = row.names(scores(w1.cca, display = "wa")))
 
 w1.vectors <- scores(w1.cca, display = "bp")
-row.names(w1.vectors) <- c("elev", "temp", "spC", "cond", "tds", "sal", "pH")
+row.names(w1.vectors) <- c("elev", "temp", "cond", "pH", "TN", "TP")
 arrows(0, 0, w1.vectors[, 1] * 2, w1.vectors[, 2]*2,
        lwd = 2, lty = 1, length = 0.2, col = "red")
 text(w1.vectors[, 1] * 2, w1.vectors[, 2] * 2, pos=3,
@@ -764,7 +765,7 @@ text(w1.vectors[, 1] * 2, w1.vectors[, 2] * 2, pos=3,
 
 #Water PLot
 par(mar = c(5, 5, 4, 4) + 0.1)
-plot(scores(water.cca, display = "wa"), xlim = c(-2, 3.5), ylim = c(-3, 2),
+plot(scores(water.cca, display = "wa"), xlim = c(-2, 2), ylim = c(-3, 2.5),
      xlab = paste("CCA 1 (", water.cca.explainvar1, "%)", sep = ""), 
      ylab = paste("CCA 2 (", water.cca.explainvar2, "%)", sep = ""), 
      pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE,
@@ -779,7 +780,7 @@ text(scores(water.cca, display = "wa"), cex = 0.5,
      labels = row.names(scores(water.cca, display = "wa")))
 
 water.vectors <- scores(water.cca, display = "bp")
-row.names(water.vectors) <- c("elev", "temp", "spC", "cond", "tds", "sal", "pH")
+row.names(water.vectors) <- c("elev", "temp", "cond", "pH", "TN", "TP")
 arrows(0, 0, water.vectors[, 1] * 2, water.vectors[, 2]*2,
        lwd = 2, lty = 1, length = 0.2, col = "red")
 text(water.vectors[, 1] * 2, water.vectors[, 2] * 2, pos=3,
@@ -788,7 +789,7 @@ text(water.vectors[, 1] * 2, water.vectors[, 2] * 2, pos=3,
 # Sed plot
 
 par(mar = c(5, 5, 4, 4) + 0.1)
-plot(scores(sediment.cca, display = "wa"), xlim = c(-2, 3), ylim = c(-2, 2),
+plot(scores(sediment.cca, display = "wa"), xlim = c(-2, 3), ylim = c(-1.25, 1.25),
      xlab = paste("CCA 1 (", sediment.cca.explainvar1, "%)", sep = ""), 
      ylab = paste("CCA 2 (", sediment.cca.explainvar2, "%)", sep = ""), 
      pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE,
@@ -803,7 +804,7 @@ text(scores(sediment.cca, display = "wa"), cex = 0.5,
      labels = row.names(scores(sediment.cca, display = "wa")))
 
 sediment.vectors <- scores(sediment.cca, display = "bp")
-row.names(sediment.vectors) <- c("elev", "temp", "spC", "cond", "tds", "sal", "pH")
+row.names(sediment.vectors) <- c("elev", "temp", "cond", "pH", "TN", "TP")
 arrows(0, 0, sediment.vectors[, 1] * 2, sediment.vectors[, 2]*2,
        lwd = 2, lty = 1, length = 0.2, col = "red")
 text(sediment.vectors[, 1] * 2, sediment.vectors[, 2] * 2, pos=3,
@@ -813,6 +814,10 @@ dev.off()
 graphics.off()
 ```
 
+```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Differences between sediment and water communities exist on large and small spatial scales. "}
+img <- readPNG("../figures/FigureS2.png")
+grid.raster(img)
+```
 
 ### Figure S3: Bray-Curtis Similarity by Elevation
 ```{r}
