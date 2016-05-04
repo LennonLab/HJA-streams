@@ -814,7 +814,7 @@ dev.off()
 graphics.off()
 ```
 
-```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Differences between sediment and water communities exist on large and small spatial scales. "}
+```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Constrained ordination of sites"}
 img <- readPNG("../figures/FigureS2.png")
 grid.raster(img)
 ```
@@ -876,40 +876,11 @@ graphics.off()
 
 ```
 
-### Figure S4: Bray-Curtis Similarity by Elevation - Same Plot
-```{r,eval=F}
-
-png(filename = "../figures/FigureS4.png", 
-    width = 1200, height = 1200, res = 96*2)
-par(mar = c(5, 5, 3, 3) + 0.1)
-water.bray <- 1 - as.matrix(vegdist(OTUsREL.log[which(design$habitat=="water"),], method = "bray"))
-water.bray.mean <- round(apply(water.bray, 1, mean), 3)
-water.bray.se <- round(apply(water.bray, 1, se), 3)
-water.sim <- cbind(water.design, water.bray.mean, water.bray.se)
-model.water <- lm(water.sim$water.bray.mean ~ water.sim$elev)
-summary(model.water)
-plot(water.sim$water.bray.mean ~ water.sim$elev, xlim = c(400,1300), ylim = c(.2,.5), xlab="",
-     ylab = "", xaxt = "n", yaxt = "n", pch = 21)
-points(sed.sim$sed.bray.mean ~ sed.sim$elev, pch = 20)
-
-axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
-axis(side=2, labels=T, at = c(.2,.3,.4,.5), lwd.ticks=2, cex.axis=1.2, las=1)
-axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
-axis(side=4, labels=F, at = c(.2,.3,.4,.5), lwd.ticks=2, cex.axis=1.2, las=1)
-
-mtext("Bray-Curtis Similarity", side = 2, line = 3.5, cex = 1.5)
-mtext("Elevation (m)", side = 1, line = 3, cex = 1.5)
-
-abline(model.water, lty = 1)
-abline(model.sed, lty = 2)
-
-legend("bottomright", c("Water", "Sediment"), pch = c(21,20), cex = 1.5, bty = "n")
-
-
-dev.off()
-graphics.off()
-
+```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Beta-diversity in surface waters and sediments by elevation."}
+img <- readPNG("../figures/FigureS3.png")
+grid.raster(img)
 ```
+
 
 ### Figure S4: Distance-Decay
 ```{r}
@@ -1033,6 +1004,11 @@ var.part.1 <- sum(env.var$CCA$eig) / sum(hja.ca$CA$eig)
 var.part.2 <- sum(spatial.var$CCA$eig) / sum(hja.ca$CA$eig)
 var.part.3 <- sum(spat.env.var$CCA$eig) / sum(hja.ca$CA$eig)
 var.part.4 <- sum(env.spat.var$CCA$eig) / sum(hja.ca$CA$eig)
+
+print(paste("HJA Pure Env. = ", var.part.1))
+print(paste("HJA Pure Space. = ", var.part.2))
+print(paste("HJA Spatial + Env = ", (var.part.1 - var.part.3)))
+print(paste("HJA Residual Var. = ", (1- sum(var.part.1 + var.part.2))))
 ```
 
 #### Var Part - Surface Water
@@ -1062,6 +1038,11 @@ water.var.part.1 <- sum(water.env.var$CCA$eig) / sum(water.ca$CA$eig)
 water.var.part.2 <- sum(water.spatial.var$CCA$eig) / sum(water.ca$CA$eig)
 water.var.part.3 <- sum(water.spat.env.var$CCA$eig) / sum(water.ca$CA$eig)
 water.var.part.4 <- sum(water.env.spat.var$CCA$eig) / sum(water.ca$CA$eig)
+
+print(paste("Water Pure Env. = ", water.var.part.1))
+print(paste("Water Pure Space. = ", water.var.part.2))
+print(paste("Water Spatial + Env = ", (water.var.part.1 - water.var.part.3)))
+print(paste("Water Residual Var. = ", (1- sum(water.var.part.1 + water.var.part.2))))
 ```
 
 #### Var Part - Sediments Only
@@ -1090,6 +1071,11 @@ sediment.var.part.1 <- sum(sediment.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
 sediment.var.part.2 <- sum(sediment.spatial.var$CCA$eig) / sum(sediment.ca$CA$eig)
 sediment.var.part.3 <- sum(sediment.spat.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
 sediment.var.part.4 <- sum(sediment.env.spat.var$CCA$eig) / sum(sediment.ca$CA$eig)
+
+print(paste("Sediment Pure Env. = ", sediment.var.part.1))
+print(paste("Sediment Pure Space. = ", sediment.var.part.2))
+print(paste("Sediment Spatial + Env = ", (sediment.var.part.1 - sediment.var.part.3)))
+print(paste("Sediment Residual Var. = ", (1- sum(sediment.var.part.1 + sediment.var.part.2))))
 ```
 
 ```{r}
