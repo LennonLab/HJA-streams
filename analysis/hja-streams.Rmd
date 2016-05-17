@@ -397,8 +397,7 @@ par(mar = c(5, 5, 3, 2) + 0.1)
 plot(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2], ylim = c(-0.5, 0.4), xlim = c(-.35, .35),
      xlab = paste("PCoA 1 (", var1, "%)", sep = ""),
      ylab = paste("PCoA 2 (", var2, "%)", sep = ""), 
-     pch = 19, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
-     main="H.J. Andrews Catchment")
+     pch = 19, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F)
 axis(side = 1, labels = T, at = c(-0.3,-.15,0,.15,.3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 3, labels = F, at = c(-0.3,-.15,0,.15,.3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
@@ -820,32 +819,59 @@ img <- readPNG("../figures/FigureS2.png")
 grid.raster(img)
 ```
 
-### Figure S3: Bray-Curtis Similarity by Elevation
-```{r}
-# hja.bray <- 1 - as.matrix(vegdist(OTUsREL.log, method = "bray"))
-# hja.bray.mean <- round(apply(hja.bray, 1, mean), 3)
-# hja.bray.se <- round(apply(hja.bray, 1, se), 3)
-# hja.sim <- cbind(design, hja.bray.mean, hja.bray.se)
-# model.hja <- lm(hja.sim$hja.bray.mean ~ hja.sim$elev * hja.sim$habitat)
-# summary(model.hja)
-# plot(hja.sim$hja.bray.mean ~ hja.sim$elev, main = "HJA Catchment",
-#      ylab = "Bray-Curtis Similarity", xlab = "Elevation")
-# abline(model.hja)
 
-png(filename = "../figures/FigureS3.png", 
+```{r}
+hja.bray <- 1 - (vegdist(OTUsREL.log, method = "bray"))
+hja.bray.list <- liste(hja.bray, entry = "struc")
+hja.elev.dist <- dist(env[,10])
+hja.elev.dist.list <- liste(hja.elev.dist, entry = "elev")
+hja.model <- lm(hja.bray.list$struc ~ hja.elev.dist.list$elev)
+summary(hja.model)
+
+png(filename = "../figures/FigureS5.png", 
     width = 1200, height = 1200, res = 96*2)
-par(mfrow = c(2, 1))
-par(mar = c(1, 5, 3, 3) + 0.1)
+par(mar = c(5, 5, 1, 3) + 0.1)
+plot(hja.bray.list$struc ~ hja.elev.dist.list$elev, 
+     xlim = c(0, 800), xlab="",
+     ylab = "", xaxt = "n", yaxt = "n")
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+mtext("Bray-Curtis Similarity", side = 2, line = 3, cex = 1.2)
+mtext("Difference in Elevation (m)", side = 1, line = 3, cex = 1.5)
+box(lwd=2)
+abline(hja.model, lwd = 2)
+dev.off()
+graphics.off()
+img <- readPNG("../figures/FigureS5.png")
+grid.raster(img)
+```
+
+# Elevation gradient analysis
+```{r}
 water.bray <- 1 - (vegdist(OTUsREL.log[which(design$habitat=="water"),], method = "bray"))
 water.bray.list <- liste(water.bray, entry = "struc")
 water.elev.dist <- dist(env[which(design$habitat == "water"),10])
 water.elev.dist.list <- liste(water.elev.dist, entry = "elev")
-
-dim(water.bray.list)
-dim(water.elev.dist.list)
-
 model.water <- lm(water.bray.list$struc ~ water.elev.dist.list$elev)
 summary(model.water)
+
+sed.bray <- 1 - (vegdist(OTUsREL.log[which(design$habitat=="sediment"),], method = "bray"))
+sed.bray.list <- liste(sed.bray, entry = "struc")
+sed.elev.dist <- dist(env[which(design$habitat == "sediment"),10])
+sed.elev.dist.list <- liste(sed.elev.dist, entry = "elev")
+model.sed <- lm(sed.bray.list$struc ~ sed.elev.dist.list$elev)
+summary(model.sed)
+```
+
+### Figure S3: Bray-Curtis Similarity by Elevation
+```{r}
+png(filename = "../figures/FigureS3.png", 
+    width = 1200, height = 1200, res = 96*2)
+par(mfrow = c(2, 1))
+par(mar = c(1, 5, 3, 3) + 0.1)
+
 plot(water.bray.list$struc ~ water.elev.dist.list$elev, 
      xlim = c(0, 800), ylim = c(.1, .6), xlab="",
      ylab = "", xaxt = "n", yaxt = "n")
@@ -857,15 +883,9 @@ mtext("Surface Water", side = 2, line = 3, cex = 1.2)
 mtext("Bray-Curtis Similarity", side=3, line=1, cex=1.5)
 box(lwd=2)
 
-
 par(mar = c(5, 5, 1, 3) + 0.1)
-sed.bray <- 1 - (vegdist(OTUsREL.log[which(design$habitat=="sediment"),], method = "bray"))
-sed.bray.list <- liste(sed.bray, entry = "struc")
-sed.elev.dist <- dist(env[which(design$habitat == "sediment"),10])
-sed.elev.dist.list <- liste(sed.elev.dist, entry = "elev")
 
-model.sed <- lm(sed.bray.list$struc ~ sed.elev.dist.list$elev)
-summary(model.sed)
+
 plot(sed.bray.list$struc ~ sed.elev.dist.list$elev,
      xlim = c(0,800), ylim = c(0.1,0.6), xlab="",
      ylab = "", xaxt = "n", yaxt = "n")
@@ -874,8 +894,9 @@ axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 mtext("Sediment", side = 2, line = 3, cex = 1.2)
-mtext("Elevation (m)", side = 1, line = 3, cex = 1.5)
+mtext("Elevation difference (m)", side = 1, line = 3, cex = 1.5)
 box(lwd=2)
+abline(model.sed, lwd = 2)
 
 
 dev.off()
@@ -895,13 +916,14 @@ xy <- cbind(env$longitude, env$latitude)
 geo.dists <- geoXY(env$latitude, env$longitude)
 xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
 dist.mat <- as.matrix(dist(xy, method = "euclidean"))
-
+dists <- dend.dist.mat[which(rownames(dend.dist.mat) %in% rownames(design)),
+                       which(rownames(dend.dist.mat) %in% rownames(design))]
 
 # Water Distance Decay
 #water.lat <- as.numeric(env$latitude[which(design$habitat == "water")])
 #water.lon <- as.numeric(env$longitude[which(design$habitat == "water")])
 water.xy <- xy[which(design$habitat == "water"),]
-water.coord.dist <- dist(as.matrix(water.xy))
+water.coord.dist <- dists[which(design$habitat == "water"),which(design$habitat == "water")]
 water.struc.dist <- 1 - vegdist(OTUsREL.log[which(design$habitat == "water"),])
 #water.coord.dist <- dist(as.matrix(water.lat, water.lon))
 water.env.dist <- 1 - vegdist(env.mat[which(design$habitat == "water"),])
@@ -1123,7 +1145,9 @@ plot.igraph(stream.network)
 dev.off()
 
  # Create Dist Matrix
-euc.dist.mat <- as.matrix(dist(as.matrix(env.total$latitude, env.total$longitude)))
+xy.total <- cbind(env.total$longitude, env.total$latitude)
+xy.total <- project(xy.total, "+proj=utm +zone=10 +ellps=WGS84")
+euc.dist.mat <- as.matrix(dist(xy.total, method = "euclidean"))
 rownames(euc.dist.mat) <- env.total$sample
 colnames(euc.dist.mat) <- env.total$sample
 
@@ -1154,6 +1178,10 @@ dend.dist <- function(graph = "", dist.mat = ""){
 }
 
 dend.dist.mat <- dend.dist(graph = stream.network, dist.mat = euc.dist.mat)
+
+net = graph.adjacency((dend.dist.mat * adj.mat), mode = "directed",
+                      weighted = TRUE)
+plot.igraph(net)
 ```
 
 ```{r}
@@ -1251,4 +1279,8 @@ plot(pc1,pc2)
 cor(cbind(pc1,pc2,env.mat))
 
 vegan::cca(OTUsREL.log ~ cbind(pc1,pc2))
+```
+
+```{r}
+OTUsREL.log[which(design$h)]
 ```
