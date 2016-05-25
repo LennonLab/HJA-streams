@@ -133,10 +133,10 @@ SimpE <- function(x = ""){
   E <- (D)/S 
   return(E)
 }
-simpsE <- round(apply(OTUs, 1, SimpE), 3)
+simpsE <- round(apply(OTUsREL.hel, 1, SimpE), 3)
 
-shan <- diversity(OTUs, index = "shannon")
-simpsD <- diversity(OTUs, index = "invsimpson")
+shan <- diversity(OTUsREL.hel, index = "shannon")
+simpsD <- diversity(OTUsREL.hel, index = "invsimpson")
 
 
 # Rarefaction
@@ -166,6 +166,9 @@ ws01 <- alpha.div[alpha.div$watershed == "WS01",]
 
 # Differences in diversity (richness and evenness) between habitats
 t.test(S.rare ~ habitat, data = alpha.div)
+mean(c(358.0118, 120.1305)) / mean(alpha.div$S.rare[alpha.div$habitat == "sediment"])
+
+
 t.test(shan ~ habitat, data = alpha.div)
 t.test(simpsE ~ habitat, data = alpha.div)
 
@@ -186,12 +189,13 @@ png(filename = "../figures/Figure1.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 3, 2) + 0.3)
 boxplot(S.rare ~ habitat, data = alpha.div, at = c(3,1),
-     names = c("Sediment", "Water"), xlim = c(0,4),
+     names = c("Sediment", "Water"), col = c("grey", "white"),
+     xlim = c(0,4),
      yaxt = "n", ylab = "", xlab = "", cex.axis = 1.2)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 1, labels = F, at = c(1,3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd = 2)
-text(3, 2500, "*", cex = 2)
+text(3, 1700, "*", cex = 2)
 mtext("Habitat Type", side = 1, line = 3, cex = 1.5)
 mtext("Species Richness", side = 2, line = 4, cex = 1.5)
 dev.off()
@@ -317,8 +321,8 @@ png(filename = "../figures/Figure3.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
 boxplot(dist ~ order, data = orders.bray.w, at = c(1,4), xlim = c(0,6), ylim = c(0.4, 0.9), 
-        col = "skyblue", xlab = "", xaxt = "n", yaxt = "n")
-boxplot(dist ~ order, data = orders.bray.s, at = c(2,5), add = T, col = "wheat",
+        col = "white", xlab = "", xaxt = "n", yaxt = "n")
+boxplot(dist ~ order, data = orders.bray.s, at = c(2,5), add = T, col = "grey",
         xlab = "", xaxt = "n", yaxt = "n")
 axis(side = 1, labels = F, at = c(1.5, 4.5), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
@@ -329,8 +333,8 @@ mtext(side = 2, cex = 1.5, line = 3.5, expression(paste(beta,"-diversity")))
 mtext(side = 1, cex = 1.5, line = 3, "Stream Order")
 mtext(side = 1, at = c(1.5,4.5), line = 1, c("Headwaters","Higher-order"), cex = 1.2)
 
-legend("topright", c("Water", "Sediment"), col = c("skyblue", "wheat"),
-         pt.bg = c("skyblue", "wheat"), pch = c(15,15), cex = 1.5, bty = "n")
+legend("topright", c("Water", "Sediment"),
+         pt.bg = c("white", "grey"), pch = c(22,22), cex = 1.5, bty = "n")
 
 dev.off()
 graphics.off()
@@ -406,15 +410,19 @@ abline(h = 0, v = 0, lty = 3)
 box(lwd = 2)
 points(hja.pcoa$points[which(design$habitat == "sediment"),1], 
        hja.pcoa$points[which(design$habitat == "sediment"),2],
-       pch=21, cex=2, bg="wheat")
+       pch=21, cex=2, bg="grey")
 points(hja.pcoa$points[which(design$habitat == "water"),1], 
        hja.pcoa$points[which(design$habitat == "water"),2],
-       pch=24, cex=2, bg="skyblue")
+       pch=24, cex=2, bg="white")
 legend("topright", c("Water", "Sediment"),
-         pt.bg = c("skyblue", "wheat"), pch = c(24,21), cex = 1.5, bty = "n")
+         pt.bg = c("white", "grey"), pch = c(24,21), cex = 1.5, bty = "n")
 
 dev.off()
 graphics.off()
+
+hja.ano <- anosim(hja.db, grouping = design$habitat)
+summary(hja.ano)
+plot(hja.ano)
 ```
 
 ```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Ordination across the HJ Andrews Catchment"}
@@ -445,7 +453,7 @@ se(rowSums(in.sediment[which(design$habitat == "sediment"), which(colSums(in.sed
 png(filename = "../figures/Figure5.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
-boxplot((1-water.frac), (1-sed.frac), names = c("Water", "Sediments"),
+boxplot((1-water.frac), (1-sed.frac), names = c("Water", "Sediments"), col = c("white", "grey"),
         at = c(1,3), xlim = c(0,4), yaxt = "n", cex.axis = 1.2)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 1, labels = F, at = c(1,3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
@@ -868,9 +876,9 @@ summary(model.sed)
 ### Figure S3: Bray-Curtis Similarity by Elevation
 ```{r}
 png(filename = "../figures/FigureS3.png", 
-    width = 1200, height = 1200, res = 96*2)
+    width = 1200, height = 1800, res = 96*2)
 par(mfrow = c(2, 1))
-par(mar = c(1, 5, 3, 3) + 0.1)
+par(mar = c(1, 5, 4, 3) + 0.1)
 
 plot(water.bray.list$struc ~ water.elev.dist.list$elev, 
      xlim = c(0, 800), ylim = c(.1, .6), xlab="",
@@ -1275,12 +1283,74 @@ plot(hja.pca, type = "l")
 biplot(hja.pca)
 pc1 <- hja.pca$scores[,1]
 pc2 <- hja.pca$scores[,2]
-plot(pc1,pc2)
-cor(cbind(pc1,pc2,env.mat))
 
-vegan::cca(OTUsREL.log ~ cbind(pc1,pc2))
+env.dists <- liste(dist(pc1), entry = "env")[,3]
+hja.dists <- cbind(liste(hja.db, entry = "comm.struc"), env.dists)
+plot(hja.dists$env.dists, hja.dists$comm.struc)
+
+summary(lm(hja.dists$comm.struc ~ hja.dists$env.dists))
+
+water.pca <- princomp(env.mat[which(design$habitat == "water"),])
+summary(water.pca)
+water.pc1 <- water.pca$scores[,1]
+water.env.dists <- liste(dist(water.pc1), entry = "env")[,3]
+water.dists <- cbind(liste(water.db, entry = "comm.struc"), water.env.dists)
+plot(water.dists$water.env.dists, water.dists$comm.struc)
+
+sed.pca <- princomp(env.mat[which(design$habitat == "sediment"),])
+summary(sed.pca)
+sed.pc1 <- sed.pca$scores[,1]
+sed.env.dists <- liste(dist(sed.pc1), entry = "env")[,3]
+sed.dists <- cbind(liste(sediment.db, entry = "comm.struc"), sed.env.dists)
+plot(sed.dists$sed.env.dists, sed.dists$comm.struc)
+
+summary(lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists))
+summary(lm(water.dists$comm.struc ~ water.dists$water.env.dists))
 ```
 
 ```{r}
-OTUsREL.log[which(design$h)]
+png(filename = "../figures/FigureS6.png",
+    width = 1200, height = 1200, res = 96*2)
+par(mfrow = c(2, 1) + 0.5)
+
+par(mar = c(1, 5, 3, 3) + 0.4)
+plot(water.dists$water.env.dists, water.dists$comm.struc, xlab="", 
+     ylab = "", xaxt="n", yaxt="n", 
+     xlim = c(-.15, 6.5), ylim = c(0.4,.9))
+#abline(lm(water.dists$comm.struc ~ water.dists$water.env.dists))
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("Bray-Curtis Dissimilarity\nSurface Water", side = 2, line = 3, cex = 1.2)
+
+par(mar = c(4, 5, 1, 3) + 0.4)
+plot(sed.dists$sed.env.dists, sed.dists$comm.struc, xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", 
+     xlim = c(-.15, 6.5), ylim = c(0.4,.9))
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd=2)
+mtext("Bray-Curtis Dissimilarity\nSediment", side = 2, line = 3, cex = 1.2)
+abline(lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists))
+
+mtext("Environmental Distance (PC1)", side = 1, line = 3, cex = 1.5)
+
+
+#mtext("Community Similarity", side = 2, line = 3, cex = 1.5)
+
+dev.off()
+graphics.off()
+
+#diffslope(sed.distances$dist, sed.distances$struc, water.distances$dist, water.distances$struc)
+
+
+```
+
+```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Beta-diversity in surface waters and sediments by elevation."}
+img <- readPNG("../figures/FigureS6.png")
+grid.raster(img)
 ```
