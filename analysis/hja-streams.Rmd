@@ -420,14 +420,23 @@ legend("topright", c("Water", "Sediment"),
 dev.off()
 graphics.off()
 
-hja.ano <- anosim(hja.db, grouping = design$habitat)
-summary(hja.ano)
-plot(hja.ano)
+
 ```
 
 ```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Ordination across the HJ Andrews Catchment"}
 img <- readPNG("../figures/Figure4.png")
 grid.raster(img)
+```
+
+# Important drivers of community structure
+```{r}
+# hja.ano <- anosim(hja.db, grouping = design$habitat)
+# summary(hja.ano)
+# plot(hja.ano)
+
+adonis(hja.db ~ design$order, permutations = 999)
+adonis(hja.db ~ design$habitat * design$watershed + design$order, permutations = 999)
+
 ```
 
 ### Identify Unique OTUs across habitats
@@ -917,15 +926,70 @@ img <- readPNG("../figures/FigureS3.png")
 grid.raster(img)
 ```
 
+### Calculate Dendritic Distances
+```{r}
+require('igraph')
+adj.mat <- as.matrix(read.csv("../data/undirected-matrix.csv", header=T))
+row.names(adj.mat) <- adj.mat[,1]
+adj.mat <- adj.mat[,-1]
+adj.mat <- (adj.mat == 1) * 1
+
+stream.network <- graph_from_adjacency_matrix(adjmatrix = adj.mat)
+
+png(filename = "../figures/stream-network.png", 
+    height = 4800, width = 4800, res = 2*96)
+plot.igraph(stream.network)
+dev.off()
+
+ # Create Dist Matrix
+xy.total <- cbind(env.total$longitude, env.total$latitude)
+xy.total <- project(xy.total, "+proj=utm +zone=10 +ellps=WGS84")
+euc.dist.mat <- as.matrix(dist(xy.total, method = "euclidean"))
+rownames(euc.dist.mat) <- env.total$sample
+colnames(euc.dist.mat) <- env.total$sample
+
+# Function to find paths along the network.
+dend.dist <- function(graph = "", dist.mat = ""){
+
+  dend.dist.mat <- matrix(data = NA, nrow = length(env.total$sample), 
+                          ncol = length(env.total$sample))
+  rownames(dend.dist.mat) <- env.total$sample
+  colnames(dend.dist.mat) <- env.total$sample
+  
+  for(row in rownames(dend.dist.mat)){
+    for(col in colnames(dend.dist.mat)){
+      path.dist <- 0
+      path <- shortest_paths(graph = graph, from = row, to = col)$vpath[[1]]
+      
+      if(length(path) > 1){
+        for(i in 1:(length(path) - 1)){
+          path.dist <- path.dist + dist.mat[path[[i]]$name, path[[i+1]]$name]
+        }
+      }
+      
+      dend.dist.mat[row,col] <- path.dist
+    }
+  }
+  
+  return(dend.dist.mat)
+}
+
+dend.dist.mat <- dend.dist(graph = stream.network, dist.mat = euc.dist.mat)
+
+net = graph.adjacency((dend.dist.mat * adj.mat), mode = "directed",
+                      weighted = TRUE)
+plot.igraph(net)
+```
+
 
 ### Figure S4: Distance-Decay
-```{r}
+```{r, eval = FALSE}
 xy <- cbind(env$longitude, env$latitude)
 geo.dists <- geoXY(env$latitude, env$longitude)
 xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
 dist.mat <- as.matrix(dist(xy, method = "euclidean"))
-dists <- dend.dist.mat[which(rownames(dend.dist.mat) %in% rownames(design)),
-                       which(rownames(dend.dist.mat) %in% rownames(design))]
+#dists <- dend.dist.mat[which(rownames(dend.dist.mat) %in% rownames(design)),
+#                       which(rownames(dend.dist.mat) %in% rownames(design))]
 
 # Water Distance Decay
 #water.lat <- as.numeric(env$latitude[which(design$habitat == "water")])
@@ -934,12 +998,12 @@ water.xy <- xy[which(design$habitat == "water"),]
 water.coord.dist <- dists[which(design$habitat == "water"),which(design$habitat == "water")]
 water.struc.dist <- 1 - vegdist(OTUsREL.log[which(design$habitat == "water"),])
 #water.coord.dist <- dist(as.matrix(water.lat, water.lon))
-water.env.dist <- 1 - vegdist(env.mat[which(design$habitat == "water"),])
+#water.env.dist <- 1 - vegdist(env.mat[which(design$habitat == "water"),])
 water.struc.dist.ls <- liste(water.struc.dist, entry = "struc")
-water.env.dist.ls <- liste(water.env.dist, entry = "env")
+#water.env.dist.ls <- liste(water.env.dist, entry = "env")
 water.coord.dist.ls <- liste(water.coord.dist, entry = "dist")
-water.distances <- data.frame(water.coord.dist.ls, water.env.dist.ls[,3], water.struc.dist.ls[,3])
-names(water.distances)[4:5] <- c("env", "struc")
+water.distances <- data.frame(water.coord.dist.ls, water.struc.dist.ls[,3])
+names(water.distances)[4] <- c("struc")
 
 # Sediment Distance Decay
 #sed.lat <- as.numeric(env$latitude[which(design$habitat == "sediment")])
@@ -1137,60 +1201,6 @@ d.var.part.4 <- sum(d.env.spat.var$CCA$eig) / sum(hja.ca$CA$eig)
 ```
 
 
-### Calculate Dendritic Distances
-```{r}
-require('igraph')
-adj.mat <- as.matrix(read.csv("../data/undirected-matrix.csv", header=T))
-row.names(adj.mat) <- adj.mat[,1]
-adj.mat <- adj.mat[,-1]
-adj.mat <- (adj.mat == 1) * 1
-
-stream.network <- graph_from_adjacency_matrix(adjmatrix = adj.mat)
-
-png(filename = "../figures/stream-network.png", 
-    height = 4800, width = 4800, res = 2*96)
-plot.igraph(stream.network)
-dev.off()
-
- # Create Dist Matrix
-xy.total <- cbind(env.total$longitude, env.total$latitude)
-xy.total <- project(xy.total, "+proj=utm +zone=10 +ellps=WGS84")
-euc.dist.mat <- as.matrix(dist(xy.total, method = "euclidean"))
-rownames(euc.dist.mat) <- env.total$sample
-colnames(euc.dist.mat) <- env.total$sample
-
-# Function to find paths along the network.
-dend.dist <- function(graph = "", dist.mat = ""){
-
-  dend.dist.mat <- matrix(data = NA, nrow = length(env.total$sample), 
-                          ncol = length(env.total$sample))
-  rownames(dend.dist.mat) <- env.total$sample
-  colnames(dend.dist.mat) <- env.total$sample
-  
-  for(row in rownames(dend.dist.mat)){
-    for(col in colnames(dend.dist.mat)){
-      path.dist <- 0
-      path <- shortest_paths(graph = graph, from = row, to = col)$vpath[[1]]
-      
-      if(length(path) > 1){
-        for(i in 1:(length(path) - 1)){
-          path.dist <- path.dist + dist.mat[path[[i]]$name, path[[i+1]]$name]
-        }
-      }
-      
-      dend.dist.mat[row,col] <- path.dist
-    }
-  }
-  
-  return(dend.dist.mat)
-}
-
-dend.dist.mat <- dend.dist(graph = stream.network, dist.mat = euc.dist.mat)
-
-net = graph.adjacency((dend.dist.mat * adj.mat), mode = "directed",
-                      weighted = TRUE)
-plot.igraph(net)
-```
 
 ```{r}
 # sediments
@@ -1308,6 +1318,7 @@ summary(lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists))
 summary(lm(water.dists$comm.struc ~ water.dists$water.env.dists))
 ```
 
+# Community-Environmental similarity 
 ```{r}
 png(filename = "../figures/FigureS6.png",
     width = 1200, height = 1200, res = 96*2)
@@ -1317,13 +1328,13 @@ par(mar = c(1, 5, 3, 3) + 0.4)
 plot(water.dists$water.env.dists, water.dists$comm.struc, xlab="", 
      ylab = "", xaxt="n", yaxt="n", 
      xlim = c(-.15, 6.5), ylim = c(0.4,.9))
-#abline(lm(water.dists$comm.struc ~ water.dists$water.env.dists))
+abline(lm(water.dists$comm.struc ~ water.dists$water.env.dists), lty = 2, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd = 2)
-mtext("Bray-Curtis Dissimilarity\nSurface Water", side = 2, line = 3, cex = 1.2)
+mtext("Community Dissimilarity\nSurface Water", side = 2, line = 3, cex = 1.2)
 
 par(mar = c(4, 5, 1, 3) + 0.4)
 plot(sed.dists$sed.env.dists, sed.dists$comm.struc, xlab="", 
@@ -1334,8 +1345,8 @@ axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
-mtext("Bray-Curtis Dissimilarity\nSediment", side = 2, line = 3, cex = 1.2)
-abline(lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists))
+mtext("Community Dissimilarity\nSediment", side = 2, line = 3, cex = 1.2)
+abline(lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists), lwd = 2)
 
 mtext("Environmental Distance (PC1)", side = 1, line = 3, cex = 1.5)
 
