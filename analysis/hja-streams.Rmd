@@ -1308,14 +1308,14 @@ water.pca <- princomp(env.mat[which(design$habitat == "water"),])
 summary(water.pca)
 water.pc1 <- water.pca$scores[,1]
 water.env.dists <- liste(dist(water.pc1), entry = "env")[,3]
-water.dists <- cbind(liste(water.db, entry = "comm.struc"), water.env.dists)
+water.dists <- cbind(liste((1 - water.db), entry = "comm.struc"), water.env.dists)
 plot(water.dists$water.env.dists, water.dists$comm.struc)
 
 sed.pca <- princomp(env.mat[which(design$habitat == "sediment"),])
 summary(sed.pca)
 sed.pc1 <- sed.pca$scores[,1]
 sed.env.dists <- liste(dist(sed.pc1), entry = "env")[,3]
-sed.dists <- cbind(liste(sediment.db, entry = "comm.struc"), sed.env.dists)
+sed.dists <- cbind(liste((1-sediment.db), entry = "comm.struc"), sed.env.dists)
 plot(sed.dists$sed.env.dists, sed.dists$comm.struc)
 
 summary(lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists))
@@ -1331,25 +1331,25 @@ par(mfrow = c(2, 1) + 0.5)
 par(mar = c(1, 5, 3, 3) + 0.4)
 plot(water.dists$water.env.dists, water.dists$comm.struc, xlab="", 
      ylab = "", xaxt="n", yaxt="n", 
-     xlim = c(-.15, 6.5), ylim = c(0.4,.9))
+     xlim = c(-.15, 6.5), ylim = c(0.05,.65))
 abline(lm(water.dists$comm.struc ~ water.dists$water.env.dists), lty = 2, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd = 2)
-mtext("Community Dissimilarity\nSurface Water", side = 2, line = 3, cex = 1.2)
+mtext("Community Similarity\nSurface Water", side = 2, line = 3, cex = 1.2)
 
 par(mar = c(4, 5, 1, 3) + 0.4)
 plot(sed.dists$sed.env.dists, sed.dists$comm.struc, xlab="", 
      ylab = "", xaxt = "n", yaxt = "n", 
-     xlim = c(-.15, 6.5), ylim = c(0.4,.9))
+     xlim = c(-.15, 6.5), ylim = c(0.05,.65))
 axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
-mtext("Community Dissimilarity\nSediment", side = 2, line = 3, cex = 1.2)
+mtext("Community Similarity\nSediment", side = 2, line = 3, cex = 1.2)
 abline(lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists), lwd = 2)
 
 mtext("Environmental Distance (PC1)", side = 1, line = 3, cex = 1.5)
