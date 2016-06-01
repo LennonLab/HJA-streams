@@ -988,8 +988,9 @@ xy <- cbind(env$longitude, env$latitude)
 geo.dists <- geoXY(env$latitude, env$longitude)
 xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
 dist.mat <- as.matrix(dist(xy, method = "euclidean"))
-#dists <- dend.dist.mat[which(rownames(dend.dist.mat) %in% rownames(design)),
-#                       which(rownames(dend.dist.mat) %in% rownames(design))]
+dists <- dend.dist.mat[which(rownames(dend.dist.mat) %in% rownames(design)),
+                       which(rownames(dend.dist.mat) %in% rownames(design))]
+dists[!lower.tri(dists)] <- NA 
 
 # Water Distance Decay
 #water.lat <- as.numeric(env$latitude[which(design$habitat == "water")])
@@ -1002,22 +1003,22 @@ water.struc.dist <- 1 - vegdist(OTUsREL.log[which(design$habitat == "water"),])
 water.struc.dist.ls <- liste(water.struc.dist, entry = "struc")
 #water.env.dist.ls <- liste(water.env.dist, entry = "env")
 water.coord.dist.ls <- liste(water.coord.dist, entry = "dist")
-water.distances <- data.frame(water.coord.dist.ls, water.struc.dist.ls[,3])
+water.distances <- data.frame(na.omit(water.coord.dist.ls), water.struc.dist.ls[,3])
 names(water.distances)[4] <- c("struc")
 
 # Sediment Distance Decay
 #sed.lat <- as.numeric(env$latitude[which(design$habitat == "sediment")])
 #sed.lon <- as.numeric(env$longitude[which(design$habitat == "sediment")])
 sed.xy <- xy[which(design$habitat == "sediment"),]
-sed.coord.dist <- dist(as.matrix(sed.xy))
+sed.coord.dist <- dists[which(design$habitat == "sediment"),which(design$habitat == "sediment")]
 sed.struc.dist <- 1 - vegdist(OTUsREL.log[which(design$habitat == "sediment"),])
 #sed.coord.dist <- dist(as.matrix(sed.lat, sed.lon))
-sed.env.dist <- 1 - vegdist(env.mat[which(design$habitat == "sediment"),])
+#sed.env.dist <- 1 - vegdist(env.mat[which(design$habitat == "sediment"),])
 sed.struc.dist.ls <- liste(sed.struc.dist, entry = "struc")
-sed.env.dist.ls <- liste(sed.env.dist, entry = "env")
+#sed.env.dist.ls <- liste(sed.env.dist, entry = "env")
 sed.coord.dist.ls <- liste(sed.coord.dist, entry = "dist")
-sed.distances <- data.frame(sed.coord.dist.ls, sed.env.dist.ls[,3], sed.struc.dist.ls[,3])
-names(sed.distances)[4:5] <- c("env", "struc")
+sed.distances <- data.frame(na.omit(sed.coord.dist.ls), sed.struc.dist.ls[,3])
+names(sed.distances)[4] <- c("struc")
 
 ## Make Figure
 png(filename = "../figures/FigureS4.png",
@@ -1027,9 +1028,9 @@ par(mfrow = c(2, 1) + 0.5)
 par(mar = c(1, 5, 3, 3))
 plot(water.distances$dist, water.distances$struc, xlab="", 
      ylab = "", xaxt="n", yaxt="n", 
-     xlim = c(0,12500), ylim = c(0,.6))
-(water.lm <- summary(lm(water.distances$struc ~ water.distances$dist)))
-abline(water.lm)
+     )
+(water.lm <- (lm(water.distances$struc ~ water.distances$dist)))
+abline(water.lm, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
@@ -1039,18 +1040,17 @@ mtext("Surface Water", side = 2, line = 3, cex = 1.2)
 
 par(mar = c(4, 5, 1, 3))
 plot(sed.distances$dist, sed.distances$struc, xlab="", 
-     ylab = "", xaxt = "n", yaxt = "n", 
-     xlim = c(0,12500), ylim = c(0,.6))
+     ylab = "", xaxt = "n", yaxt = "n", )
 axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
 mtext("Sediment", side = 2, line = 3, cex = 1.2)
-sed.lm <- summary(lm(sed.distances$struc ~ sed.distances$dist))
-abline(sed.lm)
+(sed.lm <- (lm(sed.distances$struc ~ sed.distances$dist)))
+abline(sed.lm, lwd = 2)
 
-mtext("Distance (m)", side = 1, line = 3, cex = 1.5)
+mtext("Dendritic distance (m)", side = 1, line = 3, cex = 1.5)
 
 dev.off()
 graphics.off()
@@ -1058,6 +1058,10 @@ graphics.off()
 diffslope(sed.distances$dist, sed.distances$struc, water.distances$dist, water.distances$struc)
 ```
 
+```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Distance-decay relationship."}
+img <- readPNG("../figures/FigureS4.png")
+grid.raster(img)
+```
 
 ### GIS and Imagery
 ```{r, eval=FALSE}
@@ -1365,3 +1369,49 @@ graphics.off()
 img <- readPNG("../figures/FigureS6.png")
 grid.raster(img)
 ```
+
+# Co-occurrence analysis
+```{R}
+require(cooccur)
+hja.cooccur <- cooccur(mat = as.data.frame(OTUs.PA),
+                       type = "site_spp",
+                       spp_names = T,
+                       thresh = T)
+```
+
+# Rank-Abundance Curve
+```{r}
+RAC <- function(x = ""){
+  x = as.vector(x)
+  x.ab = x[x > 0]
+  x.ab.ranked = x.ab[order(x.ab, decreasing = TRUE)]
+  return(x.ab.ranked)
+  }
+
+sed.sites <- OTUsREL.log[which(design$habitat == "sediment"),]
+water.sites <- OTUsREL.log[which(design$habitat == "water"),]
+rac <- RAC(sed.sites[1,])
+ranks <- as.vector(seq(1, length(rac)))
+par(mar=c(5.1, 5.1, 4.1, 2.1))                        
+plot(ranks, log(rac), type = 'l', axes=F, col = "brown",           
+     xlab = "Rank in abundance", ylab = "Abundance",
+     las = 1, cex.lab = 1.4, cex.axis = 1.25,
+     ylim = c(0, log(20)), xlim = c(0, max(alpha.div$S.obs)))
+for(site in 2:nrow(sed.sites)){
+  rac <- RAC(sed.sites[site,])
+  ranks <- as.vector(seq(1, length(rac)))
+  points(ranks, log(rac), type = 'l', col = "brown")
+}
+for(site in 1:nrow(water.sites)){
+  rac <- RAC(water.sites[site,])
+  ranks <- as.vector(seq(1, length(rac)))
+  points(ranks, log(rac), type = 'l', col = "blue")
+}
+
+box()                                                 
+axis(side = 1, labels=T, cex.axis = 1.25)             
+axis(side = 2, las = 1, cex.axis = 1.25,              
+     labels=c(1, 2, 5, 10, 20), at=log(c(1, 2, 5, 10, 20)))
+
+```
+			   
