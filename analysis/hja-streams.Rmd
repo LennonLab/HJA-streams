@@ -1290,6 +1290,7 @@ heatmap.2(as.matrix(hja.db), distfun = function(x) vegdist(x, method = "bray"),
           col = jet.colors(100), trace = "none", density.info = "none")
 ```
 
+# Distance-Decay Relationships
 ```{r}
 hja.pca <- princomp(env.mat)
 summary(hja.pca)
@@ -1298,9 +1299,24 @@ biplot(hja.pca)
 pc1 <- hja.pca$scores[,1]
 pc2 <- hja.pca$scores[,2]
 
+xy <- cbind(env$longitude, env$latitude)
+xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
+dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+dist.mat[!lower.tri(dists)] <- NA 
+
+geo.dists <- na.omit(liste(dist.mat, entry = "geo.dist"))
 env.dists <- liste(dist(pc1), entry = "env")[,3]
+den.dists <- na.omit(liste(dists, entry = "dend.dist"))
 hja.dists <- cbind(liste(hja.db, entry = "comm.struc"), env.dists)
-plot(hja.dists$env.dists, hja.dists$comm.struc)
+hja.dists <- cbind(hja.dists, den.dists[,3], geo.dists[,3])
+names(hja.dists)[c(5,6)] <- c("den.dists", "geo.dists")
+
+
+plot(hja.dists$env.dists, 1 - hja.dists$comm.struc)
+plot(hja.dists$den.dists, 1 - hja.dists$comm.struc)
+plot(hja.dists$den.dists, hja.dists$env.dists)
+plot(hja.dists$geo.dists, hja.dists$env.dists)
+plot(hja.dists$geo.dists, 1 - hja.dists$comm.struc)
 
 summary(lm(hja.dists$comm.struc ~ hja.dists$env.dists))
 
