@@ -474,6 +474,7 @@ dev.off()
 graphics.off()
 
 t.test(1-water.frac, 1-sed.frac)
+mean(1 - water.frac) / mean(1 - sed.frac)
 ```
 
 ```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Surface waters house more unique taxa than sediments do."}
@@ -1030,6 +1031,7 @@ plot(water.distances$dist, water.distances$struc, xlab="",
      ylab = "", xaxt="n", yaxt="n", 
      )
 (water.lm <- (lm(water.distances$struc ~ water.distances$dist)))
+summary(water.lm)
 abline(water.lm, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
@@ -1048,6 +1050,7 @@ axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
 mtext("Sediment", side = 2, line = 3, cex = 1.2)
 (sed.lm <- (lm(sed.distances$struc ~ sed.distances$dist)))
+summary(sed.lm)
 abline(sed.lm, lwd = 2)
 
 mtext("Dendritic distance (m)", side = 1, line = 3, cex = 1.5)
@@ -1348,7 +1351,8 @@ par(mar = c(1, 5, 3, 3) + 0.4)
 plot(water.dists$water.env.dists, water.dists$comm.struc, xlab="", 
      ylab = "", xaxt="n", yaxt="n", 
      xlim = c(-.15, 6.5), ylim = c(0.05,.65))
-abline(lm(water.dists$comm.struc ~ water.dists$water.env.dists), lty = 2, lwd = 2)
+w.env.lm <- lm(water.dists$comm.struc ~ water.dists$water.env.dists)
+abline(w.env.lm, lty = 2, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
@@ -1366,8 +1370,8 @@ axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
 mtext("Community Similarity\nSediment", side = 2, line = 3, cex = 1.2)
-abline(lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists), lwd = 2)
-
+s.env.lm <- lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists)
+abline(s.env.lm, lwd = 2)
 mtext("Environmental Distance (PC1)", side = 1, line = 3, cex = 1.5)
 
 
