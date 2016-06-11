@@ -915,7 +915,7 @@ axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
-mtext("Community Similarity\nSurface Water", side = 2, line = 3, cex = 1.2)
+mtext("log Community Similarity\nSurface Water", side = 2, line = 3, cex = 1.2)
 box(lwd=2)
 abline(water.elev.lm, lty = 2, lwd = 2)
 
@@ -929,7 +929,7 @@ axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
-mtext("Community Similarity\nSediments", side = 2, line = 3, cex = 1.2)
+mtext("log Community Similarity\nSediments", side = 2, line = 3, cex = 1.2)
 mtext("Elevation difference (m)", side = 1, line = 3, cex = 1.5)
 box(lwd=2)
 abline(sed.elev.lm, lwd = 2)
@@ -1042,9 +1042,9 @@ names(sed.distances)[4] <- c("struc")
 ## Make Figure
 png(filename = "../figures/Figure9.png",
     width = 1200, height = 1200, res = 96*2)
-par(mfrow = c(2, 1) + 0.5)
+par(mfrow = c(2, 1))
 
-par(mar = c(1, 5, 3, 3))
+par(mar = c(1, 5, 3, 3) + 0.5)
 plot(water.distances$dist, log(water.distances$struc), xlab="", 
      ylab = "", xaxt="n", yaxt="n", 
      )
@@ -1056,9 +1056,9 @@ axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd = 2)
-mtext("Surface Water", side = 2, line = 3, cex = 1.2)
+mtext("log Community Similarity\nSurface Water", side = 2, line = 3, cex = 1.2)
 
-par(mar = c(4, 5, 1, 3))
+par(mar = c(4, 5, 1, 3) + 0.5)
 plot(sed.distances$dist, log(sed.distances$struc), xlab="", 
      ylab = "", xaxt = "n", yaxt = "n", )
 axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
@@ -1066,7 +1066,7 @@ axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
-mtext("Sediment", side = 2, line = 3, cex = 1.2)
+mtext("log Community Similarity\nSediment", side = 2, line = 3, cex = 1.2)
 (sed.lm <- (lm(log(sed.distances$struc) ~ sed.distances$dist)))
 summary(sed.lm)
 abline(sed.lm, lwd = 2)
@@ -1076,7 +1076,7 @@ mtext("Dendritic distance (m)", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
 
-diffslope(sed.distances$dist, sed.distances$struc, water.distances$dist, water.distances$struc)
+#diffslope(sed.distances$dist, sed.distances$struc, water.distances$dist, water.distances$struc)
 ```
 
 ```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Distance-decay relationship."}
@@ -1332,17 +1332,11 @@ hja.dists <- cbind(liste(hja.db, entry = "comm.struc"), env.dists)
 hja.dists <- cbind(hja.dists, den.dists[,3], geo.dists[,3])
 names(hja.dists)[c(5,6)] <- c("den.dists", "geo.dists")
 
-
-plot(hja.dists$env.dists, log(1 - hja.dists$comm.struc))
-plot(hja.dists$den.dists, log(1 - hja.dists$comm.struc))
-plot(hja.dists$den.dists, hja.dists$env.dists)
-plot(hja.dists$geo.dists, hja.dists$env.dists)
-plot(hja.dists$geo.dists, log(1 - hja.dists$comm.struc))
+hja.env.lm <- (lm(log(1-hja.dists$comm.struc) ~ hja.dists$env.dists))
+hja.den.lm <- (lm(log(1-hja.dists$comm.struc) ~ hja.dists$den.dists))
+hja.geo.lm <- (lm(log(1-hja.dists$comm.struc) ~ hja.dists$geo.dists))
 
 
-abline(lm(log(1-hja.dists$comm.struc) ~ hja.dists$env.dists))
-abline(lm(log(1-hja.dists$comm.struc) ~ hja.dists$den.dists))
-abline(lm(log(1-hja.dists$comm.struc) ~ hja.dists$geo.dists))
 
 
 water.pca <- princomp(env.mat[which(design$habitat == "water"),])
@@ -1382,7 +1376,7 @@ axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd = 2)
-mtext("Community Similarity\nSurface Water", side = 2, line = 3, cex = 1.2)
+mtext("log Community Similarity\nSurface Water", side = 2, line = 3, cex = 1.2)
 
 par(mar = c(4, 5, 1, 3) + 0.4)
 plot(sed.dists$sed.env.dists, log(sed.dists$comm.struc), xlab="", 
@@ -1392,7 +1386,7 @@ axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
-mtext("Community Similarity\nSediment", side = 2, line = 3, cex = 1.2)
+mtext("log Community Similarity\nSediment", side = 2, line = 3, cex = 1.2)
 #s.env.lm <- lm(sed.dists$comm.struc ~ sed.dists$sed.env.dists)
 abline(sed.dd, lwd = 2)
 mtext("Environmental Distance (PC1)", side = 1, line = 3, cex = 1.5)
@@ -1411,6 +1405,96 @@ graphics.off()
 ```{r fig.width=4, fig.height=4,echo=FALSE,fig.cap="Beta-diversity in surface waters and sediments by elevation."}
 img <- readPNG("../figures/FigureS6.png")
 grid.raster(img)
+```
+
+# Catchment-scale DDRs
+```{r}
+png(filename = "../figures/Figure10.png",
+    width = 1200, height = 1200, res = 96*2)
+
+par(mar = c(5, 5, 3, 3) + 0.4)
+plot(hja.dists$env.dists, log(1 - hja.dists$comm.struc), xlab="", 
+     ylab = "", xaxt="n", yaxt="n")
+abline(hja.env.lm, lwd = 2)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("log Community Similarity", side = 2, line = 3, cex = 1.5)
+mtext("Environmental Distance (PC1)", side = 1, line = 3, cex = 1.5)
+dev.off()
+graphics.off()
+
+png(filename = "../figures/Figure11.png",
+    width = 1200, height = 1200, res = 96*2)
+
+par(mar = c(5, 5, 3, 3) + 0.4)
+plot(hja.dists$den.dists, log(1 - hja.dists$comm.struc), xlab="", 
+     ylab = "", xaxt="n", yaxt="n")
+abline(hja.den.lm, lwd = 2)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("log Community Similarity", side = 2, line = 3, cex = 1.5)
+mtext("Dendritic distance (m)", side = 1, line = 3, cex = 1.5)
+dev.off()
+graphics.off()
+
+png(filename = "../figures/Figure12.png",
+    width = 1200, height = 1200, res = 96*2)
+
+par(mar = c(5, 5, 3, 3) + 0.4)
+plot(hja.dists$geo.dists, log(1 - hja.dists$comm.struc), xlab="", 
+     ylab = "", xaxt="n", yaxt="n")
+abline(hja.geo.lm, lwd = 2)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("log Community Similarity", side = 2, line = 3, cex = 1.5)
+mtext("Geographic Distance (m)", side = 1, line = 3, cex = 1.5)
+dev.off()
+graphics.off()
+
+png(filename = "../figures/Figure13.png",
+    width = 1200, height = 1200, res = 96*2)
+
+par(mar = c(5, 5, 3, 3) + 0.4)
+plot(hja.dists$geo.dists, hja.dists$env.dists, xlab="", 
+     ylab = "", xaxt="n", yaxt="n")
+abline(lm(hja.dists$env.dists ~ hja.dists$geo.dists), lwd = 2)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("Environmental Distance (PC1)", side = 2, line = 3, cex = 1.5)
+mtext("Geographic Distance (m)", side = 1, line = 3, cex = 1.5)
+dev.off()
+graphics.off()
+
+png(filename = "../figures/Figure14.png",
+    width = 1200, height = 1200, res = 96*2)
+
+par(mar = c(5, 5, 3, 3) + 0.4)
+plot(hja.dists$den.dists, hja.dists$env.dists, xlab="", 
+     ylab = "", xaxt="n", yaxt="n")
+abline(lm(hja.dists$env.dists ~ hja.dists$den.dists), lwd = 2)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("Environmental Distance (PC1)", side = 2, line = 3, cex = 1.5)
+mtext("Dendritic Distance (m)", side = 1, line = 3, cex = 1.5)
+dev.off()
+graphics.off()
+
+
 ```
 
 # Co-occurrence analysis
