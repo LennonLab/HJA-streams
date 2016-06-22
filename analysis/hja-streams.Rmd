@@ -2,7 +2,7 @@
 title: "Analysis for Stream Microbial Metacommunity"
 output: pdf_document
 ---
-### Initial Setup
+## Initial Setup
 ```{r}
 rm(list=ls())
 setwd("~/GitHub/HJA-streams/analysis")
@@ -22,6 +22,8 @@ require("SoDA")
 require("grid")
 require("simba")
 require("vegetarian")
+require("geoR")
+
 
 se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
 
@@ -76,7 +78,6 @@ goods.c <- goods(OTUs)
 
 # Remove Low Coverage Samples
 lows <- which(coverage < 7000)
-lows
 OTUs <- OTUs[-which(coverage < 7000), ]
 design <- design.total[-which(coverage < 7000), ]
 env <- env.total[-which(coverage < 7000), ]
@@ -101,27 +102,24 @@ xy <- cbind(env$longitude, env$latitude)
 geo.dists <- geoXY(env$latitude, env$longitude)
 xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
 dist.mat <- as.matrix(dist(xy, method = "euclidean"))
-
-# Connectivity Matrix 
-adj.mat <- as.matrix(read.csv("../data/undirected-matrix.csv", header=T))
-row.names(adj.mat) <- adj.mat[,1]
-adj.mat <- adj.mat[,-1]
-adj.mat <- (adj.mat == 1) * 1
-adj.mat <- adj.mat[-which(coverage < 7000), -which(coverage < 7000)]
+# 
+# # Connectivity Matrix 
+# adj.mat <- as.matrix(read.csv("../data/undirected-matrix.csv", header=T))
+# row.names(adj.mat) <- adj.mat[,1]
+# adj.mat <- adj.mat[,-1]
+# adj.mat <- (adj.mat == 1) * 1
+# adj.mat <- adj.mat[-which(coverage < 7000), -which(coverage < 7000)]
 
 # Make Relative Abundence Matrices
 OTUsREL <- decostand(OTUs, method = "total")
 
 # Transform Relative Abundances
 OTUsREL.log <- decostand(OTUs, method = "log")
-
-OTUs.PA <- decostand(OTUs, method = "pa")
-
-OTUsREL.hel <- decostand(OTUs, method = "hellinger")
-
 ```
 
-### Calculate Alpha Diversity
+## Calculate Alpha Diversity
+
+### Richness and Rarefaction
 ```{r}
 # Observed Richness
 S.obs <- rowSums((OTUs > 0) * 1)
@@ -129,77 +127,242 @@ S.obs <- rowSums((OTUs > 0) * 1)
 # Simpson's Evenness
 SimpE <- function(x = ""){
   x <- as.data.frame(x)
-  D <- diversity(x, "inv")
+  D <- vegan::diversity(x, "inv")
   S <- sum((x > 0) * 1) 
   E <- (D)/S 
   return(E)
 }
-simpsE <- round(apply(OTUsREL.hel, 1, SimpE), 3)
-
-shan <- diversity(OTUsREL.hel, index = "shannon")
-simpsD <- diversity(OTUsREL.hel, index = "invsimpson")
-
-s.size <- as.vector(c(rowSums(OTUsREL.log)))
-hja.alpha <- d(OTUsREL.log, lev = "alpha", q = 1, boot = T, 
-               boot.arg = list(s.sizes = s.size))
-hja.beta <- d(OTUsREL.log, lev = "beta", q = 1, boot = T, 
-              boot.arg = list(s.sizes = s.size))
-hja.gamma <- d(OTUsREL.log, lev = "gamma", q = 1, boot = T, 
-               boot.arg = list(s.sizes = s.size))
-
-water.alpha <- d(OTUsREL.log[which(design$habitat == "water"),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water")]))
-sediment.alpha <- d(OTUsREL.log[which(design$habitat == "sediment"),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment")]))
-
-water.alpha$D.Value / sediment.alpha$D.Value
-
+simpsE <- round(apply(OTUsREL, 1, SimpE), 3)
+shan <- vegan::diversity(OTUsREL, index = "shannon")
+simpsD <- vegan::diversity(OTUsREL, index = "invsimpson")
 
 # Rarefaction
-hja.S <- rowSums((OTUs > 0) * 1)
 min.N <- min(rowSums(OTUs))
 S.rarefy <- rarefy(x = OTUs, sample = (min.N/2), se = TRUE)
-#S.rarefy2 <- rarefy(x = OTUs, sample = min.N/2, se = TRUE)
 #rarecurve(x = OTUs, step = 20, col = "blue", cex = 0.6, las = 1)
 rare.d <- t(S.rarefy)
-#rare.d.2 <- t(S.rarefy2)
 colnames(rare.d) <- c("S.rare", "se.rare")
-#colnames(rare.d.2) <- c("S.rare.sub", "se.rare.sub")
-
-
 alpha.div <- cbind(design, S.obs, simpsE, shan, simpsD, rare.d)
-```
 
-
-#### Alpha Diversity Across Habitats
-```{r}
 # Seperate data based on water and sediment samples
-water <- alpha.div[alpha.div$habitat == "water",]
-sed <- alpha.div[alpha.div$habitat == "sediment", ]
-
-lc   <- alpha.div[alpha.div$watershed == "LC",]
-ws01 <- alpha.div[alpha.div$watershed == "WS01",]
+alpha.water <- alpha.div[alpha.div$habitat == "water",]
+alpha.sed <- alpha.div[alpha.div$habitat == "sediment", ]
 
 # Differences in diversity (richness and evenness) between habitats
-t.test(S.rare ~ habitat, data = alpha.div)
+t.test(alpha.water$S.rare, alpha.sed$S.rare)
 mean(c(358.0118, 120.1305)) / mean(alpha.div$S.rare[alpha.div$habitat == "sediment"])
-
-
-t.test(shan ~ habitat, data = alpha.div)
-t.test(simpsE ~ habitat, data = alpha.div)
-
-plot(simpsE ~ order, data = alpha.div[which(alpha.div$habitat == "water"),])
-a.1 <- alpha.div[which(alpha.div$order == 1),]
-a.2 <- alpha.div[which(alpha.div$order != 1),]
 
 t.test(a.1$S.rare, a.2$S.rare)
 
-# Rare tail:
-cor.test(alpha.div$S.obs, alpha.div$simpsE)
-#plot(alpha.div$S.obs, alpha.div$simpsE)
+
 ```
+
+### Numbers Equivalents
+```{r}
+# Numbers Equivalents
+s.size <- as.vector(c(rowSums(OTUsREL)))
+hja.alpha <- d(OTUsREL, lev = "alpha", q = 1, boot = T, 
+               boot.arg = list(s.sizes = s.size))
+hja.beta <- d(OTUsREL, lev = "beta", q = 1, boot = T, 
+              boot.arg = list(s.sizes = s.size))
+hja.gamma <- d(OTUsREL, lev = "gamma", q = 1, boot = T, 
+               boot.arg = list(s.sizes = s.size))
+
+water.alpha <- d(OTUsREL[which(design$habitat == "water"),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water")]))
+sediment.alpha <- d(OTUsREL[which(design$habitat == "sediment"),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment")]))
+
+water.beta <- d(OTUsREL[which(design$habitat == "water"),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water")]))
+sediment.beta <- d(OTUsREL[which(design$habitat == "sediment"),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment")]))
+
+water.alpha$D.Value / sediment.alpha$D.Value
+water.beta$D.Value / sediment.beta$D.Value
+
+# Calculate Water Alpha Diversity
+water.alpha.1 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 1),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 1)]))
+water.alpha.2 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 2),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 2)]))
+water.alpha.3 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 3),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 3)]))
+water.alpha.4 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 4),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 4)]))
+water.alpha.5 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 5),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 5)]))
+# Calculate Water Beta Diversity
+water.beta.1 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 1),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 1)]))
+water.beta.2 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 2),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 2)]))
+water.beta.3 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 3),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 3)]))
+water.beta.4 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 4),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 4)]))
+water.beta.5 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 5),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 5)]))
+
+# Calculate Water Gamma Diversity
+water.gamma.1 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 1),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 1)]))
+water.gamma.2 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 2),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 2)]))
+water.gamma.3 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 3),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 3)]))
+water.gamma.4 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 4),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 4)]))
+water.gamma.5 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 5),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
+                                                          design$order == 5)]))
+
+# Calculate sediment alpha diversity
+sed.alpha.1 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 1),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 1)]))
+sed.alpha.2 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 2),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 2)]))
+sed.alpha.3 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 3),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 3)]))
+sed.alpha.4 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 4),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 4)]))
+sed.alpha.5 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 5),], 
+                 lev = "alpha", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 5)]))
+
+# Calculate sediment beta diversity
+sed.beta.1 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 1),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 1)]))
+sed.beta.2 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 2),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 2)]))
+sed.beta.3 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 3),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 3)]))
+sed.beta.4 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 4),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 4)]))
+sed.beta.5 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 5),], 
+                 lev = "beta", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 5)]))
+
+# Calculate Sediment Gamma Diversity
+sed.gamma.1 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 1),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 1)]))
+sed.gamma.2 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 2),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 2)]))
+sed.gamma.3 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 3),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 3)]))
+sed.gamma.4 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 4),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 4)]))
+sed.gamma.5 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 5),], 
+                 lev = "gamma", q = 1, boot = T, 
+                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
+                                                          design$order >= 5)]))
+
+# Create Vectors of Diversity Measures
+water.a <- c(water.alpha.1$D.Value, water.alpha.2$D.Value, water.alpha.3$D.Value, 
+             water.alpha.4$D.Value, water.alpha.5$D.Value)
+water.a.se <- c(water.alpha.1$StdErr, water.alpha.2$StdErr, water.alpha.3$StdErr, 
+             water.alpha.4$StdErr, water.alpha.5$StdErr)
+water.b <- c(water.beta.1$D.Value, water.beta.2$D.Value, water.beta.3$D.Value, 
+             water.beta.4$D.Value, water.beta.5$D.Value)
+water.b.se <- c(water.beta.1$StdErr, water.beta.2$StdErr, water.beta.3$StdErr, 
+             water.beta.4$StdErr, water.beta.5$StdErr)
+water.g <- c(water.gamma.1$D.Value, water.gamma.2$D.Value, water.gamma.3$D.Value, 
+             water.gamma.4$D.Value, water.gamma.5$D.Value)
+water.g.se <- c(water.gamma.1$StdErr, water.gamma.2$StdErr, water.gamma.3$StdErr, 
+             water.gamma.4$StdErr, water.gamma.5$StdErr)
+
+sed.a <- c(sed.alpha.1$D.Value, sed.alpha.2$D.Value, sed.alpha.3$D.Value, 
+             sed.alpha.4$D.Value, sed.alpha.5$D.Value)
+sed.a.se <- c(sed.alpha.1$StdErr, sed.alpha.2$StdErr, sed.alpha.3$StdErr, 
+             sed.alpha.4$StdErr, sed.alpha.5$StdErr)
+sed.b <- c(sed.beta.1$D.Value, sed.beta.2$D.Value, sed.beta.3$D.Value, 
+             sed.beta.4$D.Value, sed.beta.5$D.Value)
+sed.b.se <- c(sed.beta.1$StdErr, sed.beta.2$StdErr, sed.beta.3$StdErr, 
+             sed.beta.4$StdErr, sed.beta.5$StdErr)
+sed.g <- c(sed.gamma.1$D.Value, sed.gamma.2$D.Value, sed.gamma.3$D.Value, 
+             sed.gamma.4$D.Value, sed.gamma.5$D.Value)
+sed.g.se <- c(sed.gamma.1$StdErr, sed.gamma.2$StdErr, sed.gamma.3$StdErr, 
+             sed.gamma.4$StdErr, sed.gamma.5$StdErr)
+orders <- c(1,2,3,4,5)
+water.hill <- as.data.frame(cbind(orders, water.a, water.a.se, water.b, water.b.se, water.g, water.g.se))
+sed.hill <- as.data.frame(cbind(orders, sed.a, sed.a.se, sed.b, sed.b.se, sed.g, sed.g.se))
+
+# Plot by stream order to visualize
+plot(water.hill$orders, water.hill$water.a, type = "l")
+plot(water.hill$orders, water.hill$water.b, type = "l")
+plot(water.hill$orders, water.hill$water.g, type = "l")
+plot(sed.hill$orders, sed.hill$sed.a, type = "l")
+plot(sed.hill$orders, sed.hill$sed.b, type = "l")
+plot(sed.hill$orders, sed.hill$sed.g, type = "l")
+
+model.water.b <- lm(water.hill$water.b ~ water.hill$orders)
+summary(model.water.b)
+conf95.water.b <- predict.lm(object = model.water.b, interval="confidence")
+
+model.sed.b <- lm(sed.hill$sed.b ~ sed.hill$orders)
+summary(model.sed.b)
+conf95.sed.b <- predict.lm(object = model.sed.b, interval="confidence")
+```
+
 
 ### Figure 1: Rarefied diversity in sediment and surface-water communities
 ```{r}
@@ -374,7 +537,7 @@ var2 <- round(hja.pcoa$eig[2] / sum(hja.pcoa$eig),3) * 100
 var3 <- round(hja.pcoa$eig[3] / sum(hja.pcoa$eig),3) * 100
 
 # Sediments Only
-sediment <- OTUsREL.log[which(design$habitat == "sediment"),]
+sediment <- OTUsREL[which(design$habitat == "sediment"),]
 sediment.db <- vegdist(sediment, method = "bray", diag = T)
 sediment.pcoa <- cmdscale(sediment.db, eig=TRUE, k=3)
 sed.design <- design[which(design$habitat == "sediment"),]
@@ -383,7 +546,7 @@ s.var2 <- round(sediment.pcoa$eig[2] / sum(sediment.pcoa$eig),3) * 100
 s.var3 <- round(sediment.pcoa$eig[3] / sum(sediment.pcoa$eig),3) * 100
 
 # Water Only
-water <- OTUsREL.log[which(design$habitat == "water"),]
+water <- OTUsREL[which(design$habitat == "water"),]
 water.db <- vegdist(water, method = "bray", diag = T)
 water.pcoa <- cmdscale(water.db, eig=TRUE, k=3)
 water.design <- design[which(design$habitat == "water"),]
@@ -1016,7 +1179,7 @@ dists[!lower.tri(dists)] <- NA
 #water.lon <- as.numeric(env$longitude[which(design$habitat == "water")])
 water.xy <- xy[which(design$habitat == "water"),]
 water.coord.dist <- dists[which(design$habitat == "water"),which(design$habitat == "water")]
-water.struc.dist <- 1 - vegdist(OTUsREL.log[which(design$habitat == "water"),])
+water.struc.dist <- 1 - vegdist(OTUsREL[which(design$habitat == "water"),])
 #water.coord.dist <- dist(as.matrix(water.lat, water.lon))
 #water.env.dist <- 1 - vegdist(env.mat[which(design$habitat == "water"),])
 water.struc.dist.ls <- liste(water.struc.dist, entry = "struc")
@@ -1030,7 +1193,7 @@ names(water.distances)[4] <- c("struc")
 #sed.lon <- as.numeric(env$longitude[which(design$habitat == "sediment")])
 sed.xy <- xy[which(design$habitat == "sediment"),]
 sed.coord.dist <- dists[which(design$habitat == "sediment"),which(design$habitat == "sediment")]
-sed.struc.dist <- 1 - vegdist(OTUsREL.log[which(design$habitat == "sediment"),])
+sed.struc.dist <- 1 - vegdist(OTUsREL[which(design$habitat == "sediment"),])
 #sed.coord.dist <- dist(as.matrix(sed.lat, sed.lon))
 #sed.env.dist <- 1 - vegdist(env.mat[which(design$habitat == "sediment"),])
 sed.struc.dist.ls <- liste(sed.struc.dist, entry = "struc")
@@ -1146,7 +1309,7 @@ water.pcnmw <- pcnm(dist(xy[which(design$habitat == "water"),]), w = water.rs)
 
 water.spatial.var <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),] ~ scores(water.pcnmw))
 water.env.var <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),] ~ env.mat[which(design$habitat == "water"),])
-water.env.spat.var <- vegan::rdaa(OTUsREL.log[which(design$habitat == "water"),] ~
+water.env.spat.var <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),] ~
       scores(water.pcnmw) + Condition(env.mat[which(design$habitat == "water"),]))
 water.spat.env.var <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),] ~ 
       env.mat[which(design$habitat == "water"),] + Condition(scores(water.pcnmw)))
@@ -1156,7 +1319,7 @@ sum(water.spatial.var$CCA$eig)
 sum(water.env.spat.var$CCA$eig)
 sum(water.spat.env.var$CCA$eig)
 
-water.ca <- vegan::cca(OTUsREL.log[which(design$habitat == "water"),])
+water.ca <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),])
 sum(water.ca$CA$eig)
 
 water.var.part.1 <- sum(water.env.var$CCA$eig) / sum(water.ca$CA$eig)
@@ -1164,10 +1327,14 @@ water.var.part.2 <- sum(water.spatial.var$CCA$eig) / sum(water.ca$CA$eig)
 water.var.part.3 <- sum(water.spat.env.var$CCA$eig) / sum(water.ca$CA$eig)
 water.var.part.4 <- sum(water.env.spat.var$CCA$eig) / sum(water.ca$CA$eig)
 
-print(paste("Water Pure Env. = ", water.var.part.1))
-print(paste("Water Pure Space. = ", water.var.part.2))
-print(paste("Water Spatial + Env = ", (water.var.part.1 - water.var.part.3)))
-print(paste("Water Residual Var. = ", (1- sum(water.var.part.1 + water.var.part.2))))
+water.table <- matrix(c(
+rbind(c("Water", "Pure Env. = ", water.var.part.1)),
+rbind(c("Water", "Pure Space. = ", water.var.part.2)),
+rbind(c("Water", "Spatial + Env = ", (water.var.part.1 - water.var.part.3))),
+rbind(c("Water", "Residual Var. = ", (1- sum(water.var.part.1 + water.var.part.2))))
+), nrow = 4, byrow = T)
+colnames(water.table) <- c("Habitat", "Variation Partition", "Value")
+
 ```
 
 #### Var Part - Sediments Only
@@ -1177,11 +1344,11 @@ sediment.rs <- rowSums(OTUsREL.log[which(design$habitat == "sediment"),]) /
   sum(OTUsREL.log[which(design$habitat == "sediment"),])
 sediment.pcnmw <- pcnm(dist(xy[which(design$habitat == "sediment"),]), w = sediment.rs)
 
-sediment.spatial.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ scores(sediment.pcnmw))
-sediment.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ env.mat[which(design$habitat == "sediment"),])
-sediment.env.spat.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~
+sediment.spatial.var <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),] ~ scores(sediment.pcnmw))
+sediment.env.var <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),] ~ env.mat[which(design$habitat == "sediment"),])
+sediment.env.spat.var <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),] ~
       scores(sediment.pcnmw) + Condition(env.mat[which(design$habitat == "sediment"),]))
-sediment.spat.env.var <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),] ~ 
+sediment.spat.env.var <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),] ~ 
       env.mat[which(design$habitat == "sediment"),] + Condition(scores(sediment.pcnmw)))
 
 sum(sediment.env.var$CCA$eig)
@@ -1189,7 +1356,7 @@ sum(sediment.spatial.var$CCA$eig)
 sum(sediment.env.spat.var$CCA$eig)
 sum(sediment.spat.env.var$CCA$eig)
 
-sediment.ca <- vegan::cca(OTUsREL.log[which(design$habitat == "sediment"),])
+sediment.ca <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),])
 sum(sediment.ca$CA$eig)
 
 sediment.var.part.1 <- sum(sediment.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
@@ -1201,6 +1368,21 @@ print(paste("Sediment Pure Env. = ", sediment.var.part.1))
 print(paste("Sediment Pure Space. = ", sediment.var.part.2))
 print(paste("Sediment Spatial + Env = ", (sediment.var.part.1 - sediment.var.part.3)))
 print(paste("Sediment Residual Var. = ", (1- sum(sediment.var.part.1 + sediment.var.part.2))))
+
+perm.sed.spa <- permutest(sediment.spatial.var, permutations = 999)
+perm.sed.env <- permutest(sediment.env.var, permutations = 999)
+perm.sed.env_spa <- permutest(sediment.spatial.var, permutations = 999)
+perm.sed.spa_env <- permutest(sediment.spatial.var, permutations = 999)
+
+sediment.table <- matrix(c(
+rbind(c("Sediment", "Pure Env. = ", sediment.var.part.1)),
+rbind(c("Sediment", "Pure Space. = ", sediment.var.part.2)),
+rbind(c("Sediment", "Spatial + Env = ", (sediment.var.part.1 - sediment.var.part.3))),
+rbind(c("Sediment", "Residual Var. = ", (1- sum(sediment.var.part.1 + sediment.var.part.2))))
+), nrow = 4, byrow = T)
+colnames(sediment.table) <- c("Habitat", "Variation Partition", "Value")
+
+
 ```
 
 ```{r}
@@ -1336,25 +1518,34 @@ hja.env.lm <- (lm(log(1-hja.dists$comm.struc) ~ hja.dists$env.dists))
 hja.den.lm <- (lm(log(1-hja.dists$comm.struc) ~ hja.dists$den.dists))
 hja.geo.lm <- (lm(log(1-hja.dists$comm.struc) ~ hja.dists$geo.dists))
 
+hja.geo_env.lm <- lm(log(1-hja.dists$comm.struc) ~ hja.dists$geo.dists | hja.dists$env.dists)
 
+summary(hja.geo_env.lm)
 
 
 water.pca <- princomp(env.mat[which(design$habitat == "water"),])
 summary(water.pca)
 water.pc1 <- water.pca$scores[,1]
+water.geo.dists <- na.omit(liste(dist.mat[which(design$habitat == "water"), which(design$habitat == "water")],
+                                 entry = "geo.dist"))
 water.env.dists <- liste(dist(water.pc1), entry = "env")[,3]
-water.dists <- cbind(liste((1 - water.db), entry = "comm.struc"), water.env.dists)
+water.dists <- cbind(liste((1 - water.db), entry = "comm.struc"), water.env.dists, water.geo.dists)
 plot(water.dists$water.env.dists, log(water.dists$comm.struc))
 
 sed.pca <- princomp(env.mat[which(design$habitat == "sediment"),])
 summary(sed.pca)
 sed.pc1 <- sed.pca$scores[,1]
+sed.geo.dists <- na.omit(liste(dist.mat[which(design$habitat == "sediment"), which(design$habitat == "sediment")],
+                                 entry = "geo.dist"))
 sed.env.dists <- liste(dist(sed.pc1), entry = "env")[,3]
-sed.dists <- cbind(liste((1-sediment.db), entry = "comm.struc"), sed.env.dists)
+sed.dists <- cbind(liste((1-sediment.db), entry = "comm.struc"), sed.env.dists, sed.geo.dists)
 plot(sed.dists$sed.env.dists, log(sed.dists$comm.struc))
 
-sed.dd <- (lm(log(sed.dists$comm.struc) ~ sed.dists$sed.env.dists))
-water.dd <- (lm(log(water.dists$comm.struc) ~ water.dists$water.env.dists))
+sed.dd <- (lm(log(sed.dists$comm.struc) ~ sed.dists$sed.env.dists * sed.dists$geo.dist ))
+water.dd <- (lm(log(water.dists$comm.struc) ~ water.dists$water.env.dists * water.dists$geo.dist))
+
+plot(sed.dists$geo.dist, log(sed.dists$comm.struc))
+plot(water.dists$geo.dist, log(water.dists$comm.struc))
 
 summary(sed.dd)
 summary(water.dd)
@@ -1367,7 +1558,8 @@ png(filename = "../figures/Figure8.png",
 par(mfrow = c(2, 1) + 0.5)
 
 par(mar = c(1, 5, 3, 3) + 0.4)
-plot(water.dists$water.env.dists, log(water.dists$comm.struc), xlab="", 
+plot(water.dists$water.env.dists[which(water.dists$geo.dist > 5000)], 
+     log(water.dists$comm.struc[which(water.dists$geo.dist > 5000)]), xlab="", 
      ylab = "", xaxt="n", yaxt="n")
 #w.env.lm <- lm(water.dists$comm.struc ~ water.dists$water.env.dists)
 abline(water.dd, lty = 2, lwd = 2)
@@ -1379,7 +1571,8 @@ box(lwd = 2)
 mtext("log Community Similarity\nSurface Water", side = 2, line = 3, cex = 1.2)
 
 par(mar = c(4, 5, 1, 3) + 0.4)
-plot(sed.dists$sed.env.dists, log(sed.dists$comm.struc), xlab="", 
+plot(sed.dists$sed.env.dists[which(sed.dists$geo.dist > 5000)], 
+     log(sed.dists$comm.struc[which(sed.dists$geo.dist > 5000)]), xlab="", 
      ylab = "", xaxt = "n", yaxt = "n")
 axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
@@ -1497,6 +1690,28 @@ graphics.off()
 
 ```
 
+# Spatial autocorrelation
+```{r}
+var.trend <- variog(coords = xy, data = pc1, option = "bin")
+
+png(filename = "../figures/Figure15.png", width = 1200, height = 1200, res = 96*2)
+par(c(5,5,3,1) + 0.5)
+plot(var.trend, type = "l", xaxt = "n", yaxt = "n",
+     ylab = "", xlab = "", xlim = c(0, 12000))
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext(side = 1, line = 3, "Geographic Distance (m)", cex = 1.5)
+mtext(side = 2, line = 3, "Semivariance in PC1", cex = 1.5)
+abline(v = 10000, lty = "dashed")
+dev.off()
+graphics.off()
+img <- readPNG("../figures/Figure15.png")
+grid.raster(img)
+```
+
 # Co-occurrence analysis
 ```{R}
 require(cooccur)
@@ -1547,186 +1762,15 @@ axis(side = 2, las = 1, cex.axis = 1.25,
 water.null <- nullmodel(OTUs.PA[which(design$habitat == "water"),], method = "r0_ind")
 sed.null <- nullmodel(OTUs.PA[which(design$habitat == "sediment"),], method = "r0_ind")
 
+OTUs.common <- OTUsREL.log * 0
+for(site in 1:nrows(OTUsREL.log)){
+  this.site <- OTUsREL.log[site,]
+  for otu in sort(this.site){
+    rel.abund 
+  }
+}
 ```
 
-
-# Hill Numbers
-```{r}
-# Calculate Water Alpha Diversity
-water.alpha.1 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 1),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 1)]))
-water.alpha.2 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 2),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 2)]))
-water.alpha.3 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 3),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 3)]))
-water.alpha.4 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 4),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 4)]))
-water.alpha.5 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 5),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 5)]))
-# Calculate Water Beta Diversity
-water.beta.1 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 1),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 1)]))
-water.beta.2 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 2),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 2)]))
-water.beta.3 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 3),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 3)]))
-water.beta.4 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 4),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 4)]))
-water.beta.5 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 5),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 5)]))
-
-# Calculate Water Gamma Diversity
-water.gamma.1 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 1),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 1)]))
-water.gamma.2 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 2),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 2)]))
-water.gamma.3 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 3),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 3)]))
-water.gamma.4 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 4),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 4)]))
-water.gamma.5 <- d(OTUsREL.log[which(design$habitat == "water" & design$order == 5),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "water" & 
-                                                          design$order == 5)]))
-
-# Calculate sediment alpha diversity
-sed.alpha.1 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 1),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 1)]))
-sed.alpha.2 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 2),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 2)]))
-sed.alpha.3 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 3),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 3)]))
-sed.alpha.4 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 4),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 4)]))
-sed.alpha.5 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 5),], 
-                 lev = "alpha", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 5)]))
-
-# Calculate sediment beta diversity
-sed.beta.1 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 1),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 1)]))
-sed.beta.2 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 2),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 2)]))
-sed.beta.3 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 3),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 3)]))
-sed.beta.4 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 4),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 4)]))
-sed.beta.5 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 5),], 
-                 lev = "beta", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 5)]))
-
-# Calculate Sediment Gamma Diversity
-sed.gamma.1 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 1),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 1)]))
-sed.gamma.2 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 2),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 2)]))
-sed.gamma.3 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 3),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 3)]))
-sed.gamma.4 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 4),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 4)]))
-sed.gamma.5 <- d(OTUsREL.log[which(design$habitat == "sediment" & design$order == 5),], 
-                 lev = "gamma", q = 1, boot = T, 
-                 boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment" & 
-                                                          design$order >= 5)]))
-
-water.a <- c(water.alpha.1$D.Value, water.alpha.2$D.Value, water.alpha.3$D.Value, 
-             water.alpha.4$D.Value, water.alpha.5$D.Value)
-water.a.se <- c(water.alpha.1$StdErr, water.alpha.2$StdErr, water.alpha.3$StdErr, 
-             water.alpha.4$StdErr, water.alpha.5$StdErr)
-water.b <- c(water.beta.1$D.Value, water.beta.2$D.Value, water.beta.3$D.Value, 
-             water.beta.4$D.Value, water.beta.5$D.Value)
-water.b.se <- c(water.beta.1$StdErr, water.beta.2$StdErr, water.beta.3$StdErr, 
-             water.beta.4$StdErr, water.beta.5$StdErr)
-water.g <- c(water.gamma.1$D.Value, water.gamma.2$D.Value, water.gamma.3$D.Value, 
-             water.gamma.4$D.Value, water.gamma.5$D.Value)
-water.g.se <- c(water.gamma.1$StdErr, water.gamma.2$StdErr, water.gamma.3$StdErr, 
-             water.gamma.4$StdErr, water.gamma.5$StdErr)
-
-sed.a <- c(sed.alpha.1$D.Value, sed.alpha.2$D.Value, sed.alpha.3$D.Value, 
-             sed.alpha.4$D.Value, sed.alpha.5$D.Value)
-sed.a.se <- c(sed.alpha.1$StdErr, sed.alpha.2$StdErr, sed.alpha.3$StdErr, 
-             sed.alpha.4$StdErr, sed.alpha.5$StdErr)
-sed.b <- c(sed.beta.1$D.Value, sed.beta.2$D.Value, sed.beta.3$D.Value, 
-             sed.beta.4$D.Value, sed.beta.5$D.Value)
-sed.b.se <- c(sed.beta.1$StdErr, sed.beta.2$StdErr, sed.beta.3$StdErr, 
-             sed.beta.4$StdErr, sed.beta.5$StdErr)
-sed.g <- c(sed.gamma.1$D.Value, sed.gamma.2$D.Value, sed.gamma.3$D.Value, 
-             sed.gamma.4$D.Value, sed.gamma.5$D.Value)
-sed.g.se <- c(sed.gamma.1$StdErr, sed.gamma.2$StdErr, sed.gamma.3$StdErr, 
-             sed.gamma.4$StdErr, sed.gamma.5$StdErr)
-orders <- c(1,2,3,4,5)
-water.hill <- as.data.frame(cbind(orders, water.a, water.a.se, water.b, water.b.se, water.g, water.g.se))
-sed.hill <- as.data.frame(cbind(orders, sed.a, sed.a.se, sed.b, sed.b.se, sed.g, sed.g.se))
-
-plot(water.hill$orders, water.hill$water.a, type = "l")
-plot(water.hill$orders, water.hill$water.b, type = "l")
-plot(water.hill$orders, water.hill$water.g, type = "l")
-plot(sed.hill$orders, sed.hill$sed.a, type = "l")
-plot(sed.hill$orders, sed.hill$sed.b, type = "l")
-plot(sed.hill$orders, sed.hill$sed.g, type = "l")
-
-model.water.b <- lm(water.hill$water.b ~ water.hill$orders)
-summary(model.water.b)
-conf95.water.b <- predict.lm(object = model.water.b, interval="confidence")
-
-model.sed.b <- lm(sed.hill$sed.b ~ sed.hill$orders)
-summary(model.sed.b)
-conf95.sed.b <- predict.lm(object = model.sed.b, interval="confidence")
-```
 
 ```{r}
 png(filename = "../figures/Figure7.png",
@@ -1808,12 +1852,6 @@ plot(w1.env)
 
 ```
 
+# Spatial Autocorrelation
 ```{r}
-headwaters <- rownames(OTUs[which(design$order == 1),])
-
-for(origin in headwaters){
-  print(shortest_paths(graph = stream.network, from = origin, to = "LC_01_S")$vpath[[1]])
-}
-
-shortest_paths(graph = stream.network, from = "LC_11_W", to = "LC_01_S")$vpath[[1]]
-```
+rtree(30)
