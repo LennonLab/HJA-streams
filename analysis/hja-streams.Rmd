@@ -1271,30 +1271,10 @@ legend("topleft", c("lookout", "ws01"), col = c("wheat", "skyblue"),
 
 ```
 
-# heatmaps and clustering
-```{r}
-jet.colors <- colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan", 
-                                 "#7FFF7F", "yellow", "#FF7F00", "red", 
-                                 "#7F0000"))
-order <- c(design$site[design$habitat == "water"], design$site[design$habitat == "sediment"])
-levelplot(as.matrix(hja.db)[order,order], aspect = "iso", col.regions = jet.colors,
-          xlab = "site", ylab = "site", scales = list(cex = 0.5),
-          main = "Bray-Curtis Distance")
-
-hja.ward <- hclust(hja.db, method = "ward.D2")
-par(mar = c(1,5,2,2) + 0.1)
-plot(hja.ward)
-
-require(gplots)
-heatmap.2(as.matrix(hja.db), distfun = function(x) vegdist(x, method = "bray"),
-          hclustfun = function(x) hclust(x, method = "ward.D2"),
-          col = jet.colors(100), trace = "none", density.info = "none")
-```
 
 # Spatial autocorrelation
 ```{r}
-var.trend <- variog(coords = xy, data = pc1, option = "bin")
-
+var.trend <- variog(coords = xy, data = env.2, option = "bin")
 png(filename = "../figures/Figure15.png", width = 1200, height = 1200, res = 96*2)
 par(c(5,5,3,1) + 0.5)
 plot(var.trend, type = "l", xaxt = "n", yaxt = "n",
@@ -1305,8 +1285,7 @@ axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd = 2)
 mtext(side = 1, line = 3, "Geographic Distance (m)", cex = 1.5)
-mtext(side = 2, line = 3, "Semivariance in PC1", cex = 1.5)
-abline(v = 10000, lty = "dashed")
+mtext(side = 2, line = 3, "Semivariance", cex = 1.5)
 dev.off()
 graphics.off()
 img <- readPNG("../figures/Figure15.png")
