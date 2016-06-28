@@ -797,7 +797,7 @@ box(lwd=2)
 mtext("log Community Similarity\nSediment", side = 2, line = 3, cex = 1.2)
 
 
-mtext("Dendritic distance (m)", side = 1, line = 3, cex = 1.5)
+mtext("Geographic distance (m)", side = 1, line = 3, cex = 1.5)
 
 dev.off()
 graphics.off()
@@ -862,6 +862,8 @@ grid.raster(img)
 
 # Headwaters vs. Downstream
 ```{r}
+
+
 s1.env.dists <- vegdist(env.2[which(design$order < 2),], method = "bray")
 s1.env.dists <- liste(s1.env.dists, entry = "env")[,3]
 s1.geo.dists <- na.omit(liste(dist.mat[which(design$order < 2), which(design$order < 2)],
@@ -871,34 +873,34 @@ s1.dists <- cbind(liste((1 - s1.db), entry = "comm.struc"), s1.env.dists, s1.geo
 
 
 s1.lm <- (lm(log(s1.dists$comm.struc) ~ s1.dists$s1.env.dists))
-abline(s1.lm)
 summary(s1.lm)
 
-shi.env.dists <- vegdist(env.2[which(design$order > 1),], method = "bray")
+shi.env.dists <- vegdist(env.2[which(design$order >= 2),], method = "bray")
 shi.env.dists <- liste(shi.env.dists, entry = "env")[,3]
-shi.geo.dists <- na.omit(liste(dist.mat[which(design$order > 1), which(design$order > 1)],
+shi.geo.dists <- na.omit(liste(dist.mat[which(design$order >= 2), which(design$order >= 2)],
                                  entry = "geo.dist"))
-shi.db <- vegdist(OTUsREL[which(design$order > 1),])
+shi.db <- vegdist(OTUsREL[which(design$order >= 2),])
 shi.dists <- cbind(liste((1 - shi.db), entry = "comm.struc"), shi.env.dists, shi.geo.dists)
-plot(shi.dists$shi.env.dists, log(shi.dists$comm.struc))
 shi.lm <- (lm(log(shi.dists$comm.struc) ~ shi.dists$shi.env.dists))
-abline(shi.lm)
 summary(shi.lm)
 
-# Can also add  & design$habitat == "water" to compare in seds vs water
-shi.env.dists <- vegdist(env.2[which(design$order > 1 & design$habitat == "sediment"),], method = "bray")
-shi.env.dists <- liste(shi.env.dists, entry = "env")[,3]
-shi.geo.dists <- na.omit(liste(dist.mat[which(design$order > 1 & design$habitat == "sediment"), which(design$order > 1 & design$habitat == "sediment")],
-                                 entry = "geo.dist"))
-shi.db <- vegdist(OTUsREL[which(design$order > 1 & design$habitat == "sediment"),])
-shi.dists <- cbind(liste((1 - shi.db), entry = "comm.struc"), shi.env.dists, shi.geo.dists)
-plot(shi.dists$shi.env.dists, log(shi.dists$comm.struc))
-shi.lm <- (lm(log(shi.dists$comm.struc) ~ shi.dists$shi.env.dists))
-abline(shi.lm)
-summary(shi.lm)
+# # Can also add  & design$habitat == "water" to compare in seds vs water
+# shi.s.env.dists <- vegdist(env.2[which(design$order > 1 & design$habitat == "sediment"),], method = "bray")
+# shi.s.env.dists <- liste(shi.s.env.dists, entry = "env")[,3]
+# shi.s.geo.dists <- na.omit(liste(dist.mat[which(design$order > 1 & design$habitat == "sediment"), 
+#                                           which(design$order > 1 & design$habitat == "sediment")],
+#                                  entry = "geo.dist")[,3])
+# shi.s.db <- vegdist(OTUsREL[which(design$order > 1 & design$habitat == "sediment"),])
+# shi.s.dists <- cbind(liste((1 - shi.s.db), entry = "comm.struc"), shi.s.env.dists, shi.s.geo.dists)
+# shi.s.lm <- (lm(log(shi.s.dists$comm.struc) ~ shi.s.dists$shi.s.env.dists))
+# summary(shi.lm)
+# plot(shi.s.dists$shi.s.env.dists, log(shi.s.dists$comm.struc))
+# abline(shi.s.lm)
 
 shi.dd <- (lm(log(shi.dists$comm.struc) ~ shi.dists$geo.dist))
 s1.dd <- (lm(log(s1.dists$comm.struc) ~ s1.dists$geo.dist))
+summary(shi.dd)
+summary(s1.dd)
 ```
 
 ```{r}
@@ -910,7 +912,7 @@ par(mfcol = c(2, 2))
 par(mar = c(1, 5, 3, 0) + 0.4)
 plot(s1.dists$s1.env.dists, 
      log(s1.dists$comm.struc), xlab="", 
-     ylab = "", xaxt="n", yaxt="n")
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,.5))
 abline(s1.lm, lty = 1, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
@@ -922,7 +924,7 @@ mtext("log Community Similarity", side = 2, line = 3, cex = 1.2)
 par(mar = c(4, 5, 1, 0) + 0.4)
 plot(shi.dists$shi.env.dists, 
      log(shi.dists$comm.struc), xlab="", 
-     ylab = "", xaxt = "n", yaxt = "n")
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,.5))
 axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
@@ -964,6 +966,12 @@ graphics.off()
 
 img <- readPNG("../figures/Figure16.png")
 grid.raster(img)
+
+plot(s1.dists$geo.dist, 
+     s1.dists$s1.env.dists)
+abline(lm(s1.dists$s1.env.dists ~ s1.dists$geo.dist))
+plot(shi.dists$geo.dist, shi.dists$shi.env.dists)
+abline(lm(shi.dists$shi.env.dists ~ shi.dists$geo.dist))
 ```
 
 # Catchment-scale DDRs
@@ -981,12 +989,13 @@ axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd = 2)
 mtext("log Community Similarity", side = 2, line = 3, cex = 1.5)
-mtext("Environmental Distance (PC1)", side = 1, line = 3, cex = 1.5)
+mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
 
 png(filename = "../figures/Figure11.png",
     width = 1200, height = 1200, res = 96*2)
+grid.raster(readPNG("../figures/Figure10.png"))
 
 par(mar = c(5, 5, 3, 3) + 0.4)
 plot(hja.dists$den.dists, log(1 - hja.dists$comm.struc), xlab="", 
@@ -1031,7 +1040,7 @@ axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd = 2)
-mtext("Environmental Distance (PC1)", side = 2, line = 3, cex = 1.5)
+mtext("Environmental Distance", side = 2, line = 3, cex = 1.5)
 mtext("Geographic Distance (m)", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
@@ -1048,7 +1057,7 @@ axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd = 2)
-mtext("Environmental Distance (PC1)", side = 2, line = 3, cex = 1.5)
+mtext("Environmental Distance", side = 2, line = 3, cex = 1.5)
 mtext("Dendritic Distance (m)", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
