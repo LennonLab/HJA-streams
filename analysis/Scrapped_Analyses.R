@@ -437,3 +437,21 @@ streams <- readOGR(dsn = "./imagery/stream_network_2008/", layer = "lidar_stream
 streams@data
 plot(streams, add = TRUE)
 summary(streams)
+
+# heatmaps and clustering
+jet.colors <- colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan", 
+                                 "#7FFF7F", "yellow", "#FF7F00", "red", 
+                                 "#7F0000"))
+order <- c(design$site[design$habitat == "water"], design$site[design$habitat == "sediment"])
+levelplot(as.matrix(hja.db)[order,order], aspect = "iso", col.regions = jet.colors,
+          xlab = "site", ylab = "site", scales = list(cex = 0.5),
+          main = "Bray-Curtis Distance")
+
+hja.ward <- hclust(hja.db, method = "ward.D2")
+par(mar = c(1,5,2,2) + 0.1)
+plot(hja.ward)
+
+require(gplots)
+heatmap.2(as.matrix(hja.db), distfun = function(x) vegdist(x, method = "bray"),
+          hclustfun = function(x) hclust(x, method = "ward.D2"),
+          col = jet.colors(100), trace = "none", density.info = "none")
