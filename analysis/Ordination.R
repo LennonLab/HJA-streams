@@ -4,7 +4,7 @@
 
 # All HJA Catchment
 hja.db <- vegdist(OTUsREL, method = "bray", upper = TRUE, diag = TRUE)
-hja.pcoa <- cmdscale(hja.db, eig=TRUE, k=3)
+hja.pcoa <- cmdscale(hja.db, eig=TRUE)
 var1 <- round(hja.pcoa$eig[1] / sum(hja.pcoa$eig),3) * 100
 var2 <- round(hja.pcoa$eig[2] / sum(hja.pcoa$eig),3) * 100
 var3 <- round(hja.pcoa$eig[3] / sum(hja.pcoa$eig),3) * 100
@@ -12,7 +12,7 @@ var3 <- round(hja.pcoa$eig[3] / sum(hja.pcoa$eig),3) * 100
 # Sediments Only
 sediment <- OTUsREL[which(design$habitat == "sediment"),]
 sediment.db <- vegdist(sediment, method = "bray", diag = T)
-sediment.pcoa <- cmdscale(sediment.db, eig=TRUE, k=3)
+sediment.pcoa <- cmdscale(sediment.db, eig=TRUE)
 sed.design <- design[which(design$habitat == "sediment"),]
 s.var1 <- round(sediment.pcoa$eig[1] / sum(sediment.pcoa$eig),3) * 100
 s.var2 <- round(sediment.pcoa$eig[2] / sum(sediment.pcoa$eig),3) * 100
@@ -21,7 +21,7 @@ s.var3 <- round(sediment.pcoa$eig[3] / sum(sediment.pcoa$eig),3) * 100
 # Water Only
 water <- OTUsREL[which(design$habitat == "water"),]
 water.db <- vegdist(water, method = "bray", diag = T)
-water.pcoa <- cmdscale(water.db, eig=TRUE, k=3)
+water.pcoa <- cmdscale(water.db, eig=TRUE)
 water.design <- design[which(design$habitat == "water"),]
 w.var1 <- round(water.pcoa$eig[1] / sum(water.pcoa$eig),3) * 100
 w.var2 <- round(water.pcoa$eig[2] / sum(water.pcoa$eig),3) * 100
@@ -30,7 +30,7 @@ w.var3 <- round(water.pcoa$eig[3] / sum(water.pcoa$eig),3) * 100
 # Lookout Creek Watershed Only
 lc <- OTUsREL[which(design$watershed == "LC"),]
 lc.db <- vegdist(lc, method = "bray", diag = T)
-lc.pcoa <- cmdscale(lc.db, eig=TRUE, k=3)
+lc.pcoa <- cmdscale(lc.db, eig=TRUE)
 lc.design <- design[which(design$watershed == "LC"),]
 lc.var1 <- round(lc.pcoa$eig[1] / sum(lc.pcoa$eig),3) * 100
 lc.var2 <- round(lc.pcoa$eig[2] / sum(lc.pcoa$eig),3) * 100
@@ -39,7 +39,7 @@ lc.var3 <- round(lc.pcoa$eig[3] / sum(lc.pcoa$eig),3) * 100
 # Watershed 01 Only
 w1 <- OTUsREL[which(design$watershed == "WS01"),]
 w1.db <- vegdist(w1, method = "bray", diag = T)
-w1.pcoa <- cmdscale(w1.db, eig=TRUE, k=3)
+w1.pcoa <- cmdscale(w1.db, eig=TRUE)
 w1.design <- design[which(design$watershed == "WS01"),]
 w1.var1 <- round(w1.pcoa$eig[1] / sum(w1.pcoa$eig),3) * 100
 w1.var2 <- round(w1.pcoa$eig[2] / sum(w1.pcoa$eig),3) * 100
