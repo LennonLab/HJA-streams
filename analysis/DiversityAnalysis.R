@@ -37,9 +37,8 @@ alpha.sed <- alpha.div[alpha.div$habitat == "sediment", ]
 
 # Differences in diversity (richness and evenness) between habitats
 t.test(alpha.water$S.rare, alpha.sed$S.rare)
-mean(c(358.0118, 120.1305)) / mean(alpha.div$S.rare[alpha.div$habitat == "sediment"])
-
-t.test(a.1$S.rare, a.2$S.rare)
+capture.output(summary(lm(alpha.div$S.rare ~ design$habitat == "water")),
+               file = "../tables/richness_compare_model.txt")
 
 ### Diversity Partitioning
 s.size <- as.vector(c(rowSums(OTUsREL)))
