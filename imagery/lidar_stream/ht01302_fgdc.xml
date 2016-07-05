@@ -1,0 +1,384 @@
+﻿<metadata>
+  <idinfo>
+    <citation>
+      <citeinfo>
+        <origin>Theresa Valentine, Corvallis Forest Science Laboratory, Spatial Information Manager</origin>
+        <pubdate>20140220</pubdate>
+        <title>Stream network generated from the 2008 Lidar bare earth DEM</title>
+        <edition>2</edition>
+        <geoform>vector digital data</geoform>
+        <pubinfo>
+          <pubplace>Corvallis, OR</pubplace>
+          <publish>Forest Science Data Bank</publish>
+        </pubinfo>
+        <othercit>hf01302</othercit>
+        <onlink>http://andrewsforest.oregonstate.edu/data/studies/spatialdata/hf01302.zip</onlink>
+      </citeinfo>
+    </citation>
+    <descript>
+      <abstract>HJ Andrews Experimental Forest Stream Network derived from the 2008 Lidar bare earth Digital Elevatiion Model (DEM). This layer was generated using arcgis hydrography tools and the one meter resolution DEM. The resulting stream layer was modified by hand, to correct stream flows through culverts.</abstract>
+      <purpose>Prepared as a base layer in the HJ Andrews GIS database.  Updates the previous stream network to match the 1 meter bare earth DEM (from 2008 Lidar flight).  </purpose>
+    </descript>
+    <timeperd>
+      <timeinfo>
+        <sngdate>
+          <caldate>20080811</caldate>
+        </sngdate>
+      </timeinfo>
+      <current>ground condition</current>
+    </timeperd>
+    <status>
+      <progress>Complete</progress>
+      <update>As needed</update>
+    </status>
+    <spdom>
+      <bounding>
+        <westbc>-122.271699</westbc>
+        <eastbc>-122.107881</eastbc>
+        <northbc>44.278860</northbc>
+        <southbc>44.199773</southbc>
+      </bounding>
+    </spdom>
+    <keywords>
+      <theme>
+        <themekt>Andrews Forest LTER Thesaurus</themekt>
+        <themekey>hydrography data</themekey>
+        <themekey>streams</themekey>
+        <themekey>streamflow</themekey>
+        <themekey>aquatic habitat</themekey>
+        <themekey>stream order</themekey>
+        <themekey>hydrology/water</themekey>
+        <themekey>stream hydrology</themekey>
+        <themekey>Lidar</themekey>
+      </theme>
+      <theme>
+        <themekt>ISO 19115 Topic Categories</themekt>
+        <themekey>environment</themekey>
+        <themekey>inlandWaters</themekey>
+      </theme>
+      <place>
+        <placekt>None</placekt>
+        <placekey>HJ Andrews</placekey>
+        <placekey>Oregon</placekey>
+        <placekey>Lookout Creek</placekey>
+        <placekey>Western Cascades</placekey>
+      </place>
+    </keywords>
+    <accconst>Available on line</accconst>
+    <useconst>While substantial efforts are made to ensure the accuracy of data and documentation, complete accuracy of data sets cannot be guaranteed. All data are made available "as is". The Andrews LTER shall not be liable for damages resulting from any use or misinterpretation of data sets.</useconst>
+    <ptcontac>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>Corvallis Forest Science Laboratory</cntorg>
+          <cntper>Theresa Valentine</cntper>
+        </cntorgp>
+        <cntpos>Spatial Information Manager</cntpos>
+        <cntaddr>
+          <addrtype>mailing and physical</addrtype>
+          <address>3200 SW Jefferson Way</address>
+          <city>Corvallis</city>
+          <state>Oregon</state>
+          <postal>97332</postal>
+          <country>US</country>
+        </cntaddr>
+        <cntvoice>541-750-7333</cntvoice>
+        <cntfax>541-758-7760</cntfax>
+        <cntemail>tvalentine@fs.fed.us or theresa.valentine@orst.edu</cntemail>
+        <hours>m-f 8:00am-4:00pm</hours>
+      </cntinfo>
+    </ptcontac>
+    <secinfo>
+      <secclass>Unclassified</secclass>
+    </secinfo>
+    <native>Microsoft Windows 7 Version 6.1 (Build 7601) Service Pack 1; Esri ArcGIS 10.1.1.3143</native>
+  </idinfo>
+  <dataqual>
+    <logic>Comment: Very Good</logic>
+    <complete>Data complete for the entire basin</complete>
+    <lineage>
+      <srcinfo>
+        <typesrc>hardDisk</typesrc>
+        <srccontr>generated from August 2008 Andrews Lidar 1 meter DEM, FSDB database number GI010</srccontr>
+      </srcinfo>
+      <procstep>
+        <procdesc> Stream network generated from 2008 LiDAR one meter bare-earth Digital Elevation Model (DEM). This layer was generated using the streamtofeature command in arcgis toolbox, with the flowdirection grid (hja_flowd). Attribute name was added to the resulting shapefile, with known stream names added to streams. Comments were added for streams where features were identified in the field, such as large culvert, no water. Type 2 streams were eliminated as being without water. Streams were corrected for culvert locations through roads. The program to generated the streams did not take this into account. On screen digitizing was done throughout the basin to correct the stream flow, based on the one meter DEM. SimplifyLine and SmoothLine commands were used to smooth the stream lines out, from the raster based linework. Width attribute was added to main lines of the Andrews, so that they would appear wider on the 2011 Andrews map. The geodatabase feature class was converted into a shapefile for distribution on the web. All commands issues can be found in the geoprocessing history report on the esri description tab in arc catalog.</procdesc>
+        <procdate>20110106</procdate>
+        <proccont>
+          <cntinfo>
+            <cntorgp>
+              <cntorg>Corvallis Forest Science Laboratory</cntorg>
+              <cntper>Theresa Valentine</cntper>
+            </cntorgp>
+            <cntpos>Spatial Information Manager</cntpos>
+            <cntaddr>
+              <addrtype>mailing and physical</addrtype>
+              <address>3200 SW Jefferson Way</address>
+              <city>Corvallis</city>
+              <state>Oregon</state>
+              <postal>97332</postal>
+              <country>US</country>
+            </cntaddr>
+            <cntvoice>541-750-7333</cntvoice>
+            <cntfax>541-758-7760</cntfax>
+            <cntemail>tvalentine@fs.fed.us or theresa.valentine@orst.edu</cntemail>
+            <hours>m-f 8:00am-4:00pm</hours>
+          </cntinfo>
+        </proccont>
+      </procstep>
+      <procstep>
+        <procdesc>coverage was converted to a shapefile  for distribution.</procdesc>
+        <procdate>20140219</procdate>
+        <proccont>
+          <cntinfo>
+            <cntorgp>
+              <cntorg>Corvallis Forest Science Laboratory</cntorg>
+              <cntper>Theresa Valentine</cntper>
+            </cntorgp>
+            <cntpos>Spatial Information Manager</cntpos>
+            <cntaddr>
+              <addrtype>mailing and physical</addrtype>
+              <address>3200 SW Jefferson Way</address>
+              <city>Corvallis</city>
+              <state>Oregon</state>
+              <postal>97332</postal>
+              <country>US</country>
+            </cntaddr>
+            <cntvoice>541-750-7333</cntvoice>
+            <cntfax>541-758-7760</cntfax>
+            <cntemail>tvalentine@fs.fed.us or theresa.valentine@orst.edu</cntemail>
+            <hours>m-f 8:00am-4:00pm</hours>
+          </cntinfo>
+        </proccont>
+      </procstep>
+    </lineage>
+  </dataqual>
+  <spdoinfo>
+    <direct>Vector</direct>
+    <ptvctinf>
+      <sdtsterm>
+        <sdtstype>String</sdtstype>
+        <ptvctcnt>1088</ptvctcnt>
+      </sdtsterm>
+    </ptvctinf>
+  </spdoinfo>
+  <spref>
+    <horizsys>
+      <planar>
+        <mapproj>
+          <mapprojn>NAD 1983 UTM Zone 10N</mapprojn>
+          <transmer>
+            <sfctrmer>0.9996</sfctrmer>
+            <longcm>-123.0</longcm>
+            <latprjo>0.0</latprjo>
+            <feast>500000.0</feast>
+            <fnorth>0.0</fnorth>
+          </transmer>
+        </mapproj>
+        <planci>
+          <plance>coordinate pair</plance>
+          <coordrep>
+            <absres>0.000000002220024164500956</absres>
+            <ordres>0.000000002220024164500956</ordres>
+          </coordrep>
+          <plandu>meter</plandu>
+        </planci>
+      </planar>
+      <geodetic>
+        <horizdn>D North American 1983</horizdn>
+        <ellips>GRS 1980</ellips>
+        <semiaxis>6378137.0</semiaxis>
+        <denflat>298.257222101</denflat>
+      </geodetic>
+    </horizsys>
+  </spref>
+  <eainfo>
+    <detailed>
+      <enttyp>
+        <enttypl>lidar_stream</enttypl>
+        <enttypd>poly line</enttypd>
+        <enttypds>esri</enttypds>
+      </enttyp>
+      <attr>
+        <attrlabl>FID</attrlabl>
+        <attrdef>Internal feature number.</attrdef>
+        <attrdefs>ESRI</attrdefs>
+        <attrdomv>
+          <udom>Sequential unique whole numbers that are automatically generated.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Shape</attrlabl>
+        <attrdef>Feature geometry.</attrdef>
+        <attrdefs>ESRI</attrdefs>
+        <attrdomv>
+          <udom>Coordinates defining the features.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>ARCID</attrlabl>
+        <attrdef>internal code, unknown</attrdef>
+        <attrdefs>esri</attrdefs>
+      </attr>
+      <attr>
+        <attrlabl>FROM_NODE</attrlabl>
+        <attrdef> Internal node number for the beginning of an arc (from-node).</attrdef>
+        <attrdefs>esri</attrdefs>
+      </attr>
+      <attr>
+        <attrlabl>TO_NODE</attrlabl>
+        <attrdef>Internal node number for the end of an arc (to-node).</attrdef>
+        <attrdefs>esri</attrdefs>
+      </attr>
+      <attr>
+        <attrlabl>name</attrlabl>
+        <attrdef>stream name where one exists</attrdef>
+        <attrdefs>CFS documentation</attrdefs>
+      </attr>
+      <attr>
+        <attrlabl>status</attrlabl>
+        <attrdef>indicates if water present in summer, culvert, and channels.  </attrdef>
+        <attrdefs>internal documentation</attrdefs>
+        <attrdomv>
+          <edom>
+            <edomv>0</edomv>
+            <edomvd>not surveyed</edomvd>
+            <edomvds>internal documentation</edomvds>
+          </edom>
+          <edom>
+            <edomv>1</edomv>
+            <edomvd>water visible in summer, culvert present</edomvd>
+            <edomvds> internal documentation</edomvds>
+          </edom>
+          <edom>
+            <edomv>2</edomv>
+            <edomvd>no water visible in summer, channel present, culvert</edomvd>
+            <edomvds>internal documentation</edomvds>
+          </edom>
+          <edom>
+            <edomv>3</edomv>
+            <edomvd>no water, no channel, culvert </edomvd>
+            <edomvds>internal documentation</edomvds>
+          </edom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>comments</attrlabl>
+        <attrdef>free text comments from survey of specific streams to verify status</attrdef>
+        <attrdefs>internal documentation</attrdefs>
+        <attrdomv>
+          <udom>open free text</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>type</attrlabl>
+        <attrdef>type was used to determine what lines in the computer generated stream network were representative of true streams, not just flow.</attrdef>
+        <attrdefs>internal documentation</attrdefs>
+        <attrdomv>
+          <edom>
+            <edomv>1</edomv>
+            <edomvd>line most likely a stream</edomvd>
+            <edomvds>internal documentation</edomvds>
+          </edom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>InLine_FID</attrlabl>
+        <attrdef>internal field created during smoothing process</attrdef>
+        <attrdefs>esri</attrdefs>
+        <attrdomv>
+          <udom>feature ids of the input layer before the smoothing.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>SimLnFLag</attrlabl>
+        <attrdef>internal flag that is used to examine features that have topological errors.</attrdef>
+        <attrdefs>esri</attrdefs>
+        <attrdomv>
+          <udom>whole numbers</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Shape_Leng</attrlabl>
+        <attrdef>length of the line segment</attrdef>
+        <attrdefs>esri</attrdefs>
+        <attrdomv>
+          <udom>length in meters</udom>
+        </attrdomv>
+        <attrvai>
+          <attrva>meters</attrva>
+        </attrvai>
+      </attr>
+      <attr>
+        <attrlabl>width</attrlabl>
+        <attrdef>used to differentiate between the larger, main streams and the smaller streams.  Used to create the 2011 Andrews Map.</attrdef>
+        <attrdefs>internal documentation</attrdefs>
+        <attrdomv>
+          <edom>
+            <edomv>0</edomv>
+            <edomvd>small stream</edomvd>
+            <edomvds>internal documentation</edomvds>
+          </edom>
+          <edom>
+            <edomv>1</edomv>
+            <edomvd>large, main stream</edomvd>
+            <edomvds>internal documentation</edomvds>
+          </edom>
+        </attrdomv>
+      </attr>
+    </detailed>
+  </eainfo>
+  <distinfo>
+    <distrib>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>Corvallis Forest Science Laboratory</cntorg>
+          <cntper>Theresa Valentine</cntper>
+        </cntorgp>
+        <cntpos>Spatial Information Manager</cntpos>
+        <cntaddr>
+          <addrtype>mailing and physical</addrtype>
+          <address>3200 SW Jefferson Way</address>
+          <city>Corvallis</city>
+          <state>Oregon</state>
+          <postal>97332</postal>
+          <country>US</country>
+        </cntaddr>
+        <cntvoice>541-750-7333</cntvoice>
+        <cntfax>541-758-7760</cntfax>
+        <cntemail>tvalentine@fs.fed.us or theresa.valentine@orst.edu</cntemail>
+        <hours>m-f 8:00am-4:00pm</hours>
+      </cntinfo>
+    </distrib>
+    <distliab>See access and use constraints information.</distliab>
+  </distinfo>
+  <metainfo>
+    <metd>20140220</metd>
+    <metc>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>UF Forest Service, Corvallis Forest Science Laboratory</cntorg>
+          <cntper>Theresa Valentine</cntper>
+        </cntorgp>
+        <cntpos>Spatial Information Manager</cntpos>
+        <cntaddr>
+          <addrtype>mailing and physical</addrtype>
+          <address>3200 SW Jefferson Way</address>
+          <city>Corvallis</city>
+          <state>OR.</state>
+          <postal>97332</postal>
+          <country>US</country>
+        </cntaddr>
+        <cntvoice>541-750-7333</cntvoice>
+        <cntfax>541-750-7760</cntfax>
+        <cntemail>theresa.valentine@orst.edu</cntemail>
+        <hours>m-f 0800-1630</hours>
+      </cntinfo>
+    </metc>
+    <metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+    <metstdv>FGDC-STD-001-1998</metstdv>
+    <mettc>local time</mettc>
+    <metsi>
+      <metsc>Unclassified</metsc>
+    </metsi>
+  </metainfo>
+</metadata>
