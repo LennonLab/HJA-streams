@@ -1,0 +1,25 @@
+
+Partition of squared Bray distance in dbRDA 
+
+Call: varpart(Y = hja.db, X = ~., hja.pcnm, data = hja.env)
+
+Explanatory tables:
+X1:  ~.
+X2:  hja.pcnm 
+
+No. of explanatory tables: 2 
+Total variation (SS): 10.924 
+No. of observations: 56 
+
+Partition table:
+                     Df R.squared Adj.R.squared Testable
+[a+b] = X1            6   0.29592       0.20970     TRUE
+[b+c] = X2           15   0.32257       0.06854     TRUE
+[a+b+c] = X1+X2      21   0.55085       0.27343     TRUE
+Individual fractions                                    
+[a] = X1|X2           6                 0.20490     TRUE
+[b]                   0                 0.00481    FALSE
+[c] = X2|X1          15                 0.06373     TRUE
+[d] = Residuals                         0.72657    FALSE
+---
+Use function ‘capscale’ to test significance of fractions of interest

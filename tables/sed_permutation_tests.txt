@@ -1,0 +1,44 @@
+
+Permutation test for capscale 
+
+Permutation: free
+Number of permutations: 999
+ 
+Call: vegan::capscale(formula = sed.db ~ sed.env.mat)
+Permutation test for all constrained eigenvalues
+Pseudo-F:	 1.414924 (with 5, 18 Degrees of Freedom)
+Significance:	 0.009 
+
+
+Permutation test for capscale 
+
+Permutation: free
+Number of permutations: 999
+ 
+Call: vegan::capscale(formula = sed.db ~ sed.pcnm.mat)
+Permutation test for all constrained eigenvalues
+Pseudo-F:	 1.246577 (with 10, 13 Degrees of Freedom)
+Significance:	 0.066 
+
+
+Permutation test for capscale 
+
+Permutation: free
+Number of permutations: 999
+ 
+Call: vegan::capscale(formula = sed.db ~ sed.env.mat + Condition(sed.pcnm.mat))
+Permutation test for all constrained eigenvalues
+Pseudo-F:	 1.304968 (with 5, 8 Degrees of Freedom)
+Significance:	 0.165 
+
+
+Permutation test for capscale 
+
+Permutation: free
+Number of permutations: 999
+ 
+Call: vegan::capscale(formula = sed.db ~ sed.pcnm.mat + Condition(sed.env.mat))
+Permutation test for all constrained eigenvalues
+Pseudo-F:	 1.242504 (with 10, 8 Degrees of Freedom)
+Significance:	 0.113 
+
