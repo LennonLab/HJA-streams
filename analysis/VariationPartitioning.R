@@ -1,142 +1,121 @@
+# setwd("~/GitHub/HJA-streams/analysis/")
 # source("./InitialSetup.R")
 # source("./Ordination.R")
 
-### Variation Partitioning
+## Variation Partitioning
 
-#### Var Part - HJA Catchment
-trunc.dist <- as.matrix(dist(geo.dists)) * adj.mat
-dist.pcnm <- pcnm(trunc.dist)
-ordisurf(geo.dists, scores(dist.pcnm, choi=1), bubble = 4, main = "PCNM 1")
-ordisurf(geo.dists, scores(dist.pcnm, choi=2), bubble = 4, main = "PCNM 2")
-ordisurf(geo.dists, scores(dist.pcnm, choi=3), bubble = 4, main = "PCNM 3")
-ordisplom(dist.pcnm, choices = 1:4)
-rs <- rowSums(OTUsREL.log) / sum(OTUsREL.log)
-pcnmw <- pcnm(trunc.dist, w = rs)
+#### dbRDA
+habitat <- scale((env[,8] == "sediment") * 1)
+hja.env <- as.data.frame(cbind(habitat, env.mat[, 2:6]))
+colnames(hja.env)[1] <- "habitat"
 
-spatial.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw))
-env.var <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)])
-env.spat.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw) +
-                             Condition(env.mat[,c(1:4,6)]))
-spat.env.var <- vegan::cca(OTUsREL.log ~ env.mat[,c(1:4,6)] +
-                             Condition(scores(pcnmw)))
+trunc.dist <- as.matrix(dist(geo.dists))
+dist.pcnm <- pcnm(trunc.dist, dist.ret = T)
+rs <- rowSums(OTUsREL) / sum(OTUsREL)
+hja.pcnm <- pcnm(trunc.dist, w = rs)
+hja.pcnm <- scores(hja.pcnm)[,which(hja.pcnm$values>0)]
+hja.pcnm <- as.data.frame(hja.pcnm)
 
+varpart(hja.db, ~ ., hja.pcnm, data=hja.env)
 
+hja.env <- as.matrix(hja.env)
+hja.pcnm <- as.matrix(hja.pcnm)
 
-sum(env.var$CCA$eig)
-sum(spatial.var$CCA$eig)
-sum(env.spat.var$CCA$eig)
-sum(spat.env.var$CCA$eig)
+hja.env.var <- vegan::capscale(hja.db ~ hja.env)
+hja.spa.var <- vegan::capscale(hja.db ~ hja.pcnm)
+hja.env_spa.var <- vegan::capscale(hja.db ~ hja.env + Condition(hja.pcnm))
+hja.spa_env.var <- vegan::capscale(hja.db ~ hja.pcnm + Condition(hja.env))
+permutest(hja.env.var, permutations = 999)
+permutest(hja.spa.var, permutations = 999)
+permutest(hja.env_spa.var, permutations = 999)
+permutest(hja.spa_env.var, permutations = 999)
 
-hja.ca <- vegan::cca(OTUsREL.log)
-sum(hja.ca$CA$eig)
+# headwaters vs. downstream
+headwaters.db <- vegdist(OTUsREL[which(design$order==1),], method = "bray")
+downstream.db <- vegdist(OTUsREL[which(design$order!=1),], method = "bray")
+headwaters.env <- hja.env[which(design$order==1),] 
+downstream.env <- hja.env[which(design$order!=1),]
 
-var.part.1 <- sum(env.var$CCA$eig) / sum(hja.ca$CA$eig)
-var.part.2 <- sum(spatial.var$CCA$eig) / sum(hja.ca$CA$eig)
-var.part.3 <- sum(spat.env.var$CCA$eig) / sum(hja.ca$CA$eig)
-var.part.4 <- sum(env.spat.var$CCA$eig) / sum(hja.ca$CA$eig)
+headwaters.dist <- as.matrix(dist(geo.dists[which(design$order==1),]))
+headwaters.pcnm <- pcnm(headwaters.dist, dist.ret = T)
+rs <- rowSums(OTUsREL[which(design$order==1),]) / sum(OTUsREL[which(design$order==1),])
+headwaters.pcnm <- pcnm(headwaters.dist, w = rs)
+headwaters.pcnm <- scores(headwaters.pcnm)[,which(headwaters.pcnm$values>0)]
+headwaters.pcnm <- as.data.frame(headwaters.pcnm)
 
-print(paste("HJA Pure Env. = ", var.part.1))
-print(paste("HJA Pure Space. = ", var.part.2))
-print(paste("HJA Spatial + Env = ", (var.part.1 - var.part.3)))
-print(paste("HJA Residual Var. = ", (1- sum(var.part.1 + var.part.2))))
+downstream.dist <- as.matrix(dist(geo.dists[which(design$order!=1),]))
+downstream.pcnm <- pcnm(downstream.dist, dist.ret = T)
+rs <- rowSums(OTUsREL[which(design$order!=1),]) / sum(OTUsREL[which(design$order!=1),])
+downstream.pcnm <- pcnm(downstream.dist, w = rs)
+downstream.pcnm <- scores(downstream.pcnm)[,which(downstream.pcnm$values>0)]
+downstream.pcnm <- as.data.frame(downstream.pcnm)
 
+varpart(headwaters.db, ~ ., headwaters.pcnm, data=headwaters.env)
+varpart(downstream.db, ~ ., downstream.pcnm, data=downstream.env)
 
-#### Var Part - Surface Water
-env.mat <- env.mat[,c(1:4,6)]
-water.dist.pcnm <- pcnm(dist(xy[which(design$habitat == "water"),]))
-water.rs <- rowSums(OTUsREL.log[which(design$habitat == "water"),]) / 
-  sum(OTUsREL.log[which(design$habitat == "water"),])
-water.pcnmw <- pcnm(dist(xy[which(design$habitat == "water"),]), w = water.rs)
+headwaters.env <- as.matrix(headwaters.env)
+headwaters.pcnm <- as.matrix(headwaters.pcnm)
+headwaters.env.var <- vegan::capscale(headwaters.db ~ headwaters.env)
+headwaters.spa.var <- vegan::capscale(headwaters.db ~ headwaters.pcnm)
+headwaters.env_spa.var <- vegan::capscale(headwaters.db ~ headwaters.env + Condition(headwaters.pcnm))
+headwaters.spa_env.var <- vegan::capscale(headwaters.db ~ headwaters.pcnm + Condition(headwaters.env))
+permutest(headwaters.env.var, permutations = 999)
+permutest(headwaters.spa.var, permutations = 999) # NS
+permutest(headwaters.env_spa.var, permutations = 999) # NS
+permutest(headwaters.spa_env.var, permutations = 999) # NS
 
-water.spatial.var <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),] ~ scores(water.pcnmw))
-water.env.var <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),] ~ env.mat[which(design$habitat == "water"),])
-water.env.spat.var <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),] ~
-                                   scores(water.pcnmw) + Condition(env.mat[which(design$habitat == "water"),]))
-water.spat.env.var <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),] ~ 
-                                   env.mat[which(design$habitat == "water"),] + Condition(scores(water.pcnmw)))
+downstream.env <- as.matrix(downstream.env)
+downstream.pcnm <- as.matrix(downstream.pcnm)
+downstream.env.var <- vegan::capscale(downstream.db ~ downstream.env)
+downstream.spa.var <- vegan::capscale(downstream.db ~ downstream.pcnm)
+downstream.env_spa.var <- vegan::capscale(downstream.db ~ downstream.env + Condition(downstream.pcnm))
+downstream.spa_env.var <- vegan::capscale(downstream.db ~ downstream.pcnm + Condition(downstream.env))
+permutest(downstream.env.var, permutations = 999)
+permutest(downstream.spa.var, permutations = 999)
+permutest(downstream.env_spa.var, permutations = 999)
+permutest(downstream.spa_env.var, permutations = 999)
 
-sum(water.env.var$CCA$eig)
-sum(water.spatial.var$CCA$eig)
-sum(water.env.spat.var$CCA$eig)
-sum(water.spat.env.var$CCA$eig)
+# water vs. sediments
+water.db <- vegdist(OTUsREL[which(design$habitat=="water"),], method = "bray")
+sed.db <- vegdist(OTUsREL[which(design$habitat=="sediment"),], method = "bray")
+water.env <- hja.env[which(design$habitat=="water"),] 
+sed.env <- hja.env[which(design$habitat=="sediment"),]
 
-water.ca <- vegan::rda(OTUsREL.log[which(design$habitat == "water"),])
-sum(water.ca$CA$eig)
+water.dist <- as.matrix(dist(geo.dists[which(design$habitat=="water"),]))
+water.pcnm <- pcnm(water.dist, dist.ret = T)
+rs <- rowSums(OTUsREL[which(design$habitat=="water"),]) / sum(OTUsREL[which(design$habitat=="water"),])
+water.pcnm <- pcnm(water.dist, w = rs)
+water.pcnm <- scores(water.pcnm)[,which(water.pcnm$values>0)]
+water.pcnm <- as.data.frame(water.pcnm)
 
-water.var.part.1 <- sum(water.env.var$CCA$eig) / sum(water.ca$CA$eig)
-water.var.part.2 <- sum(water.spatial.var$CCA$eig) / sum(water.ca$CA$eig)
-water.var.part.3 <- sum(water.spat.env.var$CCA$eig) / sum(water.ca$CA$eig)
-water.var.part.4 <- sum(water.env.spat.var$CCA$eig) / sum(water.ca$CA$eig)
+sed.dist <- as.matrix(dist(geo.dists[which(design$habitat=="sediment"),]))
+sed.pcnm <- pcnm(sed.dist, dist.ret = T)
+rs <- rowSums(OTUsREL[which(design$habitat=="sediment"),]) / sum(OTUsREL[which(design$habitat=="sediment"),])
+sed.pcnm <- pcnm(sed.dist, w = rs)
+sed.pcnm <- scores(sed.pcnm)[,which(sed.pcnm$values>0)]
+sed.pcnm <- as.data.frame(sed.pcnm)
 
-water.table <- matrix(c(
-  rbind(c("Water", "Pure Env. = ", water.var.part.1)),
-  rbind(c("Water", "Pure Space. = ", water.var.part.2)),
-  rbind(c("Water", "Spatial + Env = ", (water.var.part.1 - water.var.part.3))),
-  rbind(c("Water", "Residual Var. = ", (1- sum(water.var.part.1 + water.var.part.2))))
-), nrow = 4, byrow = T)
-colnames(water.table) <- c("Habitat", "Variation Partition", "Value")
+varpart(water.db, ~ ., water.pcnm, data=water.env[,2:6])
+varpart(sed.db, ~ ., sed.pcnm, data=sed.env[,2:6])
 
-#### Var Part - Sediments Only
-sediment.dist.pcnm <- pcnm(dist(xy[which(design$habitat == "sediment"),]))
-sediment.rs <- rowSums(OTUsREL.log[which(design$habitat == "sediment"),]) / 
-  sum(OTUsREL.log[which(design$habitat == "sediment"),])
-sediment.pcnmw <- pcnm(dist(xy[which(design$habitat == "sediment"),]), w = sediment.rs)
+water.env <- as.matrix(water.env)
+water.pcnm <- as.matrix(water.pcnm)
+water.env.var <- vegan::capscale(water.db ~ water.env)
+water.spa.var <- vegan::capscale(water.db ~ water.pcnm)
+water.env_spa.var <- vegan::capscale(water.db ~ water.env + Condition(water.pcnm))
+water.spa_env.var <- vegan::capscale(water.db ~ water.pcnm + Condition(water.env))
+permutest(water.env.var, permutations = 999)
+permutest(water.spa.var, permutations = 999)
+permutest(water.env_spa.var, permutations = 999) # NS
+permutest(water.spa_env.var, permutations = 999) # NS
 
-sediment.spatial.var <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),] ~ scores(sediment.pcnmw))
-sediment.env.var <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),] ~ env.mat[which(design$habitat == "sediment"),])
-sediment.env.spat.var <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),] ~
-                                      scores(sediment.pcnmw) + Condition(env.mat[which(design$habitat == "sediment"),]))
-sediment.spat.env.var <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),] ~ 
-                                      env.mat[which(design$habitat == "sediment"),] + Condition(scores(sediment.pcnmw)))
-
-sum(sediment.env.var$CCA$eig)
-sum(sediment.spatial.var$CCA$eig)
-sum(sediment.env.spat.var$CCA$eig)
-sum(sediment.spat.env.var$CCA$eig)
-
-sediment.ca <- vegan::rda(OTUsREL.log[which(design$habitat == "sediment"),])
-sum(sediment.ca$CA$eig)
-
-sediment.var.part.1 <- sum(sediment.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
-sediment.var.part.2 <- sum(sediment.spatial.var$CCA$eig) / sum(sediment.ca$CA$eig)
-sediment.var.part.3 <- sum(sediment.spat.env.var$CCA$eig) / sum(sediment.ca$CA$eig)
-sediment.var.part.4 <- sum(sediment.env.spat.var$CCA$eig) / sum(sediment.ca$CA$eig)
-
-print(paste("Sediment Pure Env. = ", sediment.var.part.1))
-print(paste("Sediment Pure Space. = ", sediment.var.part.2))
-print(paste("Sediment Spatial + Env = ", (sediment.var.part.1 - sediment.var.part.3)))
-print(paste("Sediment Residual Var. = ", (1- sum(sediment.var.part.1 + sediment.var.part.2))))
-
-perm.sed.spa <- permutest(sediment.spatial.var, permutations = 999)
-perm.sed.env <- permutest(sediment.env.var, permutations = 999)
-perm.sed.env_spa <- permutest(sediment.spatial.var, permutations = 999)
-perm.sed.spa_env <- permutest(sediment.spatial.var, permutations = 999)
-
-sediment.table <- matrix(c(
-  rbind(c("Sediment", "Pure Env. = ", sediment.var.part.1)),
-  rbind(c("Sediment", "Pure Space. = ", sediment.var.part.2)),
-  rbind(c("Sediment", "Spatial + Env = ", (sediment.var.part.1 - sediment.var.part.3))),
-  rbind(c("Sediment", "Residual Var. = ", (1- sum(sediment.var.part.1 + sediment.var.part.2))))
-), nrow = 4, byrow = T)
-colnames(sediment.table) <- c("Habitat", "Variation Partition", "Value")
-
-
-habitat <- (env[,8] == "sediment") * 1
-env.dummy <- as.matrix(cbind(habitat, env[,c(10, 11, 12, 13, 15)]))
-
-d.spatial.var <- spatial.var
-d.env.var <- vegan::cca(OTUsREL.log ~ env.dummy)
-d.env.spat.var <- vegan::cca(OTUsREL.log ~ scores(pcnmw) +
-                               Condition(env.dummy))
-d.spat.env.var <- vegan::cca(OTUsREL.log ~ env.dummy +
-                               Condition(scores(pcnmw)))
-
-sum(d.env.var$CCA$eig)
-sum(d.spatial.var$CCA$eig)
-sum(d.env.spat.var$CCA$eig)
-sum(d.spat.env.var$CCA$eig)
-
-d.var.part.1 <- sum(d.env.var$CCA$eig) / sum(hja.ca$CA$eig)
-d.var.part.2 <- sum(d.spatial.var$CCA$eig) / sum(hja.ca$CA$eig)
-d.var.part.3 <- sum(d.spat.env.var$CCA$eig) / sum(hja.ca$CA$eig)
-d.var.part.4 <- sum(d.env.spat.var$CCA$eig) / sum(hja.ca$CA$eig)
+sed.env <- as.matrix(sed.env)
+sed.pcnm <- as.matrix(sed.pcnm)
+sed.env.var <- vegan::capscale(sed.db ~ sed.env)
+sed.spa.var <- vegan::capscale(sed.db ~ sed.pcnm)
+sed.env_spa.var <- vegan::capscale(sed.db ~ sed.env + Condition(sed.pcnm))
+sed.spa_env.var <- vegan::capscale(sed.db ~ sed.pcnm + Condition(sed.env))
+permutest(sed.env.var, permutations = 999)
+permutest(sed.spa.var, permutations = 999) # NS
+permutest(sed.env_spa.var, permutations = 999) # NS
+permutest(sed.spa_env.var, permutations = 999) # NS
