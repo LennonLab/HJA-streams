@@ -1,10 +1,10 @@
 # Initial setup
 rm(list=ls())
-setwd("~/GitHub/HJA-streams/analysis")
+setwd("~/GitHub/HJA-streams/")
 opar <- par()
 
 # Load packages and other tools
-source("MothurTools.R")
+source("./analysis/MothurTools.R")
 
 require("vegan")
 require("png")
@@ -32,10 +32,10 @@ error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
 # Design = general design file for experiment
 # shared = OTU table from mothur with sequence similarity clustering
 # Taxonomy = Taxonomic information for each OTU
-design <- "../data/design.txt"
-shared <- "../data/hja_streams.final.shared"
-taxon  <- "../data/hja_streams.final.0.03.taxonomy"
-env    <- "../data/hja_env.csv"
+design <- "./data/design.txt"
+shared <- "./data/hja_streams.final.shared"
+taxon  <- "./data/hja_streams.final.0.03.taxonomy"
+env    <- "./data/hja_env.csv"
 
 # Import Design
 design.total <- read.delim(design, header=T, row.names=1)

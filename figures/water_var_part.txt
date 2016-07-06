@@ -1,6 +1,0 @@
-"Habitat" "Variation Partition" "Value"
-"1" "Habitat" "Variation Partition" "Value"
-"2" "Water" "Pure Env. = " "0.171124868099442"
-"3" "Water" "Pure Space. = " "0.468920790119796"
-"4" "Water" "Spatial + Env = " "0.0431997047270183"
-"5" "Water" "Residual Var. = " "0.359954341780762"

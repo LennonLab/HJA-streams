@@ -1,15 +1,15 @@
-# source("./InitialSetup.R")
+# source("./analysis/InitialSetup.R")
 
 # Calculate Dendritic Distances
 require('igraph')
-adj.mat <- as.matrix(read.csv("../data/undirected-matrix.csv", header=T))
+adj.mat <- as.matrix(read.csv("./data/undirected-matrix.csv", header=T))
 row.names(adj.mat) <- adj.mat[,1]
 adj.mat <- adj.mat[,-1]
 adj.mat <- (adj.mat == 1) * 1
 
 stream.network <- graph_from_adjacency_matrix(adjmatrix = adj.mat)
 
-png(filename = "../figures/stream-network.png", 
+png(filename = "./figures/stream-network.png", 
     height = 4800, width = 4800, res = 2*96)
 plot.igraph(stream.network)
 dev.off()
@@ -58,4 +58,8 @@ dist.mat[!lower.tri(dist.mat)] <- NA
 den.dists <- dend.dist.mat[which(rownames(dend.dist.mat) %in% rownames(design)),
                        which(rownames(dend.dist.mat) %in% rownames(design))]
 den.dists[!lower.tri(den.dists)] <- NA 
-env.2 <- env.mat[,2:6]+2.685105 # Make all values positive
+env.2 <- env.mat[,2:6]
+habitat <- scale((env[,8] == "sediment") * 1)
+env.2 <- as.data.frame(cbind(habitat, env.2))
+colnames(env.2)[1] <- "habitat"
+env.2 <- env.2 + abs(min(env.2))

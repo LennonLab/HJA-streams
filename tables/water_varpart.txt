@@ -1,0 +1,25 @@
+
+Partition of squared Bray distance in dbRDA 
+
+Call: varpart(Y = water.db, X = ~., water.pcnm, data = water.env[, 2:6])
+
+Explanatory tables:
+X1:  ~.
+X2:  water.pcnm 
+
+No. of explanatory tables: 2 
+Total variation (SS): 5.4018 
+No. of observations: 32 
+
+Partition table:
+                     Df R.squared Adj.R.squared Testable
+[a+b] = X1            5   0.24096       0.09499     TRUE
+[b+c] = X2           13   0.50580       0.14888     TRUE
+[a+b+c] = X1+X2      18   0.65995       0.18912     TRUE
+Individual fractions                                    
+[a] = X1|X2           5                 0.04024     TRUE
+[b]                   0                 0.05475    FALSE
+[c] = X2|X1          13                 0.09413     TRUE
+[d] = Residuals                         0.81088    FALSE
+---
+Use function ‘capscale’ to test significance of fractions of interest

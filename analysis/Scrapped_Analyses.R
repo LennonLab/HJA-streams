@@ -19,7 +19,7 @@ t.test(paired.div$S.rare[which(paired.div$habitat == "water")],
        paired.div$S.rare[which(paired.div$habitat == "sediment")], paired = TRUE)
 
 #### Figure 2: Water vs. Sed. diversity
-png(filename = "../figures/Figure2.png",
+png(filename = "./figures/Figure2.png",
     width = 1200, height = 1200, res = 96*2)
 par(c(5,5,3,2) + 0.3)
 barplot(height = sort(paired.div.difs, decreasing = T), names.arg = unique(paired.div$site),
@@ -35,7 +35,7 @@ mtext(side = 3, line = 0.5, at = c(1500), adj = 1, "Higher in\nwater")
 dev.off()
 graphics.off()
 
-img <- readPNG("../figures/Figure2.png")
+img <- readPNG("./figures/Figure2.png")
 grid.raster(img)
 
 
@@ -117,7 +117,7 @@ sed.coord.dist <- as.matrix(dist(as.matrix(sed.lat, sed.lon)))
 mantel(sed.struc.dist, sed.coord.dist, method = "pearson", permutations = 999)
 
 #### Figure S1: Surface-water / Sediment differences are robust across scales
-png(filename = "../figures/FigureS1.png",
+png(filename = "./figures/FigureS1.png",
     width = 2400, height = 1200, res = 96*2)
 par(mfrow = c(1,2))
 
@@ -163,7 +163,7 @@ points(w1.pcoa$points[which(w1.design$habitat == "sediment"),1],
 dev.off()
 graphics.off()
 
-img <- readPNG("../figures/FigureS1.png")
+img <- readPNG("./figures/FigureS1.png")
 grid.raster(img)
 
 
@@ -208,7 +208,7 @@ sediment.cca.explainvar2 <- round(sediment.cca$CCA$eig[2] /
 
 
 #### Figure S2: Environmental variables explain little variation in structure. Elevation seems important.
-png(filename = "../figures/FigureS2.png",
+png(filename = "./figures/FigureS2.png",
     width = 2400, height = 1800, res=96*2)
 par(mfrow=c(2,2))
 
@@ -309,7 +309,7 @@ text(sediment.vectors[, 1] * 2, sediment.vectors[, 2] * 2, pos=3,
 dev.off()
 graphics.off()
 
-img <- readPNG("../figures/FigureS2.png")
+img <- readPNG("./figures/FigureS2.png")
 grid.raster(img)
 
 
@@ -318,7 +318,7 @@ grid.raster(img)
 
 #### Figure 6: Surface Water vs. Sediment Communities
 
-png(filename = "../figures/Figure6.png",
+png(filename = "./figures/Figure6.png",
     width = 2400, height = 1200, res = 96*2)
 par(mfrow = c(1,2))
 
@@ -366,7 +366,7 @@ points(water.pcoa$points[which(water.design$watershed == "WS01"),1],
 dev.off()
 graphics.off()
 
-img <- readPNG("../figures/Figure6.png")
+img <- readPNG("./figures/Figure6.png")
 grid.raster(img)
 
 
@@ -416,27 +416,27 @@ axis(side = 2, las = 1, cex.axis = 1.25,
 
 # Elements of Metacommunity Structure (Leibold and Mikkelson 2002)
 
-water.null <- nullmodel(OTUs.PA[which(design$habitat == "water"),], method = "r0_ind")
-sed.null <- nullmodel(OTUs.PA[which(design$habitat == "sediment"),], method = "r0_ind")
+# water.null <- nullmodel(OTUs.PA[which(design$habitat == "water"),], method = "r0_ind")
+# sed.null <- nullmodel(OTUs.PA[which(design$habitat == "sediment"),], method = "r0_ind")
+# 
+# OTUs.common <- OTUsREL.log * 0
+# for(site in 1:nrows(OTUsREL.log)){
+#   this.site <- OTUsREL.log[site,]
+#   for otu in sort(this.site){
+#     rel.abund 
+#   }
+# }
 
-OTUs.common <- OTUsREL.log * 0
-for(site in 1:nrows(OTUsREL.log)){
-  this.site <- OTUsREL.log[site,]
-  for otu in sort(this.site){
-    rel.abund 
-  }
-}
 
 
-
-### GIS and Imagery
-DEM <- raster("~/GitHub/HJA-streams/imagery/bare_earth_DEM_1m/gi01001.e00")
-DEM
-image(DEM, col=terrain.colors(1000))
-streams <- readOGR(dsn = "./imagery/stream_network_2008/", layer = "lidar_stream")
-streams@data
-plot(streams, add = TRUE)
-summary(streams)
+# ### GIS and Imagery
+# DEM <- raster("~/GitHub/HJA-streams/imagery/bare_earth_DEM_1m/gi01001.e00")
+# DEM
+# image(DEM, col=terrain.colors(1000))
+# streams <- readOGR(dsn = "./imagery/stream_network_2008/", layer = "lidar_stream")
+# streams@data
+# plot(streams, add = TRUE)
+# summary(streams)
 
 # heatmaps and clustering
 jet.colors <- colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan", 

@@ -1,4 +1,3 @@
-# setwd("~/GitHub/HJA-streams")
 # source("./analysis/InitialSetup.R")
 
 require("vegan")
@@ -37,9 +36,8 @@ alpha.sed <- alpha.div[alpha.div$habitat == "sediment", ]
 
 # Differences in diversity (richness and evenness) between habitats
 t.test(alpha.water$S.rare, alpha.sed$S.rare)
-mean(c(358.0118, 120.1305)) / mean(alpha.div$S.rare[alpha.div$habitat == "sediment"])
-
-t.test(a.1$S.rare, a.2$S.rare)
+capture.output(summary(lm(alpha.div$S.rare ~ design$habitat == "water")),
+               file = "./tables/richness_compare_model.txt")
 
 ### Diversity Partitioning
 s.size <- as.vector(c(rowSums(OTUsREL)))
@@ -64,6 +62,8 @@ sediment.beta <- d(OTUsREL[which(design$habitat == "sediment"),],
                    lev = "beta", q = 1, boot = T, 
                    boot.arg = list(s.sizes = s.size[which(design$habitat == "sediment")]))
 
+water.alpha
+sediment.alpha
 water.alpha$D.Value / sediment.alpha$D.Value
 water.beta$D.Value / sediment.beta$D.Value
 
@@ -286,7 +286,7 @@ model.orders.s <- lm(orders.bray.s$dist ~ orders.bray.s$order)
 #### Figures
 
 ### Figure 1: Rarefied diversity in sediment and surface-water communities
-png(filename = "../figures/AlphaDiv.png",
+png(filename = "./figures/AlphaDiv.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 3, 2) + 0.3)
 boxplot(S.rare ~ habitat, data = alpha.div, at = c(3,1),
@@ -301,11 +301,11 @@ mtext("Habitat Type", side = 1, line = 3, cex = 1.5)
 mtext("Species Richness", side = 2, line = 4, cex = 1.5)
 dev.off()
 graphics.off()
-#img <- readPNG("../figures/AlphaDiv.png")
+#img <- readPNG("./figures/AlphaDiv.png")
 #grid.raster(img)
 
 # Figure 3: Beta-diversity is higher among headwaters than among higher order streams.
-png(filename = "../figures/BetaDiv_BrayCurtis.png",
+png(filename = "./figures/BetaDiv_BrayCurtis.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
 boxplot(dist ~ order, data = orders.bray.w, at = c(1,4), xlim = c(0,6), ylim = c(0.4, 0.9), 
@@ -326,12 +326,12 @@ legend("bottomleft", c("Water", "Sediment"),
 dev.off()
 graphics.off()
 
-img <- readPNG("../figures/BetaDiv_BrayCurtis.png")
+img <- readPNG("./figures/BetaDiv_BrayCurtis.png")
 grid.raster(img)
 
 
 
-png(filename = "../figures/BetaDiv_NumEquiv.png",
+png(filename = "./figures/BetaDiv_NumEquiv.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5,5,2,1) + 0.1)
 
@@ -360,5 +360,5 @@ legend(1, 1.35, c("Bacterioplankton", "Sediment-associated"),
 dev.off()
 graphics.off()
 
-img <- readPNG("../figures/BetaDiv_NumEquiv.png")
+img <- readPNG("./figures/BetaDiv_NumEquiv.png")
 grid.raster(img)
