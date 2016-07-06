@@ -1,4 +1,4 @@
-# source("./InitialSetup.R")
+# source("./analysis/InitialSetup.R")
 
 #### PCoA 
 
@@ -52,11 +52,11 @@ w1.var3 <- round(w1.pcoa$eig[3] / sum(w1.pcoa$eig),3) * 100
 
 # Is habitat or order an important factor in community structure?
 hja.permanova <- adonis(hja.db ~ design$habitat * design$watershed + design$order, permutations = 999)
-capture.output(hja.permanova$aov.tab, file = "../tables/hja_permanova.txt")
+capture.output(hja.permanova$aov.tab, file = "./tables/hja_permanova.txt")
 
 
 #### Figure 4: Sediment vs. Water PCoA
-png(filename = "../figures/HJA_PCoA_Bray.png",
+png(filename = "./figures/HJA_PCoA_Bray.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 3, 2) + 0.1)
 plot(hja.pcoa$points[ ,1], hja.pcoa$points[ ,2], ylim = c(-0.5, 0.5), xlim = c(-.4, .4),
@@ -80,10 +80,10 @@ legend("topleft", c("Water", "Sediment"),
 ordiellipse(hja.pcoa, design$habitat, conf = 0.95)
 dev.off()
 graphics.off()
-img <- readPNG("../figures/HJA_PCoA_Bray.png")
+img <- readPNG("./figures/HJA_PCoA_Bray.png")
 grid.raster(img)
 
-png(filename = "../figures/HJA_PCoA_Sorensen.png",
+png(filename = "./figures/HJA_PCoA_Sorensen.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 3, 2) + 0.1)
 plot(hja.pcoa.sorensen$points[ ,1], hja.pcoa.sorensen$points[ ,2], ylim = c(-0.5, 0.5), xlim = c(-.5, .5),
@@ -107,5 +107,5 @@ legend("topleft", c("Water", "Sediment"),
 ordiellipse(hja.pcoa.sorensen, design$habitat, conf = .95)
 dev.off()
 graphics.off()
-img <- readPNG("../figures/HJA_PCoA_Sorensen.png")
+img <- readPNG("./figures/HJA_PCoA_Sorensen.png")
 grid.raster(img)

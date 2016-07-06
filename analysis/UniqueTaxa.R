@@ -1,4 +1,4 @@
-# source("./InitialSetup.R")
+# source("./analysis/InitialSetup.R")
 
 sediment.only <- OTUs[, which(colSums(OTUs[which(design$habitat == "water"),]) == 0)]
 water.only <- OTUs[, which(colSums(OTUs[which(design$habitat == "sediment"),]) == 0)]
@@ -31,7 +31,7 @@ colnames(unique.fracs) <- c("unique_frac", "habitat")
 summary(lm(unique_frac ~ habitat, data = unique.fracs))
 
 ### Figure 2: Proportion unique taxa
-png(filename = "../figures/UniqueTaxa.png",
+png(filename = "./figures/UniqueTaxa.png",
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 2, 2) + 0.1)
 boxplot(unique_frac ~ habitat, data = unique.fracs, names = c("Sediments", "Water"), col = c("grey", "white"),
@@ -45,5 +45,5 @@ text(x = 1, y = 0.25, "*", cex = 2)
 dev.off()
 graphics.off()
 
-img <- readPNG("../figures/UniqueTaxa.png")
+img <- readPNG("./figures/UniqueTaxa.png")
 grid.raster(img)

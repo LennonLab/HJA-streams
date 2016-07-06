@@ -1,5 +1,5 @@
-# source("./InitialSetup.R")
-# source("./DistanceCalcs.R")
+# source("./analysis/InitialSetup.R")
+# source("./analysis/DistanceCalcs.R")
 
 # Water Distance Decay
 water.xy <- xy[which(design$habitat == "water"),]
@@ -138,7 +138,7 @@ summary(water.dd)
 
 ##### Figure: Headwater vs. Mainstem DDRs
 
-png(filename = "../figures/DDR_HeadwaterMainstem.png",
+png(filename = "./figures/DDR_HeadwaterMainstem.png",
     width = 1600, height = 1600, res = 96*2)
 par(mfcol = c(2, 2))
 
@@ -194,7 +194,7 @@ mtext("Higher Orders", side = 4, line = 1, cex = 1.2)
 
 dev.off()
 graphics.off()
-img <- readPNG("../figures/DDR_HeadwaterMainstem.png")
+img <- readPNG("./figures/DDR_HeadwaterMainstem.png")
 grid.raster(img)
 
 
@@ -202,7 +202,7 @@ grid.raster(img)
 
 
 #### Figure: Water vs Sediment DDRs
-png(filename = "../figures/DDR_WaterSed.png",
+png(filename = "./figures/DDR_WaterSed.png",
     width = 1600, height = 1600, res = 96*2)
 par(mfcol = c(2, 2))
 
@@ -258,7 +258,7 @@ mtext("Sediment", side = 4, line = 1, cex = 1.2)
 
 dev.off()
 graphics.off()
-img <- readPNG("../figures/DDR_WaterSed.png")
+img <- readPNG("./figures/DDR_WaterSed.png")
 grid.raster(img)
 
 
@@ -266,7 +266,7 @@ grid.raster(img)
 
 
 # Catchment-Scale DDRs
-png(filename = "../figures/Figure10.png",
+png(filename = "./figures/Figure10.png",
     width = 1200, height = 1200, res = 96*2)
 
 par(mar = c(5, 5, 3, 3) + 0.4)
@@ -283,9 +283,9 @@ mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
 
-png(filename = "../figures/Figure11.png",
+png(filename = "./figures/Figure11.png",
     width = 1200, height = 1200, res = 96*2)
-grid.raster(readPNG("../figures/Figure10.png"))
+grid.raster(readPNG("./figures/Figure10.png"))
 
 par(mar = c(5, 5, 3, 3) + 0.4)
 plot(hja.dists$den.dists, log(1 - hja.dists$comm.struc), xlab="", 
@@ -301,7 +301,7 @@ mtext("Dendritic distance (m)", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
 
-png(filename = "../figures/Figure12.png",
+png(filename = "./figures/Figure12.png",
     width = 1200, height = 1200, res = 96*2)
 
 par(mar = c(5, 5, 3, 3) + 0.4)
@@ -318,7 +318,7 @@ mtext("Geographic Distance (m)", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
 
-png(filename = "../figures/Figure13.png",
+png(filename = "./figures/Figure13.png",
     width = 1200, height = 1200, res = 96*2)
 
 par(mar = c(5, 5, 3, 3) + 0.4)
@@ -335,7 +335,7 @@ mtext("Geographic Distance (m)", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
 
-png(filename = "../figures/Figure14.png",
+png(filename = "./figures/Figure14.png",
     width = 1200, height = 1200, res = 96*2)
 
 par(mar = c(5, 5, 3, 3) + 0.4)

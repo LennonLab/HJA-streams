@@ -1,7 +1,7 @@
 # Spatial autocorrelation
 
 var.trend <- variog(coords = xy, data = env.2, option = "bin")
-png(filename = "../figures/Figure15.png", width = 1200, height = 1200, res = 96*2)
+png(filename = "./figures/Figure15.png", width = 1200, height = 1200, res = 96*2)
 par(c(5,5,3,1) + 0.5)
 plot(var.trend, type = "l", xaxt = "n", yaxt = "n",
      ylab = "", xlab = "", xlim = c(0, 12000))
@@ -14,7 +14,7 @@ mtext(side = 1, line = 3, "Geographic Distance (m)", cex = 1.5)
 mtext(side = 2, line = 3, "Semivariance", cex = 1.5)
 dev.off()
 graphics.off()
-img <- readPNG("../figures/Figure15.png")
+img <- readPNG("./figures/Figure15.png")
 grid.raster(img)
 
 var.trend <- variog(coords = xy, data = env$conductivity, option = "bin")

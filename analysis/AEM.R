@@ -1,11 +1,11 @@
 # AEM 
 
-site.by.edges.lc <- as.matrix(read.csv("../data/sites-by-edges_LC.csv", header=T))
+site.by.edges.lc <- as.matrix(read.csv("./data/sites-by-edges_LC.csv", header=T))
 row.names(site.by.edges.lc) <- site.by.edges.lc[,1]
 site.by.edges.lc <- site.by.edges.lc[,-1]
 site.by.edges.lc <- (site.by.edges.lc == 1) * 1
 
-site.by.edges.w1 <- as.matrix(read.csv("../data/sites-by-edges_WS1.csv", header=T))
+site.by.edges.w1 <- as.matrix(read.csv("./data/sites-by-edges_WS1.csv", header=T))
 row.names(site.by.edges.w1) <- site.by.edges.w1[,1]
 site.by.edges.w1 <- site.by.edges.w1[,-1]
 site.by.edges.w1 <- (site.by.edges.w1 == 1) * 1

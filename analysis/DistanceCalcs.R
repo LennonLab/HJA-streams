@@ -1,15 +1,15 @@
-# source("./InitialSetup.R")
+# source("./analysis/InitialSetup.R")
 
 # Calculate Dendritic Distances
 require('igraph')
-adj.mat <- as.matrix(read.csv("../data/undirected-matrix.csv", header=T))
+adj.mat <- as.matrix(read.csv("./data/undirected-matrix.csv", header=T))
 row.names(adj.mat) <- adj.mat[,1]
 adj.mat <- adj.mat[,-1]
 adj.mat <- (adj.mat == 1) * 1
 
 stream.network <- graph_from_adjacency_matrix(adjmatrix = adj.mat)
 
-png(filename = "../figures/stream-network.png", 
+png(filename = "./figures/stream-network.png", 
     height = 4800, width = 4800, res = 2*96)
 plot.igraph(stream.network)
 dev.off()

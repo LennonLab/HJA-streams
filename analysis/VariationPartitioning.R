@@ -1,6 +1,6 @@
-# setwd("~/GitHub/HJA-streams/analysis/")
-# source("./InitialSetup.R")
-# source("./Ordination.R")
+# setwd("~/GitHub/HJA-streams/")
+# source("./analysis/InitialSetup.R")
+# source("./analysis/Ordination.R")
 
 ## Variation Partitioning
 
@@ -18,7 +18,7 @@ hja.pcnm <- as.data.frame(hja.pcnm)
 
 capture.output(
   varpart(hja.db, ~ ., hja.pcnm, data=hja.env),
-  file = "../tables/hja_varpart.txt")
+  file = "./tables/hja_varpart.txt")
 
 hja.env.mat <- as.matrix(hja.env)
 hja.pcnm.mat <- as.matrix(hja.pcnm)
@@ -32,7 +32,7 @@ capture.output(
   permutest(hja.spa.var, permutations = 999),
   permutest(hja.env_spa.var, permutations = 999),
   permutest(hja.spa_env.var, permutations = 999),
-  file = "../tables/hja_permutation_tests.txt")
+  file = "./tables/hja_permutation_tests.txt")
 
 # headwaters vs. downstream
 headwaters.db <- vegdist(OTUsREL[which(design$order==1),], method = "bray")
@@ -56,10 +56,10 @@ downstream.pcnm <- as.data.frame(downstream.pcnm)
 
 capture.output(
   varpart(headwaters.db, ~ ., headwaters.pcnm, data=headwaters.env),
-  file = "../tables/headwaters_varpart.txt")
+  file = "./tables/headwaters_varpart.txt")
 capture.output(
   varpart(downstream.db, ~ ., downstream.pcnm, data=downstream.env),
-  file = "../tables/downstream_varpart.txt")
+  file = "./tables/downstream_varpart.txt")
 
 headwaters.env.mat <- as.matrix(headwaters.env)
 headwaters.pcnm.mat <- as.matrix(headwaters.pcnm)
@@ -72,7 +72,7 @@ capture.output(
   permutest(headwaters.spa.var, permutations = 999), # NS
   permutest(headwaters.env_spa.var, permutations = 999), # NS
   permutest(headwaters.spa_env.var, permutations = 999), # NS
-  file = "../tables/headwaters_permutation_tests.txt")
+  file = "./tables/headwaters_permutation_tests.txt")
 
 downstream.env.mat <- as.matrix(downstream.env)
 downstream.pcnm.mat <- as.matrix(downstream.pcnm)
@@ -85,7 +85,7 @@ capture.output(
   permutest(downstream.spa.var, permutations = 999),
   permutest(downstream.env_spa.var, permutations = 999),
   permutest(downstream.spa_env.var, permutations = 999),
-  file = "../tables/downstream_permutation_tests.txt")
+  file = "./tables/downstream_permutation_tests.txt")
 
 # water vs. sediments
 water.db <- vegdist(OTUsREL[which(design$habitat=="water"),], method = "bray")
@@ -109,10 +109,10 @@ sed.pcnm <- as.data.frame(sed.pcnm)
 
 capture.output(
   varpart(water.db, ~ ., water.pcnm, data=water.env[,2:6]),
-  file = "../tables/water_varpart.txt")
+  file = "./tables/water_varpart.txt")
 capture.output(
   varpart(sed.db, ~ ., sed.pcnm, data=sed.env[,2:6]),
-  file = "../tables/sed_varpart.txt")
+  file = "./tables/sed_varpart.txt")
 
 water.env.mat <- as.matrix(water.env)
 water.pcnm.mat <- as.matrix(water.pcnm)
@@ -125,7 +125,7 @@ capture.output(
   permutest(water.spa.var, permutations = 999),
   permutest(water.env_spa.var, permutations = 999), # NS
   permutest(water.spa_env.var, permutations = 999), # NS
-  file = "../tables/water_permutation_tests.txt")
+  file = "./tables/water_permutation_tests.txt")
 
 sed.env.mat <- as.matrix(sed.env)
 sed.pcnm.mat <- as.matrix(sed.pcnm)
@@ -138,4 +138,4 @@ capture.output(
   permutest(sed.spa.var, permutations = 999), # NS
   permutest(sed.env_spa.var, permutations = 999), # NS
   permutest(sed.spa_env.var, permutations = 999), # NS
-  file = "../tables/sed_permutation_tests.txt")
+  file = "./tables/sed_permutation_tests.txt")
