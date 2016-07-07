@@ -1,5 +1,5 @@
-# setwd("~/GitHub/HJA-streams")
-# source("./analysis/InitialSetup.R")
+# setwd("~/GitHub/HJA-streams/analysis")
+# source("./InitialSetup.R")
 
 require("vegan")
 require("vegetarian")
