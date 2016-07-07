@@ -7,7 +7,7 @@ hja.elev.dist.list <- liste(hja.elev.dist, entry = "elev")
 hja.model <- lm(log(hja.bray.list$struc) ~ hja.elev.dist.list$elev)
 summary(hja.model)
 
-png(filename = "../figures/FigureS5.png", 
+png(filename = "./figures/FigureS5.png", 
     width = 1200, height = 1200, res = 96*2)
 par(mar = c(5, 5, 1, 3) + 0.1)
 plot(log(hja.bray.list$struc) ~ hja.elev.dist.list$elev, 
@@ -23,7 +23,7 @@ box(lwd=2)
 abline(hja.model, lwd = 2)
 dev.off()
 graphics.off()
-img <- readPNG("../figures/FigureS5.png")
+img <- readPNG("./figures/FigureS5.png")
 grid.raster(img)
 
 
@@ -45,7 +45,7 @@ summary(sed.elev.lm)
 
 
 ### Figure S3: Bray-Curtis Similarity by Elevation
-png(filename = "../figures/Figure10.png", 
+png(filename = "./figures/Figure10.png", 
     width = 1200, height = 1200, res = 96*2)
 
 par(mfrow = c(2, 1))
@@ -81,5 +81,5 @@ abline(sed.elev.lm, lwd = 2)
 dev.off()
 graphics.off()
 
-img <- readPNG("../figures/Figure10.png")
+img <- readPNG("./figures/Figure10.png")
 grid.raster(img)

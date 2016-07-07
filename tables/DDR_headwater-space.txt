@@ -1,0 +1,19 @@
+
+Call:
+lm(formula = log(headwater.dists$comm.struc) ~ headwater.dists$geo.dist)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.91282 -0.14528  0.06012  0.22242  0.54516 
+
+Coefficients:
+                           Estimate Std. Error t value Pr(>|t|)    
+(Intercept)              -1.156e+00  6.192e-02 -18.672   <2e-16 ***
+headwater.dists$geo.dist  1.509e-06  8.562e-06   0.176    0.861    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.3092 on 64 degrees of freedom
+Multiple R-squared:  0.0004851,	Adjusted R-squared:  -0.01513 
+F-statistic: 0.03106 on 1 and 64 DF,  p-value: 0.8607
+
