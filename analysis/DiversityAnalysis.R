@@ -229,12 +229,29 @@ water.hill <- as.data.frame(cbind(orders, water.a, water.a.se, water.b, water.b.
 sed.hill <- as.data.frame(cbind(orders, sed.a, sed.a.se, sed.b, sed.b.se, sed.g, sed.g.se))
 
 # Plot by stream order to visualize
-plot(water.hill$orders, water.hill$water.a, type = "l")
-plot(water.hill$orders, water.hill$water.b, type = "l")
-plot(water.hill$orders, water.hill$water.g, type = "l")
-plot(sed.hill$orders, sed.hill$sed.a, type = "l")
-plot(sed.hill$orders, sed.hill$sed.b, type = "l")
-plot(sed.hill$orders, sed.hill$sed.g, type = "l")
+png(filename = "./figures/DiversityPartitioning_Order.png",
+    height = 1200, width = 1200, res = 96*2)
+par(mar = c(5,5,2,5) + 0.5)
+plot(water.hill$orders, water.hill$water.a, type = "o", lty = 2, lwd = 2, pch = 22, bg = "black",
+     xaxt = "n", yaxt = "n", ylim = c(0, 12000),
+     xlab = "", ylab = "")
+points(water.hill$orders, water.hill$water.g, type = "o", lty = 3, lwd = 2, pch = 23, bg = "black")
+points(sed.hill$orders, sed.hill$sed.a, type = "o", lty = 2, lwd = 2, col = "grey70", pch = 22)
+points(sed.hill$orders, sed.hill$sed.g, type = "o", lty = 3, lwd = 2, col = "grey70", pch = 23)
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+par(new = TRUE)
+plot(water.hill$orders, water.hill$water.b, type = "o", lwd = 2, pch = 21, bg = "black",
+     xaxt = "n", yaxt = "n", xlab = "", ylab = "", ylim = c(1,2.5))
+points(sed.hill$orders, sed.hill$sed.b, type = "o", lwd = 2, col = "grey", pch = 21)
+axis(side = 4, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+box(lwd = 2)
+mtext("Stream Order", side = 1, line = 3, cex = 1.5)
+mtext(expression(paste(alpha," and ",gamma,"-diversity")), side = 2, line = 3.5, cex = 1.5)
+mtext(expression(paste(beta,"-diversity")), side = 4, line = 3.5, cex = 1.5)
+dev.off()
+graphics.off()
 
 model.water.b <- lm(water.hill$water.b ~ water.hill$orders)
 summary(model.water.b)
