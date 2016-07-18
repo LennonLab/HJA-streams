@@ -1,10 +1,10 @@
 
 Partition of squared Bray distance in dbRDA 
 
-Call: varpart(Y = headwaters.db, X = ~., headwaters.pcnm, data = headwaters.env)
+Call: varpart(Y = headwaters.db, X = headwaters.env, headwaters.pcnm)
 
 Explanatory tables:
-X1:  ~.
+X1:  headwaters.env
 X2:  headwaters.pcnm 
 
 No. of explanatory tables: 2 
@@ -13,13 +13,13 @@ No. of observations: 12
 
 Partition table:
                      Df R.squared Adj.R.squared Testable
-[a+b] = X1            6   0.64429       0.21743     TRUE
+[a+b] = X1            7   0.70985       0.20208     TRUE
 [b+c] = X2            5   0.48937       0.06385     TRUE
 [a+b+c] = X1+X2       8   0.80740       0.29380     TRUE
 Individual fractions                                    
 [a] = X1|X2           3                 0.22995     TRUE
-[b]                   0                -0.01251    FALSE
-[c] = X2|X1           2                 0.07637     TRUE
+[b]                   0                -0.02787    FALSE
+[c] = X2|X1           1                 0.09172     TRUE
 [d] = Residuals                         0.70620    FALSE
 ---
 Use function ‘capscale’ to test significance of fractions of interest

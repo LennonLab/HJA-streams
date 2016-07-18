@@ -6,8 +6,8 @@ Number of permutations: 999
  
 Call: vegan::capscale(formula = water.db ~ water.env.mat)
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.650764 (with 5, 26 Degrees of Freedom)
-Significance:	 0.003 
+Pseudo-F:	 1.674989 (with 6, 25 Degrees of Freedom)
+Significance:	 0.001 
 
 
 Permutation test for capscale 
@@ -15,10 +15,10 @@ Permutation test for capscale
 Permutation: free
 Number of permutations: 999
  
-Call: vegan::capscale(formula = water.db ~ water.pcnm.mat)
+Call: vegan::capscale(formula = water.db ~ water.pcnm.mat + Condition(water.coords))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.417114 (with 13, 18 Degrees of Freedom)
-Significance:	 0.004 
+Pseudo-F:	 1.241893 (with 13, 16 Degrees of Freedom)
+Significance:	 0.065 
 
 
 Permutation test for capscale 
@@ -26,10 +26,10 @@ Permutation test for capscale
 Permutation: free
 Number of permutations: 999
  
-Call: vegan::capscale(formula = water.db ~ water.env.mat + Condition(water.pcnm.mat))
+Call: vegan::capscale(formula = water.db ~ water.env.mat + Condition(water.pcnm.mat) + Condition(water.coords))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.178667 (with 5, 13 Degrees of Freedom)
-Significance:	 0.201 
+Pseudo-F:	 1.107112 (with 6, 10 Degrees of Freedom)
+Significance:	 0.313 
 
 
 Permutation test for capscale 
@@ -37,8 +37,8 @@ Permutation test for capscale
 Permutation: free
 Number of permutations: 999
  
-Call: vegan::capscale(formula = water.db ~ water.pcnm.mat + Condition(water.env.mat))
+Call: vegan::capscale(formula = water.db ~ water.pcnm.mat + Condition(water.env.mat) + Condition(water.coords))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.232167 (with 13, 13 Degrees of Freedom)
-Significance:	 0.056 
+Pseudo-F:	 1.10043 (with 13, 10 Degrees of Freedom)
+Significance:	 0.301 
 
