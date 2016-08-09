@@ -28,7 +28,8 @@ se(rowSums(in.sediment[which(design$habitat == "sediment"),
 unique.fracs <- as.data.frame(rbind(cbind(1-water.frac, 1),cbind(1-sed.frac, 0)))
 colnames(unique.fracs) <- c("unique_frac", "habitat")
 
-summary(lm(unique_frac ~ habitat, data = unique.fracs))
+capture.output(summary(lm(unique_frac ~ habitat, data = unique.fracs)),
+               file = "./tables/unique_compare.txt")
 
 ### Figure 2: Proportion unique taxa
 png(filename = "./figures/UniqueTaxa.png",

@@ -20,15 +20,17 @@ SimpE <- function(x = ""){
 }
 simpsE <- round(apply(OTUsREL, 1, SimpE), 3)
 shan <- vegan::diversity(OTUsREL, index = "shannon")
+N1 <- exp(shan)
 simpsD <- vegan::diversity(OTUsREL, index = "invsimpson")
+E1 <- N1/S.obs
 
 # Rarefaction
 min.N <- min(rowSums(OTUs))
-S.rarefy <- rarefy(x = OTUs, sample = (min.N/2), se = TRUE)
+S.rarefy <- rarefy(x = OTUs, sample = (min.N), se = TRUE)
 #rarecurve(x = OTUs, step = 20, col = "blue", cex = 0.6, las = 1)
 rare.d <- t(S.rarefy)
 colnames(rare.d) <- c("S.rare", "se.rare")
-alpha.div <- cbind(design, S.obs, simpsE, shan, simpsD, rare.d)
+alpha.div <- cbind(design, S.obs, simpsE, shan, N1, simpsD, rare.d)
 
 # Seperate data based on water and sediment samples
 alpha.water <- alpha.div[alpha.div$habitat == "water",]
@@ -36,6 +38,8 @@ alpha.sed <- alpha.div[alpha.div$habitat == "sediment", ]
 
 # Differences in diversity (richness and evenness) between habitats
 t.test(alpha.water$S.rare, alpha.sed$S.rare)
+t.test(alpha.water$N1, alpha.sed$N1)
+boxplot(alpha.water$N1, alpha.sed$N1)
 capture.output(summary(lm(alpha.div$S.rare ~ design$habitat == "water")),
                file = "./tables/richness_compare_model.txt")
 

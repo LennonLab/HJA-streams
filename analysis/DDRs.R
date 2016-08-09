@@ -45,7 +45,7 @@ capture.output(summary(sed.env.lm), file = "./tables/DDR_sed-env.txt")
 capture.output(summary(sed.geo.lm), file = "./tables/DDR_sed-space.txt")
 
 # Headwaters DDRs
-headwater.env.dists <- vegdist(env.2[which(design$order < 2),], method = "bray")
+headwater.env.dists <- vegdist(env.2[which(design$order < 2),], method = "gower")
 headwater.env.dists <- liste(headwater.env.dists, entry = "env")[,3]
 headwater.geo.dists <- na.omit(liste(dist.mat[which(design$order < 2), which(design$order < 2)],
                               entry = "geo.dist"))
@@ -58,7 +58,7 @@ capture.output(summary(headwater.env.lm), file = "./tables/DDR_headwater-env.txt
 capture.output(summary(headwater.geo.lm), file = "./tables/DDR_headwater-space.txt")
 
 # Higher Order DDRs
-downstream.env.dists <- vegdist(env.2[which(design$order >= 2),], method = "bray")
+downstream.env.dists <- vegdist(env.2[which(design$order >= 2),], method = "gower")
 downstream.env.dists <- liste(downstream.env.dists, entry = "env")[,3]
 downstream.geo.dists <- na.omit(liste(dist.mat[which(design$order >= 2), which(design$order >= 2)],
                                entry = "geo.dist"))
@@ -99,15 +99,15 @@ summary(hja.den.lm)
 
 ##### Figure: Headwater vs. Mainstem DDRs
 
-png(filename = "./figures/DDR_HeadwaterMainstem.png",
+png(filename = "./figures/DDR_HeadwaterDownstream.png",
     width = 1600, height = 1600, res = 96*2)
 par(mfcol = c(2, 2))
 
 par(mar = c(1, 5, 3, 0) + 0.4)
 plot(headwater.dists$headwater.env.dists, 
      log(headwater.dists$comm.struc), xlab="", 
-     ylab = "", xaxt="n", yaxt="n", xlim = c(0,.5))
-abline(headwater.lm, lty = 1, lwd = 2)
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,.8))
+# abline(headwater.env.lm, lty = 1, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, 
      labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
@@ -118,9 +118,9 @@ box(lwd = 2)
 mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
 
 par(mar = c(4, 5, 1, 0) + 0.4)
-plot(mainstem.dists$mainstem.env.dists, 
-     log(mainstem.dists$comm.struc), xlab="", 
-     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,.5))
+plot(downstream.dists$downstream.env.dists, 
+     log(downstream.dists$comm.struc), xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,.8))
 axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, 
      labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
@@ -129,14 +129,14 @@ axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
 mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
-abline(mainstem.lm, lwd = 2)
+abline(downstream.env.lm, lwd = 2)
 mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
 
 par(mar = c(1, 1, 3, 4) + 0.4)
 plot(headwater.dists$geo.dist, 
      log(headwater.dists$comm.struc), xlab="", 
      ylab = "", xaxt="n", yaxt="n", xlim = c(0,12000))
-abline(headwater.dd, lty = 1, lwd = 2)
+# abline(headwater.geo.lm, lty = 1, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
@@ -145,21 +145,21 @@ mtext("Headwaters", side = 4, line = 1.5, cex = 1.2)
 box(lwd = 2)
 
 par(mar = c(4, 1, 1, 4) + 0.4)
-plot(mainstem.dists$geo.dist, 
-     log(mainstem.dists$comm.struc), xlab="", 
+plot(downstream.dists$geo.dist, 
+     log(downstream.dists$comm.struc), xlab="", 
      ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,12000))
 axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
-abline(mainstem.dd, lwd = 2)
+abline(downstream.geo.lm, lwd = 2)
 mtext("Geographic Distance", side = 1, line = 3, cex = 1.5)
-mtext("Higher Orders", side = 4, line = 1.5, cex = 1.2)
+mtext("Downstream", side = 4, line = 1.5, cex = 1.2)
 
 dev.off()
 graphics.off()
-img <- readPNG("./figures/DDR_HeadwaterMainstem.png")
+img <- readPNG("./figures/DDR_HeadwaterDownstream.png")
 grid.raster(img)
 
 
@@ -175,7 +175,7 @@ par(mar = c(1, 5, 3, 0) + 0.4)
 plot(water.dists$env, 
      log(water.dists$comm.struc), xlab="", 
      ylab = "", xaxt="n", yaxt="n", xlim = c(0,.6))
-abline(water.lm, lty = 1, lwd = 2)
+abline(water.env.lm, lty = 1, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, 
      labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
@@ -197,14 +197,14 @@ axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
 mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
-abline(sed.lm, lwd = 2)
+abline(sed.env.lm, lwd = 2)
 mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
 
 par(mar = c(1, 1, 3, 4) + 0.4)
 plot(water.dists$geo, 
      log(water.dists$comm.struc), xlab="", 
      ylab = "", xaxt="n", yaxt="n", xlim = c(0,12000))
-abline(water.dd, lty = 1, lwd = 2)
+abline(water.geo.lm, lty = 1, lwd = 2)
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
@@ -221,7 +221,7 @@ axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, 
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd=2)
-abline(sed.dd, lwd = 2)
+abline(sed.geo.lm, lwd = 2)
 mtext("Geographic Distance", side = 1, line = 3, cex = 1.5)
 mtext("Sediment Bacteria", side = 4, line = 1.5, cex = 1.2)
 

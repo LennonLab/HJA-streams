@@ -1,0 +1,19 @@
+
+Call:
+lm(formula = unique_frac ~ habitat, data = unique.fracs)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.170173 -0.039679 -0.004139  0.040085  0.132960 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.10300    0.01228   8.391 2.32e-11 ***
+habitat      0.13083    0.01624   8.057 7.99e-11 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.06014 on 54 degrees of freedom
+Multiple R-squared:  0.5459,	Adjusted R-squared:  0.5375 
+F-statistic: 64.91 on 1 and 54 DF,  p-value: 7.99e-11
+

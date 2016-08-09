@@ -3,17 +3,17 @@ Call:
 lm(formula = alpha.div$S.rare ~ design$habitat == "water")
 
 Residuals:
-    Min      1Q  Median      3Q     Max 
--994.84 -149.62   31.28  164.17  443.61 
+     Min       1Q   Median       3Q      Max 
+-1645.20  -270.81    98.62   251.36   775.31 
 
 Coefficients:
                               Estimate Std. Error t value Pr(>|t|)    
-(Intercept)                    1243.96      48.06   25.88  < 2e-16 ***
-design$habitat == "water"TRUE   239.07      63.58    3.76 0.000419 ***
+(Intercept)                    1815.33      83.19  21.821  < 2e-16 ***
+design$habitat == "water"TRUE   451.78     110.05   4.105 0.000138 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 235.4 on 54 degrees of freedom
-Multiple R-squared:  0.2075,	Adjusted R-squared:  0.1928 
-F-statistic: 14.14 on 1 and 54 DF,  p-value: 0.000419
+Residual standard error: 407.6 on 54 degrees of freedom
+Multiple R-squared:  0.2378,	Adjusted R-squared:  0.2237 
+F-statistic: 16.85 on 1 and 54 DF,  p-value: 0.0001376
 
