@@ -70,6 +70,39 @@ downstream.geo.lm <- (lm(log(downstream.dists$comm.struc) ~ downstream.dists$geo
 capture.output(summary(downstream.env.lm), file = "./tables/DDR_downstream-env.txt")
 capture.output(summary(downstream.geo.lm), file = "./tables/DDR_downstream-space.txt")
 
+# Downstream seds
+downstream.sed.env.dists <- vegdist(env.2[which(design$order > 1 & design$habitat == "sediment"),], method = "gower")
+downstream.sed.env.dists <- liste(downstream.sed.env.dists, entry = "env")[,3]
+downstream.sed.geo.dists <- na.omit(liste(dist.mat[which(design$order >1  & design$habitat == "sediment"), 
+                                                  which(design$order >1 & design$habitat == "sediment")],
+                                     entry = "geo.dist"))
+downstream.sed.db <- vegdist(OTUsREL[which(design$order >1 & design$habitat == "sediment"),])
+downstream.sed.dists <- cbind(liste((1 - downstream.sed.db), entry = "comm.struc"), 
+                         downstream.sed.env.dists, downstream.sed.geo.dists)
+downstream.sed.env.lm <- (lm(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$downstream.sed.env.dists))
+downstream.sed.geo.lm <- (lm(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$geo.dist))
+summary(downstream.sed.env.lm)
+summary(downstream.sed.geo.lm)
+
+plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$downstream.sed.env.dists)
+plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$geo.dist)
+
+# Downstream water
+downstream.water.env.dists <- vegdist(env.2[which(design$order > 1 & design$habitat == "water"),], method = "gower")
+downstream.water.env.dists <- liste(downstream.water.env.dists, entry = "env")[,3]
+downstream.water.geo.dists <- na.omit(liste(dist.mat[which(design$order >1  & design$habitat == "water"), 
+                                                   which(design$order >1 & design$habitat == "water")],
+                                          entry = "geo.dist"))
+downstream.water.db <- vegdist(OTUsREL[which(design$order >1 & design$habitat == "water"),])
+downstream.water.dists <- cbind(liste((1 - downstream.water.db), entry = "comm.struc"), 
+                              downstream.water.env.dists, downstream.water.geo.dists)
+downstream.water.env.lm <- (lm(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$downstream.water.env.dists))
+downstream.water.geo.lm <- (lm(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$geo.dist))
+summary(downstream.water.env.lm)
+summary(downstream.water.geo.lm)
+
+plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$downstream.water.env.dists)
+plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$geo.dist)
 
 ### Catchment Scale DDRs
 
@@ -325,4 +358,72 @@ mtext("Environmental Distance", side = 2, line = 3, cex = 1.5)
 mtext("Dendritic Distance (m)", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
+
+
+# Downstream sed vs. water
+
+png(filename = "./figures/DDR_DownstreamSedWater.png",
+    width = 1600, height = 1600, res = 96*2)
+par(mfcol = c(2, 2))
+
+par(mar = c(1, 5, 3, 0) + 0.4)
+plot(downstream.water.dists$downstream.water.env.dists, 
+     log(downstream.water.dists$comm.struc), xlab="", 
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,.6))
+abline(downstream.water.env.lm, lty = 1, lwd = 2)
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, 
+     labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
+     at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
+
+par(mar = c(4, 5, 1, 0) + 0.4)
+plot(downstream.sed.dists$downstream.sed.env.dists, 
+     log(downstream.sed.dists$comm.struc), xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,.6))
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, 
+     labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
+     at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd=2)
+mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
+abline(downstream.sed.env.lm, lwd = 2)
+mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
+
+par(mar = c(1, 1, 3, 4) + 0.4)
+plot(downstream.water.dists$geo.dist, 
+     log(downstream.water.dists$comm.struc), xlab="", 
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,12000))
+abline(downstream.water.geo.lm, lty = 1, lwd = 2)
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+mtext("Bacterioplankton", side = 4, line = 1.5, cex = 1.2)
+box(lwd = 2)
+
+par(mar = c(4, 1, 1, 4) + 0.4)
+plot(downstream.sed.dists$geo.dist, 
+     log(downstream.sed.dists$comm.struc), xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,12000))
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd=2)
+abline(downstream.sed.geo.lm, lwd = 2)
+mtext("Geographic Distance", side = 1, line = 3, cex = 1.5)
+mtext("Sediment", side = 4, line = 1.5, cex = 1.2)
+
+dev.off()
+graphics.off()
+img <- readPNG("./figures/DDR_DownstreamSedWater.png")
+grid.raster(img)
+
+
 
