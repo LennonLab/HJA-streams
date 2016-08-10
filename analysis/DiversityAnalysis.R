@@ -235,7 +235,7 @@ sed.hill <- as.data.frame(cbind(orders, sed.a, sed.a.se, sed.b, sed.b.se, sed.g,
 # Plot by stream order to visualize
 png(filename = "./figures/DiversityPartitioning_Order.png",
     height = 1200, width = 1200, res = 96*2)
-par(mar = c(5,5,2,5) + 0.5)
+par(mar = c(5,5,5,5) + 0.5)
 plot(water.hill$orders, water.hill$water.a, type = "o", lty = 2, lwd = 2, pch = 22, bg = "black",
      xaxt = "n", yaxt = "n", ylim = c(0, 12000),
      xlab = "", ylab = "")
@@ -259,7 +259,7 @@ graphics.off()
 
 png(filename = "./figures/DiversityPartitioning_Order-alpha.png",
     height = 1200, width = 1200, res = 96*2)
-par(mar = c(5,5,2,5) + 0.5)
+par(mar = c(5,5,5,5) + 0.5)
 plot(water.hill$orders, water.hill$water.a, type = "o", lty = 2, lwd = 2, pch = 22, bg = "black",
      xaxt = "n", yaxt = "n", ylim = c(0, 12000),
      xlab = "", ylab = "")
@@ -273,7 +273,7 @@ graphics.off()
 
 png(filename = "./figures/DiversityPartitioning_Order-beta.png",
     height = 1200, width = 1200, res = 96*2)
-par(mar = c(5,5,2,5) + 0.5)
+par(mar = c(5,5,5,5) + 0.5)
 plot(water.hill$orders, water.hill$water.b, type = "o", lwd = 2, pch = 21, bg = "black",
      xaxt = "n", yaxt = "n", xlab = "", ylab = "", ylim = c(1,3))
 error.bar(water.hill$orders, water.hill$water.b, upper = water.hill$water.b.se)
@@ -289,7 +289,7 @@ graphics.off()
 
 png(filename = "./figures/DiversityPartitioning_Order-gamma.png",
     height = 1200, width = 1200, res = 96*2)
-par(mar = c(5,5,2,5) + 0.5)
+par(mar = c(5,5,5,5) + 0.5)
 plot(water.hill$orders, water.hill$water.g, type = "o", lty = 3, lwd = 2, pch = 23, bg = "black",
      xaxt = "n", yaxt = "n", xlab = "", ylab = "", ylim = c(0, 12000))
 error.bar(water.hill$orders, water.hill$water.g, upper = water.hill$water.g.se)
@@ -335,6 +335,66 @@ png(filename = "./figures/DiversityPartitioning_Order-sed.png",
 par(mar = c(5,5,5,5) + 0.5)
 plot(sed.hill$orders, sed.hill$sed.a, type = "o", lty = 2, lwd = 2, pch = 22, bg = "black",
      xaxt = "n", yaxt = "n", ylim = c(0, 9000),
+     xlab = "", ylab = "")
+points(sed.hill$orders, sed.hill$sed.g, type = "o", lty = 3, lwd = 2, pch = 23, bg = "black")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+par(new = TRUE)
+plot(sed.hill$orders, sed.hill$sed.b, type = "o", lwd = 2, pch = 21, bg = "black",
+     xaxt = "n", yaxt = "n", xlab = "", ylab = "", ylim = c(1,2.5))
+error.bar(sed.hill$orders, sed.hill$sed.b, upper = sed.hill$sed.b.se)
+axis(side = 4, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+box(lwd = 2)
+mtext("Stream Order", side = 1, line = 3, cex = 1.5)
+mtext(expression(paste(alpha," and ",gamma,"-diversity")), side = 2, line = 3.5, cex = 1.5)
+mtext(expression(paste(beta,"-diversity")), side = 4, line = 3.5, cex = 1.5)
+legend(x = 3.7, y = 2.5, pch = c(22, 23, 21), lty = c(2, 3, 2), lwd = c(2,2,2),
+       pt.bg = c("black", "black", "black"),
+       legend = c(expression(paste(alpha,"-diversity")), 
+                  expression(paste(beta,"-diversity")),
+                  expression(paste(gamma,"-diversity"))), bty = "n")
+dev.off()
+graphics.off()
+
+png(filename = "./figures/DiversityPartitioning_Order-total.png",
+    height = 1200, width = 1200, res = 96*2)
+par(mar = c(5,5,5,5) + 0.5)
+plot(water.hill$orders, water.hill$water.a, type = "o", lty = 2, lwd = 2, pch = 22, bg = "black",
+     xaxt = "n", yaxt = "n", ylim = c(0, 12000),
+     xlab = "", ylab = "")
+points(water.hill$orders, water.hill$water.g, type = "o", lty = 3, lwd = 2, pch = 23, bg = "black")
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+points(sed.hill$orders, sed.hill$sed.a, type = "o", lty = 2, lwd = 2, pch = 22, bg = "grey50", col = "grey50")
+points(sed.hill$orders, sed.hill$sed.g, type = "o", lty = 3, lwd = 2, pch = 23, bg = "grey50", col = "grey50")
+
+par(new = TRUE)
+plot(water.hill$orders, water.hill$water.b, type = "o", lwd = 2, pch = 21, bg = "black",
+     xaxt = "n", yaxt = "n", xlab = "", ylab = "", ylim = c(1,3))
+error.bar(water.hill$orders, water.hill$water.b, upper = water.hill$water.b.se)
+points(sed.hill$orders, sed.hill$sed.b, type = "o", lwd = 2, pch = 21, bg = "grey50", col = "grey50")
+error.bar(sed.hill$orders, sed.hill$sed.b, upper = sed.hill$sed.b.se, col = "grey50")
+
+axis(side = 4, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+box(lwd = 2)
+mtext("Stream Order", side = 1, line = 3, cex = 1.5)
+mtext(expression(paste(alpha," and ",gamma,"-diversity")), side = 2, line = 3.5, cex = 1.5)
+mtext(expression(paste(beta,"-diversity")), side = 4, line = 3.5, cex = 1.5)
+legend(x = 3.7, y = 3, pch = c(22, 23, 21), lty = c(2, 3, 2), lwd = c(2,2,2),
+       pt.bg = c("black", "black", "black"),
+       legend = c(expression(paste(alpha,"-diversity")), 
+                  expression(paste(beta,"-diversity")),
+                  expression(paste(gamma,"-diversity"))), bty = "n")
+dev.off()
+graphics.off()
+
+png(filename = "./figures/DiversityPartitioning_Order-sed.png",
+    height = 1200, width = 1200, res = 96*2)
+par(mar = c(5,5,5,5) + 0.5)
+plot(sed.hill$orders, sed.hill$sed.a, type = "o", lty = 2, lwd = 2, pch = 22, bg = "black",
+     xaxt = "n", yaxt = "n", ylim = c(0, 1000),
      xlab = "", ylab = "")
 points(sed.hill$orders, sed.hill$sed.g, type = "o", lty = 3, lwd = 2, pch = 23, bg = "black")
 axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)

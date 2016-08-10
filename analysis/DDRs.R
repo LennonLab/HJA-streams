@@ -47,26 +47,33 @@ capture.output(summary(sed.geo.lm), file = "./tables/DDR_sed-space.txt")
 # Headwaters DDRs
 headwater.env.dists <- vegdist(env.2[which(design$order < 2),], method = "gower")
 headwater.env.dists <- liste(headwater.env.dists, entry = "env")[,3]
+headwater.den.dist <- den.dists[which(design$order < 2),which(design$order < 2)]
+headwater.den.dists <- na.omit(liste(headwater.den.dist, entry = "den.dist")[,3])
 headwater.geo.dists <- na.omit(liste(dist.mat[which(design$order < 2), which(design$order < 2)],
                               entry = "geo.dist"))
 headwater.db <- vegdist(OTUsREL[which(design$order < 2),])
 headwater.dists <- cbind(liste((1 - headwater.db), entry = "comm.struc"), 
-                         headwater.env.dists, headwater.geo.dists)
+                         headwater.env.dists, headwater.geo.dists, headwater.den.dists)
 headwater.env.lm <- (lm(log(headwater.dists$comm.struc) ~ headwater.dists$headwater.env.dists))
 headwater.geo.lm <- (lm(log(headwater.dists$comm.struc) ~ headwater.dists$geo.dist))
+headwater.den.lm <- (lm(log(headwater.dists$comm.struc) ~ headwater.dists$headwater.den.dists))
 capture.output(summary(headwater.env.lm), file = "./tables/DDR_headwater-env.txt")
 capture.output(summary(headwater.geo.lm), file = "./tables/DDR_headwater-space.txt")
 
-# Higher Order DDRs
+# Downstream DDRs
 downstream.env.dists <- vegdist(env.2[which(design$order >= 2),], method = "gower")
 downstream.env.dists <- liste(downstream.env.dists, entry = "env")[,3]
 downstream.geo.dists <- na.omit(liste(dist.mat[which(design$order >= 2), which(design$order >= 2)],
                                entry = "geo.dist"))
+downstream.den.dist <- den.dists[which(design$order > 1),which(design$order > 1)]
+downstream.den.dists <- na.omit(liste(downstream.den.dist, entry = "den.dist")[,3])
+
 downstream.db <- vegdist(OTUsREL[which(design$order >= 2),])
 downstream.dists <- cbind(liste((1 - downstream.db), entry = "comm.struc"), 
-                        downstream.env.dists, downstream.geo.dists)
+                        downstream.env.dists, downstream.geo.dists, downstream.den.dists)
 downstream.env.lm <- (lm(log(downstream.dists$comm.struc) ~ downstream.dists$downstream.env.dists))
 downstream.geo.lm <- (lm(log(downstream.dists$comm.struc) ~ downstream.dists$geo.dist))
+downstream.den.lm <- (lm(log(downstream.dists$comm.struc) ~ downstream.dists$downstream.den.dists))
 capture.output(summary(downstream.env.lm), file = "./tables/DDR_downstream-env.txt")
 capture.output(summary(downstream.geo.lm), file = "./tables/DDR_downstream-space.txt")
 
@@ -355,6 +362,23 @@ axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 box(lwd = 2)
 mtext("Environmental Distance", side = 2, line = 3, cex = 1.5)
+mtext("Dendritic Distance (m)", side = 1, line = 3, cex = 1.5)
+dev.off()
+graphics.off()
+
+png(filename = "./figures/DDR_HJA_geo-den.png",
+    width = 1200, height = 1200, res = 96*2)
+
+par(mar = c(5, 5, 3, 3) + 0.4)
+plot(hja.dists$den.dists, hja.dists$geo.dists, xlab="", 
+     ylab = "", xaxt="n", yaxt="n")
+abline(lm(hja.dists$env.dists ~ hja.dists$den.dists), lwd = 2)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("Geo Distance", side = 2, line = 3, cex = 1.5)
 mtext("Dendritic Distance (m)", side = 1, line = 3, cex = 1.5)
 dev.off()
 graphics.off()
