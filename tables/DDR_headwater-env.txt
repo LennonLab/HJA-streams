@@ -4,16 +4,16 @@ lm(formula = log(headwater.dists$comm.struc) ~ headwater.dists$headwater.env.dis
 
 Residuals:
      Min       1Q   Median       3Q      Max 
--0.92087 -0.14757  0.05235  0.21798  0.54939 
+-0.91793 -0.14962  0.04906  0.22084  0.55418 
 
 Coefficients:
                                     Estimate Std. Error t value Pr(>|t|)    
-(Intercept)                         -1.15239    0.10573 -10.899 3.18e-16 ***
-headwater.dists$headwater.env.dists  0.01947    0.40208   0.048    0.962    
+(Intercept)                         -1.16051    0.10431 -11.125   <2e-16 ***
+headwater.dists$headwater.env.dists  0.03098    0.23332   0.133    0.895    
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 Residual standard error: 0.3092 on 64 degrees of freedom
-Multiple R-squared:  3.662e-05,	Adjusted R-squared:  -0.01559 
-F-statistic: 0.002344 on 1 and 64 DF,  p-value: 0.9615
+Multiple R-squared:  0.0002755,	Adjusted R-squared:  -0.01535 
+F-statistic: 0.01764 on 1 and 64 DF,  p-value: 0.8948
 

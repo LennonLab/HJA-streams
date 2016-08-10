@@ -2,11 +2,12 @@
 # source("./analysis/InitialSetup.R")
 # source("./analysis/Ordination.R")
 
-## Variation Partitioning
+# Variation Partitioning
 
 #### dbRDA
 habitat <- scale((env[,8] == "sediment") * 1)
-hja.env <- as.data.frame(cbind(habitat, env.mat[, 2:6]))
+hja.coords <- scale((env[,4:5]))
+hja.env <- as.data.frame(cbind(habitat, env.mat))
 colnames(hja.env)[1] <- "habitat"
 
 trunc.dist <- as.matrix(dist(geo.dists))
@@ -16,17 +17,21 @@ hja.pcnm <- pcnm(trunc.dist, w = rs)
 hja.pcnm <- scores(hja.pcnm)[,which(hja.pcnm$values>0)]
 hja.pcnm <- as.data.frame(hja.pcnm)
 
+hja.varpart <- varpart(hja.db, hja.env, hja.pcnm, hja.coords)
+
 capture.output(
-  varpart(hja.db, ~ ., hja.pcnm, data=hja.env),
+  hja.varpart,
   file = "./tables/hja_varpart.txt")
 
 hja.env.mat <- as.matrix(hja.env)
 hja.pcnm.mat <- as.matrix(hja.pcnm)
 
+anova.cca(vegan::capscale(hja.db ~ hja.coords), permutations = 999)
+
 hja.env.var <- vegan::capscale(hja.db ~ hja.env.mat)
-hja.spa.var <- vegan::capscale(hja.db ~ hja.pcnm.mat)
-hja.env_spa.var <- vegan::capscale(hja.db ~ hja.env.mat + Condition(hja.pcnm.mat))
-hja.spa_env.var <- vegan::capscale(hja.db ~ hja.pcnm.mat + Condition(hja.env.mat))
+hja.spa.var <- vegan::capscale(hja.db ~ hja.pcnm.mat + Condition(hja.coords))
+hja.env_spa.var <- vegan::capscale(hja.db ~ hja.env.mat + Condition(hja.pcnm.mat) + Condition(hja.coords))
+hja.spa_env.var <- vegan::capscale(hja.db ~ hja.pcnm.mat + Condition(hja.env.mat) + Condition(hja.coords))
 capture.output(
   permutest(hja.env.var, permutations = 999),
   permutest(hja.spa.var, permutations = 999),
@@ -39,6 +44,12 @@ headwaters.db <- vegdist(OTUsREL[which(design$order==1),], method = "bray")
 downstream.db <- vegdist(OTUsREL[which(design$order!=1),], method = "bray")
 headwaters.env <- hja.env[which(design$order==1),] 
 downstream.env <- hja.env[which(design$order!=1),]
+headwaters.coords <- hja.coords[which(design$order==1),] 
+downstream.coords <- hja.coords[which(design$order!=1),]
+
+anova.cca(vegan::capscale(headwaters.db ~ headwaters.coords), permutations = 999)
+anova.cca(vegan::capscale(downstream.db ~ downstream.coords), permutations = 999)
+# Significant linear trend in downstream, so will condition on coords
 
 headwaters.dist <- as.matrix(dist(geo.dists[which(design$order==1),]))
 headwaters.pcnm <- pcnm(headwaters.dist, dist.ret = T)
@@ -54,11 +65,13 @@ downstream.pcnm <- pcnm(downstream.dist, w = rs)
 downstream.pcnm <- scores(downstream.pcnm)[,which(downstream.pcnm$values>0)]
 downstream.pcnm <- as.data.frame(downstream.pcnm)
 
+headwaters.varpart <- varpart(headwaters.db, headwaters.env, headwaters.pcnm)
+downstream.varpart <- varpart(downstream.db, downstream.env, downstream.pcnm, downstream.coords)
 capture.output(
-  varpart(headwaters.db, ~ ., headwaters.pcnm, data=headwaters.env),
+  headwaters.varpart,
   file = "./tables/headwaters_varpart.txt")
 capture.output(
-  varpart(downstream.db, ~ ., downstream.pcnm, data=downstream.env),
+  downstream.varpart,
   file = "./tables/downstream_varpart.txt")
 
 headwaters.env.mat <- as.matrix(headwaters.env)
@@ -77,9 +90,9 @@ capture.output(
 downstream.env.mat <- as.matrix(downstream.env)
 downstream.pcnm.mat <- as.matrix(downstream.pcnm)
 downstream.env.var <- vegan::capscale(downstream.db ~ downstream.env.mat)
-downstream.spa.var <- vegan::capscale(downstream.db ~ downstream.pcnm.mat)
-downstream.env_spa.var <- vegan::capscale(downstream.db ~ downstream.env.mat + Condition(downstream.pcnm.mat))
-downstream.spa_env.var <- vegan::capscale(downstream.db ~ downstream.pcnm.mat + Condition(downstream.env.mat))
+downstream.spa.var <- vegan::capscale(downstream.db ~ downstream.pcnm.mat + Condition(downstream.coords))
+downstream.env_spa.var <- vegan::capscale(downstream.db ~ downstream.env.mat + Condition(downstream.pcnm.mat) + Condition(downstream.coords))
+downstream.spa_env.var <- vegan::capscale(downstream.db ~ downstream.pcnm.mat + Condition(downstream.env.mat) + Condition(downstream.coords))
 capture.output(
   permutest(downstream.env.var, permutations = 999),
   permutest(downstream.spa.var, permutations = 999),
@@ -92,6 +105,8 @@ water.db <- vegdist(OTUsREL[which(design$habitat=="water"),], method = "bray")
 sed.db <- vegdist(OTUsREL[which(design$habitat=="sediment"),], method = "bray")
 water.env <- hja.env[which(design$habitat=="water"),] 
 sed.env <- hja.env[which(design$habitat=="sediment"),]
+water.coords <- hja.coords[which(design$habitat=="water"),]
+sed.coords <- hja.coords[which(design$habitat=="sediment"),]
 
 water.dist <- as.matrix(dist(geo.dists[which(design$habitat=="water"),]))
 water.pcnm <- pcnm(water.dist, dist.ret = T)
@@ -107,19 +122,25 @@ sed.pcnm <- pcnm(sed.dist, w = rs)
 sed.pcnm <- scores(sed.pcnm)[,which(sed.pcnm$values>0)]
 sed.pcnm <- as.data.frame(sed.pcnm)
 
+anova.cca(vegan::capscale(water.db ~ water.coords), permutations = 999)
+anova.cca(vegan::capscale(sed.db ~ sed.coords), permutations = 999)
+
+water.varpart <- varpart(water.db, water.env[,2:7], water.pcnm, water.coords)
+sed.varpart <- varpart(sed.db, sed.env[,2:7], sed.pcnm, sed.coords)
+
 capture.output(
-  varpart(water.db, ~ ., water.pcnm, data=water.env[,2:6]),
+  water.varpart,
   file = "./tables/water_varpart.txt")
 capture.output(
-  varpart(sed.db, ~ ., sed.pcnm, data=sed.env[,2:6]),
+  sed.varpart,
   file = "./tables/sed_varpart.txt")
 
 water.env.mat <- as.matrix(water.env)
 water.pcnm.mat <- as.matrix(water.pcnm)
 water.env.var <- vegan::capscale(water.db ~ water.env.mat)
-water.spa.var <- vegan::capscale(water.db ~ water.pcnm.mat)
-water.env_spa.var <- vegan::capscale(water.db ~ water.env.mat + Condition(water.pcnm.mat))
-water.spa_env.var <- vegan::capscale(water.db ~ water.pcnm.mat + Condition(water.env.mat))
+water.spa.var <- vegan::capscale(water.db ~ water.pcnm.mat + Condition(water.coords))
+water.env_spa.var <- vegan::capscale(water.db ~ water.env.mat + Condition(water.pcnm.mat) + Condition(water.coords))
+water.spa_env.var <- vegan::capscale(water.db ~ water.pcnm.mat + Condition(water.env.mat) + Condition(water.coords))
 capture.output(
   permutest(water.env.var, permutations = 999),
   permutest(water.spa.var, permutations = 999),
@@ -130,12 +151,13 @@ capture.output(
 sed.env.mat <- as.matrix(sed.env)
 sed.pcnm.mat <- as.matrix(sed.pcnm)
 sed.env.var <- vegan::capscale(sed.db ~ sed.env.mat)
-sed.spa.var <- vegan::capscale(sed.db ~ sed.pcnm.mat)
-sed.env_spa.var <- vegan::capscale(sed.db ~ sed.env.mat + Condition(sed.pcnm.mat))
-sed.spa_env.var <- vegan::capscale(sed.db ~ sed.pcnm.mat + Condition(sed.env.mat))
+sed.spa.var <- vegan::capscale(sed.db ~ sed.pcnm.mat + Condition(sed.coords))
+sed.env_spa.var <- vegan::capscale(sed.db ~ sed.env.mat + Condition(sed.pcnm.mat) + Condition(sed.coords))
+sed.spa_env.var <- vegan::capscale(sed.db ~ sed.pcnm.mat + Condition(sed.env.mat) + Condition(sed.coords))
 capture.output(
   permutest(sed.env.var, permutations = 999),
   permutest(sed.spa.var, permutations = 999), # NS
   permutest(sed.env_spa.var, permutations = 999), # NS
   permutest(sed.spa_env.var, permutations = 999), # NS
   file = "./tables/sed_permutation_tests.txt")
+

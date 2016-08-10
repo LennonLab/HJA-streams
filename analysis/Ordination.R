@@ -17,6 +17,7 @@ var3.sor <- round(hja.pcoa.sorensen$eig[3] / sum(hja.pcoa.sorensen$eig),3) * 100
 # Sediments Only
 sediment <- OTUsREL[which(design$habitat == "sediment"),]
 sediment.db <- vegdist(sediment, method = "bray")
+sediment.dsorensen <- vegdist(decostand(sediment, method = "pa"), method = "bray")
 sediment.pcoa <- cmdscale(sediment.db, eig=TRUE)
 sed.design <- design[which(design$habitat == "sediment"),]
 s.var1 <- round(sediment.pcoa$eig[1] / sum(sediment.pcoa$eig),3) * 100
@@ -26,6 +27,7 @@ s.var3 <- round(sediment.pcoa$eig[3] / sum(sediment.pcoa$eig),3) * 100
 # Water Only
 water <- OTUsREL[which(design$habitat == "water"),]
 water.db <- vegdist(water, method = "bray")
+water.dsorensen <- vegdist(decostand(water, method = "pa"), method = "bray")
 water.pcoa <- cmdscale(water.db, eig=TRUE)
 water.design <- design[which(design$habitat == "water"),]
 w.var1 <- round(water.pcoa$eig[1] / sum(water.pcoa$eig),3) * 100
