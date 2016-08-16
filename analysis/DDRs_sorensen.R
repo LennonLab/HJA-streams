@@ -1,6 +1,6 @@
-# source("./analysis/InitialSetup.R")
-# source("./analysis/DistanceCalcs.R")
-# source("./analysis/Ordination.R")
+source("./analysis/InitialSetup.R")
+source("./analysis/DistanceCalcs.R")
+source("./analysis/Ordination.R")
 
 # Water Distance Decay
 water.xy <- xy[which(design$habitat == "water"),]
@@ -81,8 +81,8 @@ downstream.sed.dists <- cbind(liste((1 - downstream.sed.db), entry = "comm.struc
                          downstream.sed.env.dists, downstream.sed.geo.dists)
 downstream.sed.env.lm <- (lm(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$downstream.sed.env.dists))
 downstream.sed.geo.lm <- (lm(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$geo.dist))
-summary(downstream.sed.env.lm)
-summary(downstream.sed.geo.lm)
+capture.output(summary(downstream.sed.env.lm), file = "./tables/DDR_downstream-seds-env-sor.txt")
+capture.output(summary(downstream.sed.geo.lm), file = "./tables/DDR_downstream-seds-space-sor.txt")
 
 plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$downstream.sed.env.dists)
 plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$geo.dist)
@@ -98,11 +98,46 @@ downstream.water.dists <- cbind(liste((1 - downstream.water.db), entry = "comm.s
                               downstream.water.env.dists, downstream.water.geo.dists)
 downstream.water.env.lm <- (lm(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$downstream.water.env.dists))
 downstream.water.geo.lm <- (lm(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$geo.dist))
-summary(downstream.water.env.lm)
-summary(downstream.water.geo.lm)
+capture.output(summary(downstream.water.env.lm), file = "./tables/DDR_downstream-water-env-sor.txt")
+capture.output(summary(downstream.water.geo.lm), file = "./tables/DDR_downstream-water-space-sor.txt")
 
 plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$downstream.water.env.dists)
 plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$geo.dist)
+
+# Downstream seds
+downstream.sed.env.dists <- vegdist(env.2[which(design$order > 1 & design$habitat == "sediment"),], method = "gower")
+downstream.sed.env.dists <- liste(downstream.sed.env.dists, entry = "env")[,3]
+downstream.sed.geo.dists <- na.omit(liste(dist.mat[which(design$order >1  & design$habitat == "sediment"), 
+                                                   which(design$order >1 & design$habitat == "sediment")],
+                                          entry = "geo.dist"))
+downstream.sed.db <- vegdist(decostand(OTUsREL[which(design$order >1 & design$habitat == "sediment"),], method = "pa"))
+downstream.sed.dists <- cbind(liste((1 - downstream.sed.db), entry = "comm.struc"), 
+                              downstream.sed.env.dists, downstream.sed.geo.dists)
+downstream.sed.env.lm <- (lm(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$downstream.sed.env.dists))
+downstream.sed.geo.lm <- (lm(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$geo.dist))
+capture.output(summary(downstream.sed.env.lm), file = "./tables/DDR_downstream-seds-env-sor.txt")
+capture.output(summary(downstream.sed.geo.lm), file = "./tables/DDR_downstream-seds-space-sor.txt")
+
+plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$downstream.sed.env.dists)
+plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$geo.dist)
+
+# Downstream water
+downstream.water.env.dists <- vegdist(env.2[which(design$order > 1 & design$habitat == "water"),], method = "gower")
+downstream.water.env.dists <- liste(downstream.water.env.dists, entry = "env")[,3]
+downstream.water.geo.dists <- na.omit(liste(dist.mat[which(design$order >1  & design$habitat == "water"), 
+                                                     which(design$order >1 & design$habitat == "water")],
+                                            entry = "geo.dist"))
+downstream.water.db <- vegdist(decostand(OTUsREL[which(design$order >1 & design$habitat == "water"),], method = "pa"))
+downstream.water.dists <- cbind(liste((1 - downstream.water.db), entry = "comm.struc"), 
+                                downstream.water.env.dists, downstream.water.geo.dists)
+downstream.water.env.lm <- (lm(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$downstream.water.env.dists))
+downstream.water.geo.lm <- (lm(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$geo.dist))
+capture.output(summary(downstream.water.env.lm), file = "./tables/DDR_downstream-water-env-sor.txt")
+capture.output(summary(downstream.water.geo.lm), file = "./tables/DDR_downstream-water-space-sor.txt")
+
+plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$downstream.water.env.dists)
+plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$geo.dist)
+
 
 ### Catchment Scale DDRs
 

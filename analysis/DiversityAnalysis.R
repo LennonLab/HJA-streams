@@ -1,4 +1,4 @@
-# source("./analysis/InitialSetup.R")
+source("./analysis/InitialSetup.R")
 
 require("vegan")
 require("vegetarian")
@@ -322,7 +322,7 @@ box(lwd = 2)
 mtext("Stream Order", side = 1, line = 3, cex = 1.5)
 mtext(expression(paste(alpha," and ",gamma,"-diversity")), side = 2, line = 3.5, cex = 1.5)
 mtext(expression(paste(beta,"-diversity")), side = 4, line = 3.5, cex = 1.5)
-legend(x = 3.7, y = 3, pch = c(22, 23, 21), lty = c(2, 3, 2), lwd = c(2,2,2),
+legend(x = 3.7, y = 3, pch = c(22, 21, 23), lty = c(2, 2, 3), lwd = c(2,2,2),
        pt.bg = c("black", "black", "black"),
        legend = c(expression(paste(alpha,"-diversity")), 
                   expression(paste(beta,"-diversity")),
@@ -349,7 +349,7 @@ box(lwd = 2)
 mtext("Stream Order", side = 1, line = 3, cex = 1.5)
 mtext(expression(paste(alpha," and ",gamma,"-diversity")), side = 2, line = 3.5, cex = 1.5)
 mtext(expression(paste(beta,"-diversity")), side = 4, line = 3.5, cex = 1.5)
-legend(x = 3.7, y = 2.5, pch = c(22, 23, 21), lty = c(2, 3, 2), lwd = c(2,2,2),
+legend(x = 3.7, y = 2.5, pch = c(22, 21, 23), lty = c(2, 2, 3), lwd = c(2,2,2),
        pt.bg = c("black", "black", "black"),
        legend = c(expression(paste(alpha,"-diversity")), 
                   expression(paste(beta,"-diversity")),
@@ -382,7 +382,7 @@ box(lwd = 2)
 mtext("Stream Order", side = 1, line = 3, cex = 1.5)
 mtext(expression(paste(alpha," and ",gamma,"-diversity")), side = 2, line = 3.5, cex = 1.5)
 mtext(expression(paste(beta,"-diversity")), side = 4, line = 3.5, cex = 1.5)
-legend(x = 3.7, y = 3, pch = c(22, 23, 21), lty = c(2, 3, 2), lwd = c(2,2,2),
+legend(x = 3.7, y = 3, pch = c(22, 21, 23), lty = c(2, 2, 3), lwd = c(2,2,2),
        pt.bg = c("black", "black", "black"),
        legend = c(expression(paste(alpha,"-diversity")), 
                   expression(paste(beta,"-diversity")),
@@ -409,7 +409,7 @@ box(lwd = 2)
 mtext("Stream Order", side = 1, line = 3, cex = 1.5)
 mtext(expression(paste(alpha," and ",gamma,"-diversity")), side = 2, line = 3.5, cex = 1.5)
 mtext(expression(paste(beta,"-diversity")), side = 4, line = 3.5, cex = 1.5)
-legend(x = 3.7, y = 2.5, pch = c(22, 23, 21), lty = c(2, 3, 2), lwd = c(2,2,2),
+legend(x = 3.7, y = 2.5, pch = c(22, 21, 23), lty = c(2, 2, 3), lwd = c(2,2,2),
        pt.bg = c("black", "black", "black"),
        legend = c(expression(paste(alpha,"-diversity")), 
                   expression(paste(beta,"-diversity")),
