@@ -1,19 +1,24 @@
 # Initial setup
 rm(list=ls())
-setwd("~/GitHub/HJA-streams/")
+#setwd("~/GitHub/HJA-streams/")
 opar <- par()
+
+
+# Check for and install required packages
+require('vegetarian')
+require('vegan')
+require('png')
+require('sp')
+require('rgdal')
+require('SoDA')
+require('grid')
+require('simba')
+require('geoR')
+require("raster")
+
 
 # Load packages and other tools
 source("./analysis/MothurTools.R")
-
-# Check for and install required packages
-for (package in c('vegetarian', 'vegan', 'png', 'raster', 'sp', 
-                  'rgdal', 'SoDA', 'grid', 'simba', 'geoR')) {
-  if (!require(package, character.only=T, quietly=T)) {
-    install.packages(package)
-    library(package, character.only=T)
-  }
-}
 
 se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
 
