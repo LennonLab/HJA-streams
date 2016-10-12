@@ -1,0 +1,5 @@
+chimera.uchime(fasta=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.fasta, count=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.count_table, dereplicate=t, processors=8)
+remove.seqs(fasta=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.fasta, accnos=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.ref.uchime.accnos)
+summary.seqs(fasta=current, count=current, processors=8)
+classify.seqs(fasta=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.fasta, count=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.count_table, reference=trainset9_032012.pds.fasta, taxonomy=trainset9_032012.pds.tax, cutoff=80)
+remove.lineage(fasta=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.fasta, count=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.count_table, taxonomy=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.pds.wang.taxonomy, taxon=Chloroplast-Mitochondria-unknown-Archaea-Eukaryota)
