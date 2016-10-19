@@ -14,12 +14,18 @@ water.env.dist <- vegdist(env.2[which(design$habitat == "water"),],
 water.env.dist.ls <- liste(water.env.dist, entry = "env")[,3]
 water.struc.dist.ls <- liste(water.struc.dist, entry = "struc")[,3]
 water.den.dist.ls <- na.omit(liste(water.den.dist, entry = "den.dist")[,3])
+water.phylo.dist.ls <- liste(as.dist(hja.unifrac[which(design$habitat == "water"),
+                                         which(design$habitat == "water")]),
+                             entry = "unifrac")[,3]
 water.dists <- data.frame(water.den.dist.ls, water.geo.dist.ls, 
-                              water.struc.dist.ls, water.env.dist.ls)
-names(water.dists) <- c("den", "geo", "comm.struc", "env")
+                          water.struc.dist.ls, water.env.dist.ls,
+                          water.phylo.dist.ls)
+names(water.dists) <- c("den", "geo", "comm.struc", "env", "unifrac")
 
 water.env.lm <- (lm(log(water.dists$comm.struc) ~ water.dists$env))
 water.geo.lm <- (lm(log(water.dists$comm.struc) ~ water.dists$geo))
+summary(lm(log(water.dists$unifrac) ~ water.dists$env))
+plot(1-water.dists$unifrac ~ water.dists$geo)
 capture.output(summary(water.env.lm), file = "./tables/DDR_water-env.txt")
 capture.output(summary(water.geo.lm), file = "./tables/DDR_water-space.txt")
 
@@ -35,12 +41,18 @@ sed.env.dist <- vegdist(env.2[which(design$habitat == "sediment"),],
 sed.env.dist.ls <- liste(sed.env.dist, entry = "env")[,3]
 sed.struc.dist.ls <- liste(sed.struc.dist, entry = "struc")[,3]
 sed.den.dist.ls <- na.omit(liste(sed.den.dist, entry = "den.dist")[,3])
+sed.phylo.dist.ls <- liste(as.dist(hja.unifrac[which(design$habitat == "sediment"),
+                                                 which(design$habitat == "sediment")]),
+                             entry = "unifrac")[,3]
 sed.dists <- data.frame(sed.den.dist.ls, sed.geo.dist.ls, 
-                            sed.struc.dist.ls, sed.env.dist.ls)
-names(sed.dists) <- c("den", "geo", "comm.struc", "env")
+                          sed.struc.dist.ls, sed.env.dist.ls,
+                          sed.phylo.dist.ls)
+names(sed.dists) <- c("den", "geo", "comm.struc", "env", "unifrac")
 
 sed.env.lm <- (lm(log(sed.dists$comm.struc) ~ sed.dists$env))
 sed.geo.lm <- (lm(log(sed.dists$comm.struc) ~ sed.dists$geo))
+plot(1-sed.dists$unifrac ~ sed.dists$env)
+plot(log10(sed.dists$comm.struc) ~ sed.dists$unifrac)
 capture.output(summary(sed.env.lm), file = "./tables/DDR_sed-env.txt")
 capture.output(summary(sed.geo.lm), file = "./tables/DDR_sed-space.txt")
 

@@ -1,3 +1,6 @@
+source("analysis/InitialSetup.R")
+source("analysis/DistanceCalcs.R")
+source("analysis/Ordination.R")
 require(picante)
 require(png)
 require(grid)
@@ -49,5 +52,23 @@ which(rownames(hja.unifrac.raw) %in% rownames(OTUs))
 
 
 
-hja.phylostruc <- phylostruct(samp = OTUs, tree = hja.tree, env = env.mat)
+hja.phylostruc <- phylostruct()
 
+
+hja.cor <- comm.phylo.cor(samp = matched.phylo$comm, phylo = matched.phylo$phy,
+                          metric = "cij", null.model = "sample.taxa.labels", runs = 999)
+hja.cor$obs.corr.p
+hja.cor$obs.rand.p
+hja.cor$obs.corr
+hja.cor$obs.rank
+
+
+hja.pd <- pd(samp = matched.phylo$com, tree = matched.phylo$phy, include.root = F)
+
+
+source("analysis/DDRs.R")
+uf1 <- (as.dist(hja.unifrac[which(design$order == 1), which(design$order == 1)]))
+uf2 <- (as.dist(hja.unifrac[which(design$order == 2), which(design$order == 2)]))
+uf3 <- (as.dist(hja.unifrac[which(design$order == 3), which(design$order == 3)]))
+uf4 <- (as.dist(hja.unifrac[which(design$order == 4), which(design$order == 4)]))
+uf5 <- (as.dist(hja.unifrac[which(design$order == 5), which(design$order == 5)]))

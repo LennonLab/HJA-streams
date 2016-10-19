@@ -49,6 +49,16 @@ dend.dist <- function(graph = "", dist.mat = ""){
 
 dend.dist.mat <- dend.dist(graph = stream.network, dist.mat = euc.dist.mat)
 
+
+# Read in phylodist
+hja.unifrac.raw <- read.delim(file = "./data/hja_streams.tree1.weighted.phylip.dist", header = F, skip = 1, row.names = 1)
+colnames(hja.unifrac.raw) <- as.vector(lapply(strsplit(rownames(hja.unifrac.raw)," "), function(x) x[1]))
+rownames(hja.unifrac.raw) <- colnames(hja.unifrac.raw)
+hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)), 
+                               which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
+hja.unifrac.dist <- as.dist(hja.unifrac)
+
+
 # Make distance lists
 xy <- cbind(env$longitude, env$latitude)
 xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
