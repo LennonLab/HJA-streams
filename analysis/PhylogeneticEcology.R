@@ -1,17 +1,17 @@
-source("analysis/InitialSetup.R")
-source("analysis/DistanceCalcs.R")
-source("analysis/Ordination.R")
+#source("analysis/InitialSetup.R")
+#source("analysis/DistanceCalcs.R")
+#source("analysis/Ordination.R")
 require(picante)
 require(png)
 require(grid)
 
 hja.tree <- read.tree(file = "./data/hja_streams.rename.tree")
-hja.unifrac.raw <- read.delim(file = "./data/hja_streams.tree1.weighted.phylip.dist", header = F, skip = 1, row.names = 1)
-colnames(hja.unifrac.raw) <- as.vector(lapply(strsplit(rownames(hja.unifrac.raw)," "), function(x) x[1]))
-rownames(hja.unifrac.raw) <- colnames(hja.unifrac.raw)
-hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)), 
-                               which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
-hja.unifrac.dist <- as.dist(hja.unifrac)
+# hja.unifrac.raw <- read.delim(file = "./data/hja_streams.tree1.weighted.phylip.dist", header = F, skip = 1, row.names = 1)
+# colnames(hja.unifrac.raw) <- as.vector(lapply(strsplit(rownames(hja.unifrac.raw)," "), function(x) x[1]))
+# rownames(hja.unifrac.raw) <- colnames(hja.unifrac.raw)
+# hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)), 
+#                                which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
+# hja.unifrac.dist <- as.dist(hja.unifrac)
 
 unifrac.pcoa <- cmdscale(hja.unifrac.dist, eig=TRUE)
 unifvar1 <- round(unifrac.pcoa$eig[1] / sum(unifrac.pcoa$eig),3) * 100
@@ -72,3 +72,7 @@ uf2 <- (as.dist(hja.unifrac[which(design$order == 2), which(design$order == 2)])
 uf3 <- (as.dist(hja.unifrac[which(design$order == 3), which(design$order == 3)]))
 uf4 <- (as.dist(hja.unifrac[which(design$order == 4), which(design$order == 4)]))
 uf5 <- (as.dist(hja.unifrac[which(design$order == 5), which(design$order == 5)]))
+
+
+
+# PD within samples

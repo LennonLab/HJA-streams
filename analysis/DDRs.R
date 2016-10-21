@@ -104,6 +104,8 @@ downstream.phy.geo.lm <- lm(log(downstream.dists$unifrac) ~ downstream.dists$geo
 capture.output(summary(downstream.env.lm), file = "./tables/DDR_downstream-env.txt")
 capture.output(summary(downstream.geo.lm), file = "./tables/DDR_downstream-space.txt")
 
+
+
 # Downstream seds
 downstream.sed.env.dists <- vegdist(env.2[which(design$order > 1 & design$habitat == "sediment"),], method = "gower")
 downstream.sed.env.dists <- liste(downstream.sed.env.dists, entry = "env")[,3]
