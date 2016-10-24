@@ -9,7 +9,7 @@ hja.tree <- read.tree(file = "./data/hja_streams.rename.tree")
 # hja.unifrac.raw <- read.delim(file = "./data/hja_streams.tree1.weighted.phylip.dist", header = F, skip = 1, row.names = 1)
 # colnames(hja.unifrac.raw) <- as.vector(lapply(strsplit(rownames(hja.unifrac.raw)," "), function(x) x[1]))
 # rownames(hja.unifrac.raw) <- colnames(hja.unifrac.raw)
-# hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)), 
+# hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)),
 #                                which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
 # hja.unifrac.dist <- as.dist(hja.unifrac)
 
@@ -64,7 +64,16 @@ hja.cor$obs.rank
 
 
 hja.pd <- pd(samp = matched.phylo$com, tree = matched.phylo$phy, include.root = F)
-
+hja.pd$PDavg <- hja.pd$PD / hja.pd$SR
+write.table(hja.pd, file = "./data/hja.pd.txt", sep="\t")
+read.table("./data/hja.pd.txt", sep = "\t")
+hja.pd.df <- data.frame(cbind(design, hja.pd, env.mat))
+t.test(hja.pd.df$PD[which(design$habitat == "water")],
+       hja.pd.df$PD[which(design$habitat == "sediment")])
+hja.pdsr.lm <- lm(log10(PD)~log10(SR), data=hja.pd)
+summary(hja.pdsr.lm)
+plot(log10(PD)~log10(SR), data=hja.pd)
+abline(hja.pdsr.lm)
 
 source("analysis/DDRs.R")
 uf1 <- (as.dist(hja.unifrac[which(design$order == 1), which(design$order == 1)]))
@@ -74,5 +83,65 @@ uf4 <- (as.dist(hja.unifrac[which(design$order == 4), which(design$order == 4)])
 uf5 <- (as.dist(hja.unifrac[which(design$order == 5), which(design$order == 5)]))
 
 
+require(pez)
 
-# PD within samples
+
+### subset tree and species matrix
+n <- 100
+top.taxa = matrix(nrow = nrow(OTUsREL), ncol = n+1)
+rownames(top.taxa) <- rownames(OTUsREL)
+for(i in 1:nrow(OTUsREL)){
+  top.taxa[i,1:n] <- names(sort(tail(sort(OTUsREL[i,]),n), decreasing = T))
+  top.taxa[i,n+1] <- sum(OTUsREL[i,top.taxa[i,1:n]])
+}
+
+OTUsREL.top <- OTUsREL[,which(colnames(OTUsREL) %in% top.taxa)]
+
+hja.phylo <- match.phylo.comm(phy = hja.tree, comm = OTUsREL.top)
+hja.mntd.ses.tip <- ses.mntd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "taxa.labels")
+hja.mpd.ses.tip <- ses.mpd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "taxa.labels")
+hja.pd.ses.tip <- ses.pd(samp = hja.phylo$comm, tree = hja.phylo$phy, null.model = "taxa.labels")
+hja.mntd.ses.ind <- ses.mntd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "independentswap")
+hja.mpd.ses.ind <- ses.mpd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "independentswap")
+hja.pd.ses.ind <- ses.pd(samp = hja.phylo$comm, tree = hja.phylo$phy, null.model = "independentswap")
+hja.mntd.ses.trial <- ses.mntd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "trialswap")
+hja.mpd.ses.trial <- ses.mpd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "trialswap")
+hja.pd.ses.trial <- ses.pd(samp = hja.phylo$comm, tree = hja.phylo$phy, null.model = "trialswap")
+
+hja.phylo.div <- NULL
+hja.phylo.div <- list(
+mntd = list(trial=hja.mntd.ses.trial,tip=hja.mntd.ses.tip,ind=hja.mntd.ses.ind),
+pd = list(trial=hja.pd.ses.trial,tip=hja.pd.ses.tip,ind=hja.pd.ses.ind),
+mpd = list(trial=hja.mpd.ses.trial,tip=hja.mpd.ses.tip,ind=hja.mpd.ses.ind))
+
+
+write.table(hja.mntd.ses.trial, file = "./data/hja-mntd-ses-trial.txt", sep="\t")
+write.table(hja.mpd.ses.trial, file = "./data/hja-mpd-ses-trial.txt", sep="\t")
+write.table(hja.pd.ses.trial, file = "./data/hja-pd-ses-trial.txt", sep="\t")
+write.table(hja.mntd.ses.tip, file = "./data/hja-mntd-ses-tip.txt", sep="\t")
+write.table(hja.mpd.ses.tip, file = "./data/hja-mpd-ses-tip.txt", sep="\t")
+write.table(hja.pd.ses.tip, file = "./data/hja-pd-ses-tip.txt", sep="\t")
+write.table(hja.mntd.ses.ind, file = "./data/hja-mntd-ses-ind.txt", sep="\t")
+write.table(hja.mpd.ses.ind, file = "./data/hja-mpd-ses-ind.txt", sep="\t")
+write.table(hja.pd.ses.ind, file = "./data/hja-pd-ses-ind.txt", sep="\t")  
+  
+read.table(file = "./data/hja-mntd-ses-trial.txt", sep="\t")
+read.table(file = "./data/hja-mpd-ses-trial.txt", sep="\t")
+read.table(file = "./data/hja-pd-ses-trial.txt", sep="\t")
+read.table(file = "./data/hja-mntd-ses-tip.txt", sep="\t")
+read.table(file = "./data/hja-mpd-ses-tip.txt", sep="\t")
+read.table(file = "./data/hja-pd-ses-tip.txt", sep="\t")
+read.table(file = "./data/hja-mntd-ses-ind.txt", sep="\t")
+read.table(file = "./data/hja-mpd-ses-ind.txt", sep="\t")
+read.table(file = "./data/hja-pd-ses-ind.txt", sep="\t")  
+
+plot(hja.phylo.div$mntd$trial$mntd.obs.z[which(design$habitat!="water")] 
+     ~ design$order[which(design$habitat!="water")])
+abline(h=0)
+plot(hja.phylo.div$mntd$trial$mntd.obs.z[which(design$habitat=="water")] 
+     ~ design$order[which(design$habitat=="water")])
+abline(h=0)
+
+plot(hja.phylo.div$mpd$trial$ntaxa, hja.phylo.div$mpd$trial$mpd.obs.z)
+abline(h=0)
+summary(lm(hja.phylo.div$mntd$trial$mntd.obs.z ~ hja.phylo.div$mntd$trial$ntaxa))
