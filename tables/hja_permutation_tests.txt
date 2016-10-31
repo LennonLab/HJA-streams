@@ -17,8 +17,8 @@ Number of permutations: 999
  
 Call: vegan::capscale(formula = hja.db ~ hja.pcnm.mat + Condition(hja.coords))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.176337 (with 15, 38 Degrees of Freedom)
-Significance:	 0.042 
+Pseudo-F:	 1.507682 (with 4, 49 Degrees of Freedom)
+Significance:	 0.011 
 
 
 Permutation test for capscale 
@@ -26,9 +26,10 @@ Permutation test for capscale
 Permutation: free
 Number of permutations: 999
  
-Call: vegan::capscale(formula = hja.db ~ hja.env.mat + Condition(hja.pcnm.mat) + Condition(hja.coords))
+Call: vegan::capscale(formula = hja.db ~ hja.env.mat + Condition(hja.pcnm.mat) +
+Condition(hja.coords))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 2.58564 (with 7, 31 Degrees of Freedom)
+Pseudo-F:	 2.730709 (with 7, 42 Degrees of Freedom)
 Significance:	 0.001 
 
 
@@ -37,8 +38,9 @@ Permutation test for capscale
 Permutation: free
 Number of permutations: 999
  
-Call: vegan::capscale(formula = hja.db ~ hja.pcnm.mat + Condition(hja.env.mat) + Condition(hja.coords))
+Call: vegan::capscale(formula = hja.db ~ hja.pcnm.mat + Condition(hja.env.mat) +
+Condition(hja.coords))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.181913 (with 15, 31 Degrees of Freedom)
-Significance:	 0.028 
+Pseudo-F:	 1.129516 (with 4, 42 Degrees of Freedom)
+Significance:	 0.174 
 

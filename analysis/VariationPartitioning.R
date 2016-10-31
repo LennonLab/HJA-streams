@@ -14,8 +14,11 @@ trunc.dist <- as.matrix(dist(geo.dists))
 dist.pcnm <- pcnm(trunc.dist, dist.ret = T)
 rs <- rowSums(OTUsREL) / sum(OTUsREL)
 hja.pcnm <- pcnm(trunc.dist, w = rs)
+
+# First 4 eigenvalues contain 98% of variation
+sum(hja.pcnm$values[1:4])/sum(hja.pcnm$values)
 hja.pcnm <- scores(hja.pcnm)[,which(hja.pcnm$values>0)]
-hja.pcnm <- as.data.frame(hja.pcnm)
+hja.pcnm <- as.data.frame(hja.pcnm[,1:4])
 
 hja.varpart <- varpart(hja.db, hja.env, hja.pcnm, hja.coords)
 
@@ -38,6 +41,7 @@ capture.output(
   permutest(hja.env_spa.var, permutations = 999),
   permutest(hja.spa_env.var, permutations = 999),
   file = "./tables/hja_permutation_tests.txt")
+
 
 # headwaters vs. downstream
 headwaters.db <- vegdist(OTUsREL[which(design$order==1),], method = "bray")
