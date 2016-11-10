@@ -85,6 +85,7 @@ for(i in 1:nrow(env.mat)){
   }
 }
 env.mat <- scale(env.mat)
+env.pca <- princomp(env.mat, scores = T)
 
 # Distance Matrix
 xy <- cbind(env$longitude, env$latitude)

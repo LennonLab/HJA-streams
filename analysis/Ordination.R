@@ -4,20 +4,27 @@
 
 # All HJA Catchment
 hja.db <- vegdist(OTUsREL, method = "bray")
-hja.db.sorensen <- vegdist(decostand(OTUsREL, method = "pa"), method = "bray")
+hja.d.sorensen <- vegdist(OTUsREL, method = "bray", binary = T)
+hja.d.jaccard <- vegdist(OTUsREL, method = "jaccard")
 hja.pcoa <- cmdscale(hja.db, eig=TRUE)
-hja.pcoa.sorensen <- cmdscale(hja.db.sorensen, eig = TRUE)
+hja.pcoa.sorensen <- cmdscale(hja.d.sorensen, eig = TRUE)
+hja.pcoa.jaccard <- cmdscale(hja.d.jaccard, eig = TRUE)
 var1 <- round(hja.pcoa$eig[1] / sum(hja.pcoa$eig),3) * 100
 var2 <- round(hja.pcoa$eig[2] / sum(hja.pcoa$eig),3) * 100
 var3 <- round(hja.pcoa$eig[3] / sum(hja.pcoa$eig),3) * 100
 var1.sor <- round(hja.pcoa.sorensen$eig[1] / sum(hja.pcoa.sorensen$eig),3) * 100
 var2.sor <- round(hja.pcoa.sorensen$eig[2] / sum(hja.pcoa.sorensen$eig),3) * 100
 var3.sor <- round(hja.pcoa.sorensen$eig[3] / sum(hja.pcoa.sorensen$eig),3) * 100
+var1.jac <- round(hja.pcoa.jaccard$eig[1] / sum(hja.pcoa.jaccard$eig),3) * 100
+var2.jac <- round(hja.pcoa.jaccard$eig[2] / sum(hja.pcoa.jaccard$eig),3) * 100
+var3.jac <- round(hja.pcoa.jaccard$eig[3] / sum(hja.pcoa.jaccard$eig),3) * 100
+
 
 # Sediments Only
 sediment <- OTUsREL[which(design$habitat == "sediment"),]
 sediment.db <- vegdist(sediment, method = "bray")
 sediment.dsorensen <- vegdist(decostand(sediment, method = "pa"), method = "bray")
+sediment.d.jac <- vegdist(sediment, method = "jaccard")
 sediment.pcoa <- cmdscale(sediment.db, eig=TRUE)
 sed.design <- design[which(design$habitat == "sediment"),]
 s.var1 <- round(sediment.pcoa$eig[1] / sum(sediment.pcoa$eig),3) * 100
@@ -28,6 +35,7 @@ s.var3 <- round(sediment.pcoa$eig[3] / sum(sediment.pcoa$eig),3) * 100
 water <- OTUsREL[which(design$habitat == "water"),]
 water.db <- vegdist(water, method = "bray")
 water.dsorensen <- vegdist(decostand(water, method = "pa"), method = "bray")
+water.d.jac <- vegdist(water, method = "jaccard")
 water.pcoa <- cmdscale(water.db, eig=TRUE)
 water.design <- design[which(design$habitat == "water"),]
 w.var1 <- round(water.pcoa$eig[1] / sum(water.pcoa$eig),3) * 100
@@ -111,3 +119,32 @@ dev.off()
 graphics.off()
 img <- readPNG("./figures/HJA_PCoA_Sorensen.png")
 grid.raster(img)
+
+
+png(filename = "./figures/HJA_PCoA_jac.png",
+    width = 1200, height = 1200, res = 96*2)
+par(mar = c(5, 5, 3, 2) + 0.1)
+plot(hja.pcoa.jaccard$points[ ,1], hja.pcoa.jaccard$points[ ,2], 
+     ylim = c(-0.5, 0.5), xlim = c(-.5, .5),
+     xlab = paste("PCoA 1 (", var1.jac, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", var2.jac, "%)", sep = ""), 
+     pch = 19, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F)
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(hja.pcoa.jaccard$points[which(design$habitat == "sediment"),1], 
+       hja.pcoa.jaccard$points[which(design$habitat == "sediment"),2],
+       pch=21, cex=2, bg="grey")
+points(hja.pcoa.jaccard$points[which(design$habitat == "water"),1], 
+       hja.pcoa.jaccard$points[which(design$habitat == "water"),2],
+       pch=24, cex=2, bg="white")
+legend("topleft", c("Water", "Sediment"),
+       pt.bg = c("white", "grey"), pch = c(24,21), cex = 1.5, bty = "n")
+ordiellipse(hja.pcoa.jaccard, design$habitat, conf = .95)
+dev.off()
+graphics.off()
+grid.raster(png::readPNG("./figures/HJA_PCoA_jac.png"))
+

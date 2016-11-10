@@ -1,19 +1,19 @@
 
 Call:
-lm(formula = log(downstream.dists$comm.struc) ~ downstream.dists$geo.dist)
+lm(formula = log(downstream.dists$comm.struc) ~ downstream.dists$geo)
 
 Residuals:
      Min       1Q   Median       3Q      Max 
--0.67293 -0.15881 -0.00662  0.18490  0.55274 
+-0.78930 -0.20114 -0.01577  0.22551  0.75654 
 
 Coefficients:
-                            Estimate Std. Error t value Pr(>|t|)    
-(Intercept)               -8.813e-01  1.299e-02 -67.857  < 2e-16 ***
-downstream.dists$geo.dist -1.678e-05  2.317e-06  -7.244 9.07e-13 ***
+                       Estimate Std. Error t value Pr(>|t|)    
+(Intercept)          -1.333e+00  1.614e-02 -82.558  < 2e-16 ***
+downstream.dists$geo -2.111e-05  2.880e-06  -7.331 4.92e-13 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 0.2375 on 944 degrees of freedom
-Multiple R-squared:  0.05265,	Adjusted R-squared:  0.05165 
-F-statistic: 52.47 on 1 and 944 DF,  p-value: 9.072e-13
+Residual standard error: 0.2953 on 944 degrees of freedom
+Multiple R-squared:  0.05386,	Adjusted R-squared:  0.05286 
+F-statistic: 53.74 on 1 and 944 DF,  p-value: 4.923e-13
 

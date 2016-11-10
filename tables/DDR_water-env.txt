@@ -3,17 +3,17 @@ Call:
 lm(formula = log(water.dists$comm.struc) ~ water.dists$env)
 
 Residuals:
-     Min       1Q   Median       3Q      Max 
--1.04869 -0.12430  0.03162  0.17468  0.49182 
+    Min      1Q  Median      3Q     Max 
+-1.1130 -0.1600  0.0349  0.2342  0.6810 
 
 Coefficients:
                 Estimate Std. Error t value Pr(>|t|)    
-(Intercept)     -0.72587    0.02758  -26.32  < 2e-16 ***
-water.dists$env -0.97652    0.13619   -7.17 2.75e-12 ***
+(Intercept)     -1.11051    0.03449 -32.199   <2e-16 ***
+water.dists$env -0.08176    0.01024  -7.984    1e-14 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 0.258 on 494 degrees of freedom
-Multiple R-squared:  0.09426,	Adjusted R-squared:  0.09243 
-F-statistic: 51.41 on 1 and 494 DF,  p-value: 2.751e-12
+Residual standard error: 0.3123 on 494 degrees of freedom
+Multiple R-squared:  0.1143,	Adjusted R-squared:  0.1125 
+F-statistic: 63.75 on 1 and 494 DF,  p-value: 1e-14
 
