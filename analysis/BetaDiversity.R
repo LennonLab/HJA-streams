@@ -16,5 +16,8 @@ hja.beta.samp.sed$mean.values
 
 #### EMS Framework
 require(metacom)
-EMS.water <- Metacommunity(comm = OTUs.PA[which(design$habitat=="water"),], method = "tswap", verbose = TRUE)
-EMS.sed <- Metacommunity(comm = OTUs.PA[which(design$habitat=="sediment"),], method = "tswap", verbose = TRUE)
+EMS.water <- Coherence(comm = OTUs.PA[which(design$habitat=="water"),
+                                          which(colnames(OTUsREL) %in% top.taxa)], 
+                       method = "tswap", sims = 100, verbose = T)
+EMS.sed <- Metacommunity(comm = OTUs.PA[which(design$habitat=="sediment"),
+                                        which(colnames(OTUsREL) %in% top.taxa)], method = "tswap", verbose = TRUE)

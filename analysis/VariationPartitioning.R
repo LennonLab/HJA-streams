@@ -4,6 +4,7 @@
 
 # Variation Partitioning
 
+
 #### dbRDA
 habitat <- scale((env[,8] == "sediment") * 1)
 hja.coords <- scale((env[,4:5]))
@@ -16,7 +17,7 @@ rs <- rowSums(OTUsREL) / sum(OTUsREL)
 hja.pcnm <- pcnm(trunc.dist, w = rs)
 
 # First 4 eigenvalues contain 98% of variation
-sum(hja.pcnm$values[1:4])/sum(hja.pcnm$values)
+(hja.pcnm$values[hja.pcnm$values>0]/sum(hja.pcnm$values[hja.pcnm$values>0]))
 hja.pcnm <- scores(hja.pcnm)[,which(hja.pcnm$values>0)]
 hja.pcnm <- as.data.frame(hja.pcnm[,1:4])
 
