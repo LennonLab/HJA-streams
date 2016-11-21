@@ -1,6 +1,6 @@
 #source("analysis/InitialSetup.R")
-#source("analysis/DistanceCalcs.R")
-#source("analysis/Ordination.R")
+# source("analysis/DistanceCalcs.R")
+# source("analysis/Ordination.R")
 require(picante)
 require(png)
 require(grid)
@@ -96,17 +96,44 @@ for(i in 1:nrow(OTUsREL)){
 }
 
 OTUsREL.top <- OTUsREL[,which(colnames(OTUsREL) %in% top.taxa)]
-
-hja.phylo <- match.phylo.comm(phy = hja.tree, comm = OTUsREL.top)
-hja.mntd.ses.tip <- ses.mntd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "taxa.labels")
-hja.mpd.ses.tip <- ses.mpd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "taxa.labels")
-hja.pd.ses.tip <- ses.pd(samp = hja.phylo$comm, tree = hja.phylo$phy, null.model = "taxa.labels")
-hja.mntd.ses.ind <- ses.mntd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "independentswap")
-hja.mpd.ses.ind <- ses.mpd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "independentswap")
-hja.pd.ses.ind <- ses.pd(samp = hja.phylo$comm, tree = hja.phylo$phy, null.model = "independentswap")
-hja.mntd.ses.trial <- ses.mntd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "trialswap")
-hja.mpd.ses.trial <- ses.mpd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "trialswap")
-hja.pd.ses.trial <- ses.pd(samp = hja.phylo$comm, tree = hja.phylo$phy, null.model = "trialswap")
+# 
+# hja.phylo <- match.phylo.comm(phy = hja.tree, comm = OTUsREL.top)
+# hja.mntd.ses.tip <- ses.mntd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "taxa.labels")
+# hja.mpd.ses.tip <- ses.mpd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "taxa.labels")
+# hja.pd.ses.tip <- ses.pd(samp = hja.phylo$comm, tree = hja.phylo$phy, null.model = "taxa.labels")
+# hja.mntd.ses.ind <- ses.mntd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "independentswap")
+# hja.mpd.ses.ind <- ses.mpd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "independentswap")
+# hja.pd.ses.ind <- ses.pd(samp = hja.phylo$comm, tree = hja.phylo$phy, null.model = "independentswap")
+# hja.mntd.ses.trial <- ses.mntd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "trialswap")
+# hja.mpd.ses.trial <- ses.mpd(samp = hja.phylo$comm, dis = cophenetic(hja.phylo$phy), null.model = "trialswap")
+# hja.pd.ses.trial <- ses.pd(samp = hja.phylo$comm, tree = hja.phylo$phy, null.model = "trialswap")
+# 
+# hja.phylo.div <- NULL
+# hja.phylo.div <- list(
+# mntd = list(trial=hja.mntd.ses.trial,tip=hja.mntd.ses.tip,ind=hja.mntd.ses.ind),
+# pd = list(trial=hja.pd.ses.trial,tip=hja.pd.ses.tip,ind=hja.pd.ses.ind),
+# mpd = list(trial=hja.mpd.ses.trial,tip=hja.mpd.ses.tip,ind=hja.mpd.ses.ind))
+# 
+# 
+# write.table(hja.mntd.ses.trial, file = "./data/hja-mntd-ses-trial.txt", sep="\t")
+# write.table(hja.mpd.ses.trial, file = "./data/hja-mpd-ses-trial.txt", sep="\t")
+# write.table(hja.pd.ses.trial, file = "./data/hja-pd-ses-trial.txt", sep="\t")
+# write.table(hja.mntd.ses.tip, file = "./data/hja-mntd-ses-tip.txt", sep="\t")
+# write.table(hja.mpd.ses.tip, file = "./data/hja-mpd-ses-tip.txt", sep="\t")
+# write.table(hja.pd.ses.tip, file = "./data/hja-pd-ses-tip.txt", sep="\t")
+# write.table(hja.mntd.ses.ind, file = "./data/hja-mntd-ses-ind.txt", sep="\t")
+# write.table(hja.mpd.ses.ind, file = "./data/hja-mpd-ses-ind.txt", sep="\t")
+# write.table(hja.pd.ses.ind, file = "./data/hja-pd-ses-ind.txt", sep="\t")  
+  
+hja.mntd.ses.trial <- read.table(file = "./data/hja-mntd-ses-trial.txt", sep="\t")
+hja.mpd.ses.trial <- read.table(file = "./data/hja-mpd-ses-trial.txt", sep="\t")
+hja.pd.ses.trial <- read.table(file = "./data/hja-pd-ses-trial.txt", sep="\t")
+hja.mntd.ses.tip <- read.table(file = "./data/hja-mntd-ses-tip.txt", sep="\t")
+hja.mpd.ses.tip <- read.table(file = "./data/hja-mpd-ses-tip.txt", sep="\t")
+hja.pd.ses.tip <- read.table(file = "./data/hja-pd-ses-tip.txt", sep="\t")
+hja.mntd.ses.ind <- read.table(file = "./data/hja-mntd-ses-ind.txt", sep="\t")
+hja.mpd.ses.ind <- read.table(file = "./data/hja-mpd-ses-ind.txt", sep="\t")
+hja.pd.ses.ind <- read.table(file = "./data/hja-pd-ses-ind.txt", sep="\t")  
 
 hja.phylo.div <- NULL
 hja.phylo.div <- list(
@@ -114,26 +141,6 @@ mntd = list(trial=hja.mntd.ses.trial,tip=hja.mntd.ses.tip,ind=hja.mntd.ses.ind),
 pd = list(trial=hja.pd.ses.trial,tip=hja.pd.ses.tip,ind=hja.pd.ses.ind),
 mpd = list(trial=hja.mpd.ses.trial,tip=hja.mpd.ses.tip,ind=hja.mpd.ses.ind))
 
-
-write.table(hja.mntd.ses.trial, file = "./data/hja-mntd-ses-trial.txt", sep="\t")
-write.table(hja.mpd.ses.trial, file = "./data/hja-mpd-ses-trial.txt", sep="\t")
-write.table(hja.pd.ses.trial, file = "./data/hja-pd-ses-trial.txt", sep="\t")
-write.table(hja.mntd.ses.tip, file = "./data/hja-mntd-ses-tip.txt", sep="\t")
-write.table(hja.mpd.ses.tip, file = "./data/hja-mpd-ses-tip.txt", sep="\t")
-write.table(hja.pd.ses.tip, file = "./data/hja-pd-ses-tip.txt", sep="\t")
-write.table(hja.mntd.ses.ind, file = "./data/hja-mntd-ses-ind.txt", sep="\t")
-write.table(hja.mpd.ses.ind, file = "./data/hja-mpd-ses-ind.txt", sep="\t")
-write.table(hja.pd.ses.ind, file = "./data/hja-pd-ses-ind.txt", sep="\t")  
-  
-read.table(file = "./data/hja-mntd-ses-trial.txt", sep="\t")
-read.table(file = "./data/hja-mpd-ses-trial.txt", sep="\t")
-read.table(file = "./data/hja-pd-ses-trial.txt", sep="\t")
-read.table(file = "./data/hja-mntd-ses-tip.txt", sep="\t")
-read.table(file = "./data/hja-mpd-ses-tip.txt", sep="\t")
-read.table(file = "./data/hja-pd-ses-tip.txt", sep="\t")
-read.table(file = "./data/hja-mntd-ses-ind.txt", sep="\t")
-read.table(file = "./data/hja-mpd-ses-ind.txt", sep="\t")
-read.table(file = "./data/hja-pd-ses-ind.txt", sep="\t")  
 
 plot(hja.phylo.div$mntd$trial$mntd.obs.z[which(design$habitat!="water")] 
      ~ design$order[which(design$habitat!="water")])

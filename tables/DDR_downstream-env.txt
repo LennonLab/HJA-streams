@@ -4,16 +4,16 @@ lm(formula = log(downstream.dists$comm.struc) ~ downstream.dists$env)
 
 Residuals:
      Min       1Q   Median       3Q      Max 
--0.80891 -0.21109  0.00166  0.20438  0.79655 
+-0.72294 -0.12670  0.00729  0.14973  0.48583 
 
 Coefficients:
-                      Estimate Std. Error t value Pr(>|t|)    
-(Intercept)          -1.313167   0.026089 -50.333  < 2e-16 ***
-downstream.dists$env -0.044379   0.009358  -4.742 2.44e-06 ***
+                     Estimate Std. Error t value Pr(>|t|)    
+(Intercept)          -0.61910    0.01704  -36.34   <2e-16 ***
+downstream.dists$env -1.20012    0.05595  -21.45   <2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 0.3 on 944 degrees of freedom
-Multiple R-squared:  0.02327,	Adjusted R-squared:  0.02223 
-F-statistic: 22.49 on 1 and 944 DF,  p-value: 2.439e-06
+Residual standard error: 0.2001 on 944 degrees of freedom
+Multiple R-squared:  0.3277,	Adjusted R-squared:  0.327 
+F-statistic: 460.2 on 1 and 944 DF,  p-value: < 2.2e-16
 

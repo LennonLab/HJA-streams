@@ -1,19 +1,19 @@
 
 Call:
-lm(formula = log(downstream.water.dists$comm.struc) ~ downstream.water.dists$downstream.water.env.dists)
+lm(formula = log(downstream.water.dists$comm.struc) ~ downstream.water.dists$env)
 
 Residuals:
      Min       1Q   Median       3Q      Max 
--0.60306 -0.12155  0.01491  0.15608  0.31468 
+-0.45999 -0.13086  0.00305  0.15530  0.40385 
 
 Coefficients:
-                                                  Estimate Std. Error t value Pr(>|t|)    
-(Intercept)                                       -0.94173    0.02906 -32.408   <2e-16 ***
-downstream.water.dists$downstream.water.env.dists -0.09940    0.12531  -0.793    0.428    
+                           Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                -0.70248    0.02907 -24.163  < 2e-16 ***
+downstream.water.dists$env -0.57624    0.12537  -4.596 6.18e-06 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 Residual standard error: 0.1844 on 323 degrees of freedom
-Multiple R-squared:  0.001944,	Adjusted R-squared:  -0.001146 
-F-statistic: 0.6292 on 1 and 323 DF,  p-value: 0.4282
+Multiple R-squared:  0.06139,	Adjusted R-squared:  0.05848 
+F-statistic: 21.13 on 1 and 323 DF,  p-value: 6.178e-06
 
