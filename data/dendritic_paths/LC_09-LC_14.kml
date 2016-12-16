@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>LC_09-LC_14.kml</name>
+	<Style id="inline0">
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline1</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline0</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline1">
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Placemark>
+		<name>LC_09-LC_14</name>
+		<styleUrl>#inline</styleUrl>
+		<LineString>
+			<tessellate>1</tessellate>
+			<coordinates>
+				-122.1774930756997,44.23213059271499,0 -122.1777148198361,44.23187275247812,0 -122.1779229490348,44.23167455092471,0 -122.1779222869074,44.23137353939507,0 -122.1777975084759,44.23101691002049,0 -122.1782692049496,44.23077944695044,0 -122.1782985577939,44.23029120367698,0 -122.1787123306297,44.23006557472387,0 -122.1789183489595,44.23019494517402,0 -122.1792024587743,44.23024985013438,0 -122.17948981029,44.23021903983672,0 -122.1797629666335,44.23018553722942,0 -122.1803747776538,44.230267540761,0 -122.1806854663119,44.23046396586542,0 -122.1808539844074,44.23081177477238,0 -122.1812132671245,44.23090063010595,0 -122.1814863524112,44.23098932978741,0 -122.1814054939532,44.23079731122785,0 -122.18143167693,44.23062041392359,0 -122.1816799959545,44.23042495386376,0 -122.1818308316454,44.2301588110131,0 -122.1819823448436,44.22996684031609,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+</Document>
+</kml>

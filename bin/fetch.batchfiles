@@ -1,0 +1,3 @@
+#!/bin/bash
+scp wisnoski@mason.indiana.edu:/N/dc2/projects/Lennon_Sequences/2015_HJA-streams/*.batch ~/GitHub/HJA-streams/mothur/
+scp wisnoski@mason.indiana.edu:/N/dc2/projects/Lennon_Sequences/2015_HJA-streams/*.sh ~/GitHub/HJA-streams/mothur/

@@ -13,3 +13,5 @@ stream_network_2008
 .Rproj.user
 packrat/lib*/
 .RData
+.DS_Store
+data/.DS_Store
