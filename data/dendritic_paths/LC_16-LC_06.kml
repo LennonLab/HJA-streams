@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>LC_16-LC_06.kml</name>
+	<Style id="inline1">
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<StyleMap id="inline">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline1</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline0</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline0">
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Placemark>
+		<name>LC_16-LC_06</name>
+		<open>1</open>
+		<styleUrl>#inline</styleUrl>
+		<LineString>
+			<tessellate>1</tessellate>
+			<coordinates>
+				-122.2130926600151,44.2309065556252,0 -122.2130517936333,44.23105846072855,0 -122.2134454555799,44.2314700089224,0 -122.2132692909989,44.23180530171001,0 -122.2133828231938,44.23206082200393,0 -122.2137690430642,44.23216591530003,0 -122.2135724399338,44.23230042317709,0 -122.2131144447106,44.23240354377816,0 -122.2128860177578,44.23262930766633,0 -122.2127042612008,44.23280867936069,0 -122.2123524065793,44.23292569641262,0 -122.2119753769056,44.23306727181702,0 -122.2117389932569,44.23330362326529,0 -122.2114001194391,44.23352628388366,0 -122.210797463909,44.23369508310444,0 -122.210307607654,44.23374033028377,0 -122.2099618286727,44.233472594189,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+</Document>
+</kml>
