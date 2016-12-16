@@ -955,3 +955,374 @@ graphics.off()
 grid.raster(readPNG("./figures/DDR_DownstreamSedWater_bray_dt.png"))
 
 
+###### Dendritic distance decay relationships
+################################################################
+png(filename = "./figures/DDR_HeadwaterDownstream_bray_dt_dend.png",
+    width = 1600, height = 1600, res = 96*2)
+par(mfcol = c(2, 2))
+
+dt.headwater.env.lm<-(lm(residuals(headwater.den.lm) + coefficients(summary(headwater.env.lm))[1,1] ~ headwater.dists$env))
+dt.downstream.env.lm<-(lm(residuals(downstream.den.lm) + coefficients(summary(downstream.env.lm))[1,1] ~ downstream.dists$env))
+dt.headwater.den.lm<-(lm(residuals(headwater.env.lm) + coefficients(summary(headwater.den.lm))[1,1] ~ headwater.dists$den))
+dt.downstream.den.lm<-(lm(residuals(downstream.env.lm) + coefficients(summary(downstream.den.lm))[1,1] ~ downstream.dists$den))
+
+yrange.headwater <- c(
+  min(residuals(headwater.den.lm)+coefficients(summary(headwater.env.lm))[1,1],
+      residuals(headwater.env.lm)+coefficients(summary(headwater.den.lm))[1,1]),
+  max(residuals(headwater.den.lm)+coefficients(summary(headwater.env.lm))[1,1],
+      residuals(headwater.env.lm)+coefficients(summary(headwater.den.lm))[1,1]))
+yrange.downstream <- c(
+  min(residuals(downstream.env.lm)+coefficients(summary(downstream.den.lm))[1,1],
+      residuals(downstream.den.lm)+coefficients(summary(downstream.env.lm))[1,1]),
+  max(residuals(downstream.env.lm)+coefficients(summary(downstream.den.lm))[1,1],
+      residuals(downstream.den.lm)+coefficients(summary(downstream.env.lm))[1,1]))
+
+
+par(mar = c(1, 5, 3, 0) + 0.4)
+plot(headwater.dists$env, 
+     residuals(headwater.den.lm)+ coefficients(summary(headwater.env.lm))[1,1], xlab="", 
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,max(hja.env.dists)),
+     ylim = yrange.headwater)
+abline(dt.headwater.env.lm, lty = 1, lwd = 2)
+r2 <- round(summary(dt.headwater.env.lm)$r.squared, 3)
+my.p <- round(summary(dt.headwater.env.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('bottomleft', legend = rp, bty = 'n')
+
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, 
+     labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
+     at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
+
+par(mar = c(4, 5, 1, 0) + 0.4)
+plot(downstream.dists$env, 
+     residuals(downstream.den.lm)+ coefficients(summary(downstream.env.lm))[1,1] , xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,max(hja.env.dists)),
+     ylim = yrange.downstream)
+
+abline(dt.downstream.env.lm, lwd=2)
+r2 <- round(summary(dt.downstream.env.lm)$r.squared, 3)
+my.p <- round(summary(dt.downstream.env.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('topright', legend = rp, bty = 'n')
+
+
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, 
+     labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
+     at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd=2)
+mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
+mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
+
+par(mar = c(1, 1, 3, 4) + 0.4)
+plot(headwater.dists$den, 
+     residuals(headwater.env.lm)+ coefficients(summary(headwater.den.lm))[1,1], xlab="", 
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,20000), ylim = yrange.headwater)
+abline(dt.headwater.den.lm, lty = 1, lwd = 2)
+
+r2 <- round(summary(dt.headwater.den.lm)$r.squared, 3)
+my.p <- round(summary(dt.headwater.den.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('bottomleft', legend = rp, bty = 'n')
+
+
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+mtext("Headwaters", side = 4, line = 1.5, cex = 1.2)
+box(lwd = 2)
+
+par(mar = c(4, 1, 1, 4) + 0.4)
+plot(downstream.dists$den, 
+     residuals(downstream.env.lm) + coefficients(summary(downstream.den.lm))[1,1], xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,20000), ylim = yrange.downstream)
+
+abline(dt.downstream.den.lm, lwd=2)
+r2 <- round(summary(dt.downstream.den.lm)$r.squared, 3)
+my.p <- round(summary(dt.downstream.den.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('topright', legend = rp, bty = 'n')
+
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd=2)
+mtext("Dendritic Distance (m)", side = 1, line = 3, cex = 1.5)
+mtext("Downstream", side = 4, line = 1.5, cex = 1.2)
+
+dev.off()
+graphics.off()
+grid.raster(readPNG("./figures/DDR_HeadwaterDownstream_bray_dt_dend.png"))
+
+
+
+#-------------------------------------------------------
+png(filename = "./figures/DDR_WaterSed_bray_dt_dend.png",
+    width = 1600, height = 1600, res = 96*2)
+par(mfcol = c(2, 2))
+
+#models
+water.den.lm <- lm(log(water.dists$comm.struc) ~ water.dists$den)
+sed.den.lm <- lm(log(sed.dists$comm.struc) ~ sed.dists$den)
+dt.water.env.lm<-(lm(residuals(water.den.lm) + coefficients(summary(water.env.lm))[1,1] ~ water.dists$env))
+dt.sed.env.lm<-(lm(residuals(sed.den.lm) + coefficients(summary(sed.env.lm))[1,1] ~ sed.dists$env))
+dt.water.den.lm<-(lm(residuals(water.env.lm) + coefficients(summary(water.den.lm))[1,1] ~ water.dists$den))
+dt.sed.den.lm<-(lm(residuals(sed.env.lm) + coefficients(summary(sed.den.lm))[1,1] ~ sed.dists$den))
+
+yrange.water <- c(
+  min(residuals(water.den.lm)+coefficients(summary(water.env.lm))[1,1],
+      residuals(water.env.lm)+coefficients(summary(water.den.lm))[1,1]),
+  max(residuals(water.den.lm)+coefficients(summary(water.env.lm))[1,1],
+      residuals(water.env.lm)+coefficients(summary(water.den.lm))[1,1]))
+yrange.sed <- c(
+  min(residuals(sed.env.lm)+coefficients(summary(sed.den.lm))[1,1],
+      residuals(sed.den.lm)+coefficients(summary(sed.env.lm))[1,1]),
+  max(residuals(sed.env.lm)+coefficients(summary(sed.den.lm))[1,1],
+      residuals(sed.den.lm)+coefficients(summary(sed.env.lm))[1,1]))
+
+par(mar = c(1, 5, 3, 0) + 0.4)
+plot(water.dists$env, 
+     residuals(water.den.lm)+coefficients(summary(water.env.lm))[1,1], xlab="", 
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,.6),
+     ylim = yrange.water)
+abline(dt.water.env.lm, lty = 1, lwd = 2)
+r2 <- round(summary(dt.water.env.lm)$r.squared, 3)
+my.p <- round(summary(dt.water.env.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('bottomright', legend = rp, bty = 'n')
+
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, 
+     labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
+     at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
+
+par(mar = c(4, 5, 1, 0) + 0.4)
+plot(sed.dists$env, 
+     residuals(sed.den.lm)+ coefficients(summary(sed.env.lm))[1,1], xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,.6),
+     ylim = yrange.sed)
+abline(dt.sed.env.lm, lty = 1, lwd = 2)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, 
+     labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
+     at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd=2)
+mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
+mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
+r2 <- round(summary(dt.sed.env.lm)$r.squared, 3)
+my.p <- round(summary(dt.sed.env.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('topright', legend = rp, bty = 'n')
+
+par(mar = c(1, 1, 3, 4) + 0.4)
+plot(water.dists$den, 
+     residuals(water.env.lm) + coefficients(summary(water.den.lm))[1,1], xlab="", 
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,20000), ylim = yrange.water)
+abline(dt.water.den.lm, lty = 1, lwd = 2)
+r2 <- round(summary(dt.water.den.lm)$r.squared, 3)
+my.p <- round(summary(dt.water.den.lm)$coefficients[2,4],3)
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('bottomright', legend = rp, bty = 'n')
+
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+mtext("Bacterioplankton", side = 4, line = 1.5, cex = 1.2)
+box(lwd = 2)
+
+par(mar = c(4, 1, 1, 4) + 0.4)
+plot(sed.dists$den, 
+     residuals(sed.env.lm)+ coefficients(summary(sed.den.lm))[1,1], xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,20000), ylim = yrange.sed)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd=2)
+abline(dt.sed.den.lm, lwd = 2)
+r2 <- round(summary(dt.sed.den.lm)$r.squared, 3)
+my.p <- round(summary(dt.sed.den.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('topright', legend = rp, bty = 'n')
+
+mtext("Dendritic Distance (m)", side = 1, line = 3, cex = 1.5)
+mtext("Sediment Bacteria", side = 4, line = 1.5, cex = 1.2)
+
+dev.off()
+graphics.off()
+grid.raster(readPNG("./figures/DDR_WaterSed_bray_dt_dend.png"))
+
+
+
+# Downstream sed vs. water
+png(filename = "./figures/DDR_DownstreamSedWater_bray_dt_dend.png",
+    width = 1600, height = 1600, res = 96*2)
+par(mfcol = c(2, 2))
+
+downstream.water.den.lm <- lm(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$den)
+downstream.sed.den.lm <- lm(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$den)
+dt.downstream.water.env.lm<-(lm(residuals(downstream.water.den.lm) + coefficients(summary(downstream.water.env.lm))[1,1] ~ downstream.water.dists$env))
+dt.downstream.sed.env.lm<-(lm(residuals(downstream.sed.den.lm) + coefficients(summary(downstream.sed.env.lm))[1,1] ~ downstream.sed.dists$env))
+dt.downstream.water.den.lm<-(lm(residuals(downstream.water.env.lm) + coefficients(summary(downstream.water.den.lm))[1,1] ~ downstream.water.dists$den))
+dt.downstream.sed.den.lm<-(lm(residuals(downstream.sed.env.lm) + coefficients(summary(downstream.sed.den.lm))[1,1] ~ downstream.sed.dists$den))
+
+yrange.ds.water <- c(
+  min(residuals(downstream.water.den.lm)+coefficients(summary(downstream.water.env.lm))[1,1],
+      residuals(downstream.water.env.lm)+coefficients(summary(downstream.water.den.lm))[1,1]),
+  max(residuals(downstream.water.den.lm)+coefficients(summary(downstream.water.env.lm))[1,1],
+      residuals(downstream.water.env.lm)+coefficients(summary(downstream.water.den.lm))[1,1]))
+yrange.ds.sed <- c(
+  min(residuals(downstream.sed.env.lm)+coefficients(summary(downstream.sed.den.lm))[1,1],
+      residuals(downstream.sed.den.lm)+coefficients(summary(downstream.sed.env.lm))[1,1]),
+  max(residuals(downstream.sed.env.lm)+coefficients(summary(downstream.sed.den.lm))[1,1],
+      residuals(downstream.sed.den.lm)+coefficients(summary(downstream.sed.env.lm))[1,1]))
+
+par(mar = c(1, 5, 3, 0) + 0.4)
+plot(downstream.water.dists$env, 
+     residuals(downstream.water.den.lm)+ coefficients(summary(downstream.water.env.lm))[1,1], xlab="", 
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,.6), ylim = yrange.ds.water)
+abline(dt.downstream.water.env.lm, lty = 1, lwd = 2)
+r2 <- round(summary(dt.downstream.water.env.lm)$r.squared, 3)
+my.p <- round(summary(dt.downstream.water.env.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('topright', legend = rp, bty = 'n')
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, 
+     labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
+     at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd = 2)
+mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
+
+par(mar = c(4, 5, 1, 0) + 0.4)
+plot(downstream.sed.dists$env, 
+     residuals(downstream.sed.den.lm) + coefficients(summary(downstream.sed.env.lm))[1,1], xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,.6), ylim = yrange.ds.sed)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, 
+     labels=c(".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", "1.0"), 
+     at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd=2)
+mtext("Community Similarity", side = 2, line = 3, cex = 1.2)
+abline(dt.downstream.sed.env.lm, lwd = 2)
+r2 <- round(summary(dt.downstream.sed.env.lm)$r.squared, 3)
+my.p <- round(summary(dt.downstream.sed.env.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('topright', legend = rp, bty = 'n')
+
+mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
+
+par(mar = c(1, 1, 3, 4) + 0.4)
+plot(downstream.water.dists$den, 
+     residuals(downstream.water.env.lm)+ coefficients(summary(downstream.water.den.lm))[1,1], xlab="", 
+     ylab = "", xaxt="n", yaxt="n", xlim = c(0,20000), ylim = yrange.ds.water)
+abline(dt.downstream.water.den.lm, lty = 1, lwd = 2)
+r2 <- round(summary(dt.downstream.water.den.lm)$r.squared, 3)
+my.p <- round(summary(dt.downstream.water.den.lm)$coefficients[2,4],3)
+if(my.p < 0.001) my.p <- "< 0.001"
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('topright', legend = rp, bty = 'n')
+axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+mtext("Bacterioplankton", side = 4, line = 1.5, cex = 1.2)
+box(lwd = 2)
+
+par(mar = c(4, 1, 1, 4) + 0.4)
+plot(downstream.sed.dists$den, 
+     residuals(downstream.sed.env.lm)+ coefficients(summary(downstream.sed.den.lm))[1,1], xlab="", 
+     ylab = "", xaxt = "n", yaxt = "n", xlim = c(0,20000), ylim = yrange.ds.sed)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=4, labels=F, at=log(seq(0.1:1, by = 0.1)), lwd.ticks=2, cex.axis=1.2, las=1)
+box(lwd=2)
+abline(dt.downstream.sed.den.lm, lwd = 2)
+r2 <- round(summary(dt.downstream.sed.den.lm)$r.squared, 3)
+my.p <- round(summary(dt.downstream.sed.den.lm)$coefficients[2,4],3)
+rp = vector('expression',2)
+rp[1] = substitute(expression(italic(R)^2 == MYVALUE), 
+                   list(MYVALUE = format(r2,dig=3)))[2]
+rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                   list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+legend('topright', legend = rp, bty = 'n')
+
+mtext("Dendritic Distance (m)", side = 1, line = 3, cex = 1.5)
+mtext("Sediment", side = 4, line = 1.5, cex = 1.2)
+
+dev.off()
+graphics.off()
+grid.raster(readPNG("./figures/DDR_DownstreamSedWater_bray_dt_dend.png"))
