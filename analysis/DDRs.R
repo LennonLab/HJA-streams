@@ -4,7 +4,7 @@
 
 # Water Distance Decay
 water.xy <- xy[which(design$habitat == "water"),]
-water.den.dist <- den.dists[which(design$habitat == "water"),which(design$habitat == "water")]
+water.den.dist <- as.dist(den.dists[which(design$habitat == "water"),which(design$habitat == "water")])
 water.geo.dist.ls <- na.omit(liste(dist.mat[which(design$habitat == "water"),
                                             which(design$habitat == "water")], 
                                    entry = "geo.dist")[,3])
@@ -24,14 +24,14 @@ names(water.dists) <- c("den", "geo", "comm.struc", "env", "unifrac")
 
 water.env.lm <- (lm(log(water.dists$comm.struc) ~ water.dists$env))
 water.geo.lm <- (lm(log(water.dists$comm.struc) ~ water.dists$geo))
-summary(lm(log(water.dists$unifrac) ~ water.dists$env))
-plot(water.dists$unifrac ~ water.dists$geo)
+summary(lm(log(water.dists$comm.struc) ~ water.dists$env))
+plot(water.dists$comm.struc ~ water.dists$den)
 capture.output(summary(water.env.lm), file = "./tables/DDR_water-env.txt")
 capture.output(summary(water.geo.lm), file = "./tables/DDR_water-space.txt")
 
 # Sediment Distance Decay
 sed.xy <- xy[which(design$habitat == "sediment"),]
-sed.den.dist <- den.dists[which(design$habitat == "sediment"),which(design$habitat == "sediment")]
+sed.den.dist <- as.dist(den.dists[which(design$habitat == "sediment"),which(design$habitat == "sediment")])
 sed.geo.dist.ls <- na.omit(liste(dist.mat[which(design$habitat == "sediment"),
                                           which(design$habitat == "sediment")], 
                                  entry = "geo.dist")[,3])
@@ -51,15 +51,15 @@ names(sed.dists) <- c("den", "geo", "comm.struc", "env", "unifrac")
 
 sed.env.lm <- (lm(log(sed.dists$comm.struc) ~ sed.dists$env))
 sed.geo.lm <- (lm(log(sed.dists$comm.struc) ~ sed.dists$geo))
-plot(sed.dists$unifrac ~ sed.dists$env)
-plot(log10(sed.dists$comm.struc) ~ sed.dists$unifrac)
+plot(sed.dists$unifrac ~ sed.dists$den)
+plot(log10(sed.dists$comm.struc) ~ sed.dists$den)
 capture.output(summary(sed.env.lm), file = "./tables/DDR_sed-env.txt")
 capture.output(summary(sed.geo.lm), file = "./tables/DDR_sed-space.txt")
 
 # Headwaters DDRs
 headwater.env.dists <- vegdist(env.2[which(design$order < 2),], method = "gower")
 headwater.env.dists <- liste(headwater.env.dists, entry = "env")[,3]
-headwater.den.dist <- den.dists[which(design$order < 2),which(design$order < 2)]
+headwater.den.dist <- as.dist(den.dists[which(design$order < 2),which(design$order < 2)])
 headwater.den.dists <- na.omit(liste(headwater.den.dist, entry = "den.dist")[,3])
 headwater.geo.dists <- na.omit(liste(dist.mat[which(design$order < 2), which(design$order < 2)],
                               entry = "geo.dist")[,3])
@@ -85,7 +85,7 @@ downstream.env.dists <- vegdist(env.2[which(design$order >= 2),], method = "gowe
 downstream.env.dists <- liste(downstream.env.dists, entry = "env")[,3]
 downstream.geo.dists <- na.omit(liste(dist.mat[which(design$order >= 2), which(design$order >= 2)],
                                entry = "geo.dist"))[,3]
-downstream.den.dist <- den.dists[which(design$order > 1),which(design$order > 1)]
+downstream.den.dist <- as.dist(den.dists[which(design$order > 1),which(design$order > 1)])
 downstream.den.dists <- na.omit(liste(downstream.den.dist, entry = "den.dist")[,3])
 
 downstream.db <- vegdist(OTUsREL[which(design$order >= 2),])
@@ -112,14 +112,17 @@ downstream.sed.env.dists <- liste(downstream.sed.env.dists, entry = "env")[,3]
 downstream.sed.geo.dists <- na.omit(liste(dist.mat[which(design$order >1  & design$habitat == "sediment"), 
                                                   which(design$order >1 & design$habitat == "sediment")],
                                      entry = "geo.dist"))[,3]
+downstream.sed.den.dists <- na.omit(liste(as.dist(den.dists[which(design$order >1  & design$habitat == "sediment"), 
+                                                   which(design$order >1 & design$habitat == "sediment")]),
+                                          entry = "den.dist"))[,3]
 downstream.sed.db <- vegdist(OTUsREL[which(design$order >1 & design$habitat == "sediment"),])
 downstream.sed.phylo.dist.ls <- 1-liste(as.dist(hja.unifrac[which(design$order >= 2 & design$habitat == "sediment"),
                                                       which(design$order >= 2 & design$habitat == "sediment")]),
                                   entry = "unifrac")[,3]
 downstream.sed.dists <- data.frame(liste((1 - downstream.sed.db), entry = "comm.struc")[,3], 
                          downstream.sed.env.dists, downstream.sed.geo.dists,
-                         downstream.sed.phylo.dist.ls)
-colnames(downstream.sed.dists) <- c("comm.struc", "env", "geo", "unifrac")
+                         downstream.sed.phylo.dist.ls, downstream.sed.den.dists)
+colnames(downstream.sed.dists) <- c("comm.struc", "env", "geo", "unifrac", "den")
 downstream.sed.env.lm <- (lm(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$env))
 downstream.sed.geo.lm <- (lm(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$geo))
 downstream.sed.phy.env.lm <- (lm(log(downstream.sed.dists$unifrac) ~ downstream.sed.dists$env))
@@ -130,14 +133,14 @@ summary(downstream.sed.geo.lm)
 summary(downstream.sed.phy.geo.lm)
 
 
-plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$env)
-abline(downstream.sed.env.lm)
-plot(log(downstream.sed.dists$unifrac) ~ downstream.sed.dists$env)
-abline(downstream.sed.phy.env.lm)
-plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$geo)
-abline(downstream.sed.geo.lm)
-plot(log(downstream.sed.dists$unifrac) ~ downstream.sed.dists$geo)
-abline(downstream.sed.phy.geo.lm)
+# plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$env)
+# abline(downstream.sed.env.lm)
+# plot(log(downstream.sed.dists$unifrac) ~ downstream.sed.dists$env)
+# abline(downstream.sed.phy.env.lm)
+# plot(log(downstream.sed.dists$comm.struc) ~ downstream.sed.dists$geo)
+# abline(downstream.sed.geo.lm)
+# plot(log(downstream.sed.dists$unifrac) ~ downstream.sed.dists$geo)
+# abline(downstream.sed.phy.geo.lm)
 
 # Downstream water
 downstream.water.env.dists <- vegdist(env.2[which(design$order > 1 & design$habitat == "water"),], method = "gower")
@@ -149,10 +152,14 @@ downstream.water.db <- vegdist(OTUsREL[which(design$order >1 & design$habitat ==
 downstream.water.phylo.dist.ls <- 1-liste(as.dist(hja.unifrac[which(design$order >= 2 & design$habitat == "water"),
                                                           which(design$order >= 2 & design$habitat == "water")]),
                                       entry = "unifrac")[,3]
+downstream.water.den.dists <- na.omit(liste(as.dist(den.dists[which(design$order >1  & design$habitat == "water"), 
+                                                            which(design$order >1 & design$habitat == "water")]),
+                                          entry = "den.dist"))[,3]
+
 downstream.water.dists <- data.frame(liste((1 - downstream.water.db), entry = "comm.struc")[,3], 
                               downstream.water.env.dists, downstream.water.geo.dists,
-                              downstream.water.phylo.dist.ls)
-colnames(downstream.water.dists) <- c("comm.struc", "env", "geo", "unifrac")
+                              downstream.water.phylo.dist.ls, downstream.water.den.dists)
+colnames(downstream.water.dists) <- c("comm.struc", "env", "geo", "unifrac", "den")
 downstream.water.env.lm <- (lm(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$env))
 downstream.water.geo.lm <- (lm(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$geo))
 downstream.water.phy.env.lm <- lm(log(downstream.water.dists$unifrac) ~ downstream.water.dists$env)
@@ -161,21 +168,21 @@ summary(downstream.water.env.lm)
 summary(downstream.water.phy.env.lm)
 summary(downstream.water.geo.lm)
 summary(downstream.water.phy.geo.lm)
-plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$env)
-abline(downstream.water.env.lm)
-plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$geo)
-abline(downstream.water.geo.lm)
-plot(log(downstream.water.dists$unifrac) ~ downstream.water.dists$env)
-abline(downstream.water.phy.env.lm)
-plot(log(downstream.water.dists$unifrac) ~ downstream.water.dists$geo)
-abline(downstream.water.phy.geo.lm)
+# plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$env)
+# abline(downstream.water.env.lm)
+# plot(log(downstream.water.dists$comm.struc) ~ downstream.water.dists$geo)
+# abline(downstream.water.geo.lm)
+# plot(log(downstream.water.dists$unifrac) ~ downstream.water.dists$env)
+# abline(downstream.water.phy.env.lm)
+# plot(log(downstream.water.dists$unifrac) ~ downstream.water.dists$geo)
+# abline(downstream.water.phy.geo.lm)
 
 ### Catchment Scale DDRs
 
 hja.env.dists <- vegdist(env.2, method = "gower")
 hja.env.dists <- liste(hja.env.dists, entry = "env")[,3]
 hja.geo.dists <- na.omit(liste(dist.mat, entry = "geo"))[,3]
-hja.den.dists <- na.omit(liste(den.dists, entry = "den"))[,3]
+hja.den.dists <- na.omit(liste(as.dist(den.dists), entry = "den"))[,3]
 hja.com.dists <- 1-liste(hja.db, entry = "comm.struc")[,3]
 hja.phy.dists <- 1-liste(hja.unifrac.dist, entry = "unifrac")[,3]
 hja.dists <- data.frame(hja.com.dists, hja.env.dists, hja.den.dists, hja.geo.dists, hja.phy.dists)
@@ -195,9 +202,11 @@ summary(hja.env.lm)
 summary(hja.geo.lm)
 summary(hja.den.lm)
 plot(log(hja.dists$comm.struc) ~ hja.dists$geo)
+plot(log(hja.dists$comm.struc) ~ hja.dists$den)
 plot(log(hja.dists$comm.struc) ~ hja.dists$env)
 plot(log(hja.dists$unifrac) ~ hja.dists$env)
 plot(log(hja.dists$unifrac) ~ hja.dists$geo)
+plot(log(hja.dists$unifrac) ~ hja.dists$den)
 
 ################# FIGURES
 
