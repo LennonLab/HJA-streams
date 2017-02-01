@@ -5,16 +5,14 @@ opar <- par()
 
 
 # Check for and install required packages
-require('vegetarian')
-require('vegan')
-require('png')
-require('sp')
-require('rgdal')
-require('SoDA')
-require('grid')
-require('simba')
-require('geoR')
-require("raster")
+package.list <- c('vegetarian', 'vegan', 'png', 'sp', 'rgdal',
+                  'SoDA', 'grid', 'simba', 'geoR', 'raster')
+for (package in package.list) {
+  if (!require(package, character.only=T, quietly=T)) {
+    install.packages(package)
+    library(package, character.only=T)
+  }
+}
 
 
 # Load packages and other tools
