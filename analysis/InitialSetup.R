@@ -96,3 +96,6 @@ OTUsREL <- decostand(OTUs, method = "total")
 
 # Transform Relative Abundances
 OTUsREL.log <- decostand(OTUs, method = "log")
+
+# Chosen distance metric
+dist.met <- "bray"
