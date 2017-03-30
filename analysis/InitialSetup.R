@@ -5,8 +5,10 @@ opar <- par()
 
 
 # Check for and install required packages
-package.list <- c('vegetarian', 'vegan', 'png', 'sp', 'rgdal',
-                  'SoDA', 'grid', 'simba', 'geoR', 'raster')
+package.list <- c('vegan', 'png', 'rgdal', 'simba', 'grid', 'vegetarian', 'pander')
+# 'sp', 'vegetarian', 
+# 'SoDA', 'geoR',
+
 for (package in package.list) {
   if (!require(package, character.only=T, quietly=T)) {
     install.packages(package)
@@ -41,7 +43,7 @@ env    <- "./data/hja_env.csv"
 design.total <- read.delim(design, header=T, row.names=1)
 
 # Import Shared Files
-OTUs <- read.otu(shared = shared, cutoff = "0.03")         # 97% Similarity
+OTUs <- read.otu(shared = shared, cutoff = "0.03") # 97% Similarity
 
 # Import Taxonomy
 OTU.tax <- read.tax(taxonomy = taxon, format = "rdp")
@@ -87,7 +89,7 @@ env.pca <- princomp(env.mat, scores = T)
 
 # Distance Matrix
 xy <- cbind(env$longitude, env$latitude)
-geo.dists <- geoXY(env$latitude, env$longitude)
+#geo.dists <- geoXY(env$latitude, env$longitude)
 xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
 dist.mat <- as.matrix(dist(xy, method = "euclidean"))
 

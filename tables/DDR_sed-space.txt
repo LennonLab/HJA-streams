@@ -1,19 +1,19 @@
 
 Call:
-lm(formula = log(sed.dists$comm.struc) ~ sed.dists$geo)
+lm(formula = (sed.dists$comm.struc) ~ sed.dists$geo)
 
 Residuals:
      Min       1Q   Median       3Q      Max 
--0.26743 -0.05679  0.01936  0.07015  0.14298 
+-0.20211 -0.04959  0.01341  0.05692  0.12350 
 
 Coefficients:
                 Estimate Std. Error t value Pr(>|t|)    
-(Intercept)   -1.601e-01  8.753e-03 -18.297   <2e-16 ***
-sed.dists$geo -3.517e-06  1.445e-06  -2.434   0.0156 *  
+(Intercept)    8.546e-01  7.093e-03  120.49   <2e-16 ***
+sed.dists$geo -2.822e-06  1.171e-06   -2.41   0.0166 *  
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 0.0894 on 274 degrees of freedom
-Multiple R-squared:  0.02116,	Adjusted R-squared:  0.01758 
-F-statistic: 5.922 on 1 and 274 DF,  p-value: 0.01559
+Residual standard error: 0.07245 on 274 degrees of freedom
+Multiple R-squared:  0.02075,	Adjusted R-squared:  0.01718 
+F-statistic: 5.807 on 1 and 274 DF,  p-value: 0.01662
 

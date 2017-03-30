@@ -5,23 +5,32 @@
 # Variation Partitioning
 
 
-#### dbRDA
 habitat <- scale((env[,8] == "sediment") * 1)
 hja.coords <- scale((env[,4:5]))
 hja.env <- as.data.frame(cbind(habitat, env.mat))
 colnames(hja.env)[1] <- "habitat"
 
-trunc.dist <- as.matrix(dist(geo.dists))
-dist.pcnm <- pcnm(trunc.dist, dist.ret = T)
-rs <- rowSums(OTUsREL) / sum(OTUsREL)
-hja.pcnm <- pcnm(trunc.dist, w = rs)
 
-# First 4 eigenvalues contain 98% of variation
-(hja.pcnm$values[hja.pcnm$values>0]/sum(hja.pcnm$values[hja.pcnm$values>0]))
-hja.pcnm <- scores(hja.pcnm)[,which(hja.pcnm$values>0)]
-hja.pcnm <- as.data.frame(hja.pcnm[,1:4])
+# Create env model
+hja.dbrda.mod0 <- dbrda(OTUsREL.log ~ 1, hja.env)
+hja.dbrda.mod1 <- dbrda(OTUsREL.log ~ ., hja.env)
+hja.dbrda.env <- step(hja.dbrda.mod1)
+hja.dbrda.env$call
+permutest(hja.dbrda.env, permutations = 999)
+hja.env.mod <- model.matrix(~ habitat + conductivity, data = hja.env)[,-1]
 
-hja.varpart <- varpart(hja.db, hja.env, hja.pcnm, hja.coords)
+# Create spatial mod
+rs <- rowSums(OTUs) / sum(OTUs)
+hja.pcnm <- pcnm(dist(geo.dists), w = rs, dist.ret = T)
+hja.pcnm.mod0 <- dbrda(OTUsREL.log ~ 1, as.data.frame(hja.pcnm$vectors))
+hja.pcnm.mod1 <- dbrda(OTUsREL.log ~ ., as.data.frame(hja.pcnm$vectors))
+hja.pcnm.mod <- step(hja.pcnm.mod1)
+hja.pcnm.mod$call
+permutest(hja.pcnm.mod, permutations = 999)
+hja.space.mod <- model.matrix(~ PCNM1, data = as.data.frame(hja.pcnm$vectors))[,-1]
+
+hja.varpart <- varpart(hja.db, hja.env.mod, hja.space.mod)
+hja.varpart
 
 capture.output(
   hja.varpart,
