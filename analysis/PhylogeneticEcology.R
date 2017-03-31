@@ -183,16 +183,16 @@ mntd.null.water <- NULL
 mntd.null.water <- readRDS(file = "data/mntds-water-null-dist.rda")
 hist(mntd.null.water)
 
-mntd.null.sed <- NULL
-for(i in 1:999){
-  temp.mntd <- liste(
-    comdistnt(sed.comm,
-              cophenetic(tipShuffle(sed.phy)),
-              abundance.weighted=T)
-  )[,3]
-  mntd.null.water[i] <- mean(temp.mntd)
-}
-saveRDS(mntd.null.sed, file = "data/mntds-sed-null-dist.rda")
+# mntd.null.sed <- NULL
+# for(i in 1:999){
+#   temp.mntd <- liste(
+#     comdistnt(sed.comm,
+#               cophenetic(tipShuffle(sed.phy)),
+#               abundance.weighted=T)
+#   )[,3]
+#   mntd.null.sed[i] <- mean(temp.mntd)
+# }
+# saveRDS(mntd.null.sed, file = "data/mntds-sed-null-dist.rda")
 mntd.null.sed <- readRDS(file = "data/mntds-sed-null-dist.rda")
 hist(mntd.null.sed)
 
@@ -200,6 +200,9 @@ hist(mntd.null.sed)
 mntds.water.rank <- NULL
 mntds.water.pval <- NULL
 bNTI.water <- NULL
+mntds.sed.rank <- NULL
+mntds.sed.pval <- NULL
+bNTI.sed <- NULL
 i <- 1
 
 for(each in mntds.water[,3]){
@@ -211,4 +214,22 @@ for(each in mntds.water[,3]){
   bNTI.water[i] <- (each - mean(mntd.null.water)) / sd(mntd.null.water)
   i <- i+1
 }
-length(bNTI.water) - (sum(bNTI.water < -2) + sum(bNTI.water > 2))
+
+i <- 1
+for(each in mntds.sed[,3]){
+  # mntds.rank[i] <- rank(c(each, mntd.null))[1]
+  # pval <- mntds.rank[i] / (length(mntd.null) + 1)
+  # if (pval > 0.5) mntds.pval[i] <- (1-pval)*2
+  # if (pval <= 0.5) mntds.pval[i] <- pval*2
+  # i <- i+1
+  bNTI.sed[i] <- (each - mean(mntd.null.sed)) / sd(mntd.null.sed)
+  i <- i+1
+}
+length(bNTI.sed) - (sum(bNTI.sed < -2) + sum(bNTI.sed > 2))
+
+sed.mntd <- ses.mntd(samp = sed.comm, dis = cophenetic(sed.phy), 
+                     abundance.weighted = T, iterations = 999,
+                      null.model = "taxa.labels")
+water.mntd <- ses.mntd(samp = water.comm, dis = cophenetic(water.phy), 
+                     abundance.weighted = T, iterations = 999,
+                     null.model = "taxa.labels")d
