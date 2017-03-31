@@ -4,6 +4,7 @@ source("analysis/Ordination.R")
 require(picante)
 require(png)
 require(grid)
+require(treeman)
 
 #------------------------------------------------#
 # Read TREE
@@ -45,7 +46,6 @@ hja.tree <- read.tree(file = "./data/hja_streams.rename.tree")
 img <- readPNG("./figures/HJA_PCoA_UniFrac.png")
 grid.raster(img)
 
-
 #----------------------------------------------------#
 OTUs.water <- OTUs[which(design$habitat == "water"),]
 OTUs.water <- OTUs.water[,which(colSums(OTUs.water) < 2)]
@@ -53,6 +53,12 @@ OTUs.water <- decostand(OTUs.water, method = 'total')
 OTUs.sed <- OTUs[which(design$habitat == "sediment"),]
 OTUs.sed <- OTUs.sed[,which(colSums(OTUs.sed) < 2)]
 
+#----------------------------------------------------#
+OTUs.water <- OTUs[which(design$habitat == "water"),]
+OTUs.water <- OTUs.water[,which(colSums(OTUs.water) < 2)]
+OTUs.water <- decostand(OTUs.water, method = 'total')
+OTUs.sed <- OTUs[which(design$habitat == "sediment"),]
+OTUs.sed <- OTUs.sed[,which(colSums(OTUs.sed) < 2)]
 matched.phylo.water <- match.phylo.comm(hja.tree, OTUs.water)
 matched.phylo.sed <- match.phylo.comm(hja.tree, OTUs.sed)
 

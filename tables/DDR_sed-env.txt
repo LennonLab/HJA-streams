@@ -1,19 +1,19 @@
 
 Call:
-lm(formula = log(sed.dists$comm.struc) ~ sed.dists$env)
+lm(formula = (sed.dists$comm.struc) ~ sed.dists$env)
 
 Residuals:
      Min       1Q   Median       3Q      Max 
--0.27148 -0.05650  0.01760  0.07073  0.13158 
+-0.20078 -0.04898  0.01171  0.05828  0.11386 
 
 Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept)   -0.14314    0.01200 -11.931  < 2e-16 ***
-sed.dists$env -0.17850    0.05672  -3.147  0.00183 ** 
+               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)    0.869016   0.009714  89.459  < 2e-16 ***
+sed.dists$env -0.147188   0.045924  -3.205  0.00151 ** 
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 0.08877 on 274 degrees of freedom
-Multiple R-squared:  0.03489,	Adjusted R-squared:  0.03137 
-F-statistic: 9.905 on 1 and 274 DF,  p-value: 0.00183
+Residual standard error: 0.07187 on 274 degrees of freedom
+Multiple R-squared:  0.03614,	Adjusted R-squared:  0.03262 
+F-statistic: 10.27 on 1 and 274 DF,  p-value: 0.00151
 
