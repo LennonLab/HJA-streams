@@ -4,7 +4,6 @@ source("analysis/Ordination.R")
 require(picante)
 require(png)
 require(grid)
-require(treeman)
 
 #------------------------------------------------#
 # Read TREE
@@ -157,30 +156,59 @@ abline(h=0)
 summary(lm(hja.phylo.div$mntd$trial$mntd.obs.z ~ hja.phylo.div$mntd$trial$ntaxa))
 
 
-#### TREEMEN ######
-# # setOldClass ('phylo')
-# # 
-# # setAs(from="TreeMan", to="phylo", def=function(from, to) {
-# #   treeman::writeTree(from, file='temp.tre')
-# #   tree <- ape::read.tree(file='temp.tre')
-# #   file.remove('temp.tre')
-# #   return(tree)
-# # })
-# # 
-# # setAs(from="phylo", to="TreeMan", def=function(from, to) {
-# #   ape::write.tree(from, file='temp.tre')
-# #   tree <- treeman::readTree(file='temp.tre')
-# #   file.remove('temp.tre')
-# #   return(tree)
-# # })
-# # 
-# 
-
-### Phylocom on data after removing singletons
-sed.phylo <- matched.phylo.sed$phy
-sed.comm <- matched.phylo.sed$comm
-water.phylo <- matched.phylo.water$phy
+### bNTI 
+water.phy <- matched.phylo.water$phy
 water.comm <- matched.phylo.water$comm
-sed.mntd <- comdistnt(comm = sed.comm, 
-          dis = cophenetic(sed.phylo), 
-          abundance.weighted=T)
+sed.phy <- matched.phylo.sed$phy
+sed.comm <- matched.phylo.sed$comm
+
+# Calc. obs. mntds
+mntds.water <- liste(comdistnt(water.comm, 
+                         cophenetic(water.phy), 
+                         abundance.weighted=T))
+mntds.sed <- liste(comdistnt(sed.comm, 
+                               cophenetic(sed.phy), 
+                               abundance.weighted=T))
+# Create null comms
+mntd.null.water <- NULL
+# for(i in 1:999){
+#   temp.mntd <- liste(
+#     comdistnt(water.comm, 
+#               cophenetic(tipShuffle(water.phy)), 
+#               abundance.weighted=T)
+#   )[,3]
+#   mntd.null.water[i] <- mean(temp.mntd)
+# }
+# saveRDS(mntd.null.water, file = "data/mntds-water-null-dist.rda")
+mntd.null.water <- readRDS(file = "data/mntds-water-null-dist.rda")
+hist(mntd.null.water)
+
+mntd.null.sed <- NULL
+for(i in 1:999){
+  temp.mntd <- liste(
+    comdistnt(sed.comm,
+              cophenetic(tipShuffle(sed.phy)),
+              abundance.weighted=T)
+  )[,3]
+  mntd.null.water[i] <- mean(temp.mntd)
+}
+saveRDS(mntd.null.sed, file = "data/mntds-sed-null-dist.rda")
+mntd.null.sed <- readRDS(file = "data/mntds-sed-null-dist.rda")
+hist(mntd.null.sed)
+
+# Calculate bNTIs
+mntds.water.rank <- NULL
+mntds.water.pval <- NULL
+bNTI.water <- NULL
+i <- 1
+
+for(each in mntds.water[,3]){
+  # mntds.rank[i] <- rank(c(each, mntd.null))[1]
+  # pval <- mntds.rank[i] / (length(mntd.null) + 1)
+  # if (pval > 0.5) mntds.pval[i] <- (1-pval)*2
+  # if (pval <= 0.5) mntds.pval[i] <- pval*2
+  # i <- i+1
+  bNTI.water[i] <- (each - mean(mntd.null.water)) / sd(mntd.null.water)
+  i <- i+1
+}
+length(bNTI.water) - (sum(bNTI.water < -2) + sum(bNTI.water > 2))

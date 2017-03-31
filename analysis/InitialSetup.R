@@ -5,7 +5,7 @@ opar <- par()
 
 
 # Check for and install required packages
-package.list <- c('vegan', 'png', 'rgdal', 'simba', 'grid', 'vegetarian', 'pander')
+package.list <- c('vegan', 'png', 'simba', 'grid', 'vegetarian', 'pander', 'SoDA', 'fossil')
 # 'sp', 'vegetarian', 
 # 'SoDA', 'geoR',
 
@@ -90,8 +90,9 @@ env.pca <- princomp(env.mat, scores = T)
 # Distance Matrix
 xy <- cbind(env$longitude, env$latitude)
 #geo.dists <- geoXY(env$latitude, env$longitude)
-xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
-dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+#xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
+#dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+dist.mat <- fossil::earth.dist(xy) * 1000
 
 # Make Relative Abundence Matrices
 OTUsREL <- decostand(OTUs, method = "total")
