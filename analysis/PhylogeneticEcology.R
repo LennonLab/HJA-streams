@@ -4,7 +4,6 @@ source("analysis/Ordination.R")
 require(picante)
 require(png)
 require(grid)
-require(treeman)
 
 #------------------------------------------------#
 # Read TREE
