@@ -45,21 +45,25 @@ hja.tree <- read.tree(file = "./data/hja_streams.rename.tree")
 img <- readPNG("./figures/HJA_PCoA_UniFrac.png")
 grid.raster(img)
 
-#----------------------------------------------------#
-OTUs.water <- OTUs[which(design$habitat == "water"),]
-OTUs.water <- OTUs.water[,which(colSums(OTUs.water) < 2)]
-OTUs.water <- decostand(OTUs.water, method = 'total')
-OTUs.sed <- OTUs[which(design$habitat == "sediment"),]
-OTUs.sed <- OTUs.sed[,which(colSums(OTUs.sed) < 2)]
+# #----------------------------------------------------#
+# OTUs.water <- OTUs[which(design$habitat == "water"),]
+# OTUs.water <- OTUs.water[,which(colSums(OTUs.water) < 2)]
+# OTUs.water <- decostand(OTUs.water, method = 'total')
+# OTUs.sed <- OTUs[which(design$habitat == "sediment"),]
+# OTUs.sed <- OTUs.sed[,which(colSums(OTUs.sed) < 2)]
 
 #----------------------------------------------------#
 OTUs.water <- OTUs[which(design$habitat == "water"),]
-OTUs.water <- OTUs.water[,which(colSums(OTUs.water) < 2)]
+OTUs.water <- OTUs.water[,-which(colSums(OTUs.water) < 5)]
 OTUs.water <- decostand(OTUs.water, method = 'total')
 OTUs.sed <- OTUs[which(design$habitat == "sediment"),]
-OTUs.sed <- OTUs.sed[,which(colSums(OTUs.sed) < 2)]
+OTUs.sed <- OTUs.sed[,-which(colSums(OTUs.sed) < 4)]
+OTUs.sed <- decostand(OTUs.sed, method = 'total')
 matched.phylo.water <- match.phylo.comm(hja.tree, OTUs.water)
 matched.phylo.sed <- match.phylo.comm(hja.tree, OTUs.sed)
+saveRDS(matched.phylo.water, file = "data/matched.phylo.water.rda")
+saveRDS(matched.phylo.sed, file = "data/matched.phylo.sed.rda")
+
 
 
 # hja.cor <- comm.phylo.cor(samp = matched.phylo$comm, phylo = matched.phylo$phy,
@@ -168,37 +172,42 @@ sed.phy <- matched.phylo.sed$phy
 sed.comm <- matched.phylo.sed$comm
 
 # Calc. obs. mntds
-mntds.water <- liste(comdistnt(water.comm, 
-                         cophenetic(water.phy), 
-                         abundance.weighted=T))
-mntds.sed <- liste(comdistnt(sed.comm, 
-                               cophenetic(sed.phy), 
-                               abundance.weighted=T))
+mntds.water <- (comdistnt(water.comm,
+                        cophenetic(water.phy),
+                        abundance.weighted=T))
+mntds.sed <- (comdistnt(sed.comm,
+                              cophenetic(sed.phy),
+                              abundance.weighted=T))
+#saveRDS(mntds.water, file = "data/mntds-water.rda")
+#saveRDS(mntds.sed, file = "data/mntds-sed.rda")
+mntds.water <- readRDS(file = "data/mntds-water.rda")
+mntds.sed <- readRDS(file = "data/mntds-sed.rda")
+
 # Create null comms
 mntd.null.water <- NULL
-# for(i in 1:999){
-#   temp.mntd <- liste(
-#     comdistnt(water.comm, 
-#               cophenetic(tipShuffle(water.phy)), 
-#               abundance.weighted=T)
-#   )[,3]
-#   mntd.null.water[i] <- mean(temp.mntd)
-# }
-# saveRDS(mntd.null.water, file = "data/mntds-water-null-dist.rda")
-mntd.null.water <- readRDS(file = "data/mntds-water-null-dist.rda")
+for(i in 1:999){
+  temp.mntd <- liste(
+    comdistnt(water.comm,
+              cophenetic(tipShuffle(water.phy)),
+              abundance.weighted=T)
+  )[,3]
+  mntd.null.water[i] <- mean(temp.mntd)
+}
+saveRDS(mntd.null.water, file = "data/mntds-water-null-dist.rda")
+#mntd.null.water <- readRDS(file = "data/mntds-water-null-dist.rda")
 hist(mntd.null.water)
 
 # mntd.null.sed <- NULL
-# for(i in 1:999){
-#   temp.mntd <- liste(
-#     comdistnt(sed.comm,
-#               cophenetic(tipShuffle(sed.phy)),
-#               abundance.weighted=T)
-#   )[,3]
-#   mntd.null.sed[i] <- mean(temp.mntd)
-# }
-# saveRDS(mntd.null.sed, file = "data/mntds-sed-null-dist.rda")
-mntd.null.sed <- readRDS(file = "data/mntds-sed-null-dist.rda")
+for(i in 1:999){
+  temp.mntd <- liste(
+    comdistnt(sed.comm,
+              cophenetic(tipShuffle(sed.phy)),
+              abundance.weighted=T)
+  )[,3]
+  mntd.null.sed[i] <- mean(temp.mntd)
+}
+saveRDS(mntd.null.sed, file = "data/mntds-sed-null-dist.rda")
+#mntd.null.sed <- readRDS(file = "data/mntds-sed-null-dist.rda")
 hist(mntd.null.sed)
 
 # Calculate bNTIs
@@ -210,7 +219,7 @@ mntds.sed.pval <- NULL
 bNTI.sed <- NULL
 i <- 1
 
-for(each in mntds.water[,3]){
+for(each in liste(mntds.water)[,3]){
   # mntds.rank[i] <- rank(c(each, mntd.null))[1]
   # pval <- mntds.rank[i] / (length(mntd.null) + 1)
   # if (pval > 0.5) mntds.pval[i] <- (1-pval)*2
@@ -221,7 +230,7 @@ for(each in mntds.water[,3]){
 }
 
 i <- 1
-for(each in mntds.sed[,3]){
+for(each in liste(mntds.sed)[,3]){
   # mntds.rank[i] <- rank(c(each, mntd.null))[1]
   # pval <- mntds.rank[i] / (length(mntd.null) + 1)
   # if (pval > 0.5) mntds.pval[i] <- (1-pval)*2
@@ -232,9 +241,22 @@ for(each in mntds.sed[,3]){
 }
 length(bNTI.sed) - (sum(bNTI.sed < -2) + sum(bNTI.sed > 2))
 
+
+water.den.dists <- liste(as.dist(
+  den.dists[which(design$habitat == "water"), 
+            which(design$habitat == "water")]))[,3]
+sed.den.dists <- liste(as.dist(
+  den.dists[which(design$habitat == "sediment"), 
+            which(design$habitat == "sediment")]))[,3]
+summary(lm(bNTI.sed ~ sed.env.dist.ls * sed.den.dists))
+summary(lm(bNTI.water ~ water.env.dist.ls * water.den.dists))
+plot(water.den.dists, bNTI.water)
+plot(sed.env.dist.ls, bNTI.sed)
+plot(water.env.dist.ls, bNTI.water)
+
 sed.mntd <- ses.mntd(samp = sed.comm, dis = cophenetic(sed.phy), 
                      abundance.weighted = T, iterations = 999,
                       null.model = "taxa.labels")
 water.mntd <- ses.mntd(samp = water.comm, dis = cophenetic(water.phy), 
                      abundance.weighted = T, iterations = 999,
-                     null.model = "taxa.labels")d
+                     null.model = "taxa.labels")
