@@ -5,9 +5,9 @@ Terms added sequentially (first to last)
 
                                 Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)    
 design$habitat                   1    1.8258 1.82577 11.8780 0.16714  0.001 ***
-design$watershed                 1    0.5265 0.52649  3.4252 0.04820  0.001 ***
-design$order                     1    0.4315 0.43147  2.8070 0.03950  0.001 ***
-design$habitat:design$watershed  1    0.3007 0.30072  1.9564 0.02753  0.015 *  
+design$watershed                 1    0.5265 0.52649  3.4252 0.04820  0.002 ** 
+design$order                     1    0.4315 0.43147  2.8070 0.03950  0.003 ** 
+design$habitat:design$watershed  1    0.3007 0.30072  1.9564 0.02753  0.016 *  
 Residuals                       51    7.8392 0.15371         0.71764           
 Total                           55   10.9237                 1.00000           
 ---
