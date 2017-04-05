@@ -58,3 +58,21 @@ for(row.i in 1:nrow(site.compares)){
 }
 RC.bray.dist <- as.dist(RC.bray)
 
+rc.water <- as.dist(RC.bray[which(design$habitat == "water"), which(design$habitat == "water")])
+rc.sed <- as.dist(RC.bray[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
+hist(rc.water)
+hist(rc.sed)
+
+rc.dat <- rbind(
+  cbind(RC.bray = liste(rc.water)[3], habitat = rep("water")),
+  cbind(RC.bray = liste(rc.sed)[3], habitat = rep("sediment")))
+names(rc.dat)[1] <- "rc.bray"
+require(cowplot)
+
+rc.bp <- ggplot(data = rc.dat, aes(x = habitat, y = rc.bray)) + 
+  geom_boxplot() + 
+  geom_hline(aes(yintercept = 0.95), lty = "dashed") +
+  geom_hline(aes(yintercept = -0.95), lty = "dashed") +
+  geom_jitter(aes(colour = abs(rc.bray) > 0.95)) + 
+  scale_color_manual(values = c('grey', 'red'))
+ggsave(filename = "figures/RC_bray_boxplot.pdf", plot = rc.bp, width = 8, height = 8, units = "in")
