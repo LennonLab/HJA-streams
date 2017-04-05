@@ -1,4 +1,5 @@
 source("analysis/InitialSetup.R")
+source("analysis/DistanceCalcs.R")
 
 regional.abunds <- t(as.matrix(colSums(OTUs)))
 regional.relabunds <- decostand(regional.abunds, method = "total")
@@ -41,3 +42,19 @@ for(i in 1:999){
   RCbc.nulls[,,i] <- null.bc
 }
 saveRDS(RCbc.nulls, file = "data/null_models/RCbc.null.rda")
+
+obs.bc <- as.matrix(vegdist(OTUsREL, method = "bray"))
+site.compares <- expand.grid(site1 = 1:56, site2 = 1:56)
+RC.bray <- matrix(NA, nrow = 56, ncol = 56)
+for(row.i in 1:nrow(site.compares)){
+  site1 <- site.compares[row.i,1]
+  site2 <- site.compares[row.i,2]
+  pairwise.null <- RCbc.nulls[site1,site2,]
+  pairwise.bray <- obs.bc[site1,site2]
+  num.greater <- sum(pairwise.null > pairwise.bray)
+  num.ties <- sum(pairwise.null == pairwise.bray)
+  val <- (((1 * num.greater) + (0.5 * num.ties))/1000 - 0.5) * 2
+  RC.bray[site1, site2] <- val
+}
+RC.bray.dist <- as.dist(RC.bray)
+
