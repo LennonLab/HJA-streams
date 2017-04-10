@@ -166,44 +166,49 @@ sed.phy <- matched.phylo.sed$phy
 sed.comm <- matched.phylo.sed$comm
 
 # Calc. obs. mntds
-# mntds.water <- (comdistnt(water.comm,
-#                         cophenetic(water.phy),
-#                         abundance.weighted=T))
-# mntds.sed <- (comdistnt(sed.comm,
-#                         cophenetic(sed.phy),
-#                         abundance.weighted=T))
-# saveRDS(mntds.water, file = "data/mntds-water.rda")
-# saveRDS(mntds.sed, file = "data/mntds-sed.rda")
-mntds.water <- readRDS(file = "data/mntds-water.rda")
-mntds.sed <- readRDS(file = "data/mntds-sed.rda")
+mntds.water <- (comdistnt(water.comm,
+                        cophenetic(water.phy),
+                        abundance.weighted=T))
+mntds.sed <- (comdistnt(sed.comm,
+                        cophenetic(sed.phy),
+                        abundance.weighted=T))
+saveRDS(mntds.water, file = "data/mntds-water.rda")
+saveRDS(mntds.sed, file = "data/mntds-sed.rda")
+# mntds.water <- readRDS(file = "data/mntds-water.rda")
+# mntds.sed <- readRDS(file = "data/mntds-sed.rda")
 
 # Create null comms
-mntd.null.water <- array(NA, c(32, 32, 999))
+mntd.null.water <- NULL
+write(paste("i",",","bMNTDvalue.water", sep = ""), file = "./analysis/logs/11mntd.water.null.log")
 for(i in 1:999){
   print(paste("creating null community ", i, " of 999"))
-  temp.mntd <- comdistnt(water.comm,
-                         cophenetic(tipShuffle(water.phy)),
-                         abundance.weighted=T)
-  mntd.null.water[,,i] <- as.matrix(temp.mntd)
-  saveRDS(mntd.null.water, file = "data/mntds-water-null-dist.rda")
+  temp.mntd <- liste(
+    comdistnt(water.comm,
+              cophenetic(tipShuffle(water.phy)),
+              abundance.weighted=T)
+  )[,3]
+  mntd.null.water[i] <- mean(temp.mntd)
+  write(paste(i,",",mntd.null.water[i], sep = ""), file = "./analysis/logs/11mntd.water.null.log", append = T)
 }
+saveRDS(mntd.null.water, file = "data/11mntds-water-null-dist.rda")
+#mntd.null.water <- readRDS(file = "data/mntds-water-null-dist.rda")
+#hist(mntd.null.water)
 
-# mntd.null.water <- readRDS(file = "data/mntds-water-null-dist.rda")
-# hist(mntd.null.water)
-
-mntd.null.sed <- array(NA, c(24, 24, 999))
+mntd.null.sed <- NULL
+write(paste("i",",","bMNTDvalue.sed", sep = ""), file = "./analysis/logs/11mntd.sed.null.log")
 for(i in 1:999){
   print(paste("creating null community ", i, " of 999"))
-  temp.mntd <- comdistnt(sed.comm,
-                         cophenetic(tipShuffle(sed.phy)),
-                         abundance.weighted=T)
-  mntd.null.sed[,,i] <- as.matrix(temp.mntd)
-  saveRDS(mntd.null.sed, file = "data/mntds-sed-null-dist.rda")
+  temp.mntd <- liste(
+    comdistnt(sed.comm,
+              cophenetic(tipShuffle(sed.phy)),
+              abundance.weighted=T)
+  )[,3]
+  mntd.null.sed[i] <- mean(temp.mntd)
+  write(paste(i,",",mntd.null.sed[i], sep = ""), file = "./analysis/logs/11mntd.sed.null.log", append = T)
 }
-# mntd.null.sed <- readRDS(file = "data/mntds-sed-null-dist.rda")
-
-# hist(mntd.null.sed)
-# hist(mntds.sed)
+saveRDS(mntd.null.sed, file = "data/11mntds-sed-null-dist.rda")
+#mntd.null.sed <- readRDS(file = "data/mntds-sed-null-dist.rda")
+#hist(mntd.null.sed)
 
 # Calculate bNTIs
 # mntds.water.rank <- NULL
