@@ -1,5 +1,5 @@
-source("analysis/InitialSetup.R")
-source("analysis/DistanceCalcs.R")
+# source("analysis/InitialSetup.R")
+# source("analysis/DistanceCalcs.R")
 
 regional.abunds <- t(as.matrix(colSums(OTUs)))
 regional.relabunds <- decostand(regional.abunds, method = "total")
@@ -42,10 +42,11 @@ for(i in 1:999){
   RCbc.nulls[,,i] <- null.bc
 }
 saveRDS(RCbc.nulls, file = "data/null_models/RCbc.null.rda")
-
+RCbc.nulls <- readRDS(file = "data/null_models/RCbc.null.rda")
 obs.bc <- as.matrix(vegdist(OTUsREL, method = "bray"))
 site.compares <- expand.grid(site1 = 1:56, site2 = 1:56)
 RC.bray <- matrix(NA, nrow = 56, ncol = 56)
+
 for(row.i in 1:nrow(site.compares)){
   site1 <- site.compares[row.i,1]
   site2 <- site.compares[row.i,2]
@@ -56,8 +57,13 @@ for(row.i in 1:nrow(site.compares)){
   val <- (((1 * num.greater) + (0.5 * num.ties))/1000 - 0.5) * 2
   RC.bray[site1, site2] <- val
 }
+rownames(RC.bray) <- rownames(design)
+colnames(RC.bray) <- rownames(design)
 RC.bray.dist <- as.dist(RC.bray)
 
+
+write.csv(RC.bray, "data/RCbray.csv")
+saveRDS(RC.bray.dist, "data/RCbraydist.csv")
 rc.water <- as.dist(RC.bray[which(design$habitat == "water"), which(design$habitat == "water")])
 rc.sed <- as.dist(RC.bray[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
 hist(rc.water)
