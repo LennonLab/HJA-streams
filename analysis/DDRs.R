@@ -1,6 +1,8 @@
-# source("./analysis/InitialSetup.R")
-# source("./analysis/DistanceCalcs.R")
-# source("./analysis/Ordination.R")
+source("./analysis/InitialSetup.R")
+source("./analysis/DistanceCalcs.R")
+source("./analysis/Ordination.R")
+
+RC.bray.dist <- readRDS(file = "./data/RCbraydist.csv")
 
 # Water Distance Decay
 water.xy <- xy[which(design$habitat == "water"),]
@@ -11,11 +13,12 @@ water.geo.dist.ls <- na.omit(liste(as.dist(
   as.matrix(dist.mat)[which(design$habitat == "water"), 
            which(design$habitat == "water")]),
   entry = "geo.dist")[,3])
-water.struc.dist <- 1 - vegdist(OTUsREL.log[which(design$habitat == "water"), 
+water.struc.dist <- 1 - vegdist(OTUsREL[which(design$habitat == "water"), 
                                             which(design$habitat == "water")],
                                 method = dist.met)
 water.env.dist <- vegdist(env.2[which(design$habitat == "water"),], 
                           method = "gower", upper = F, diag = F)
+rc.water <- as.dist(RC.bray[which(design$habitat == "water"), which(design$habitat == "water")])
 water.rc.dist.ls <- liste(rc.water, entry = "rc.bray")[,3]
 water.env.dist.ls <- liste(water.env.dist, entry = "env")[,3]
 water.struc.dist.ls <- liste(water.struc.dist, entry = "struc")[,3]
@@ -25,8 +28,9 @@ water.phylo.dist.ls <- 1-liste(as.dist(hja.unifrac[which(design$habitat == "wate
                              entry = "unifrac")[,3]
 water.dists <- data.frame(water.den.dist.ls, water.geo.dist.ls, 
                           water.struc.dist.ls, water.env.dist.ls,
-                          water.phylo.dist.ls, water.rc.dist.ls)
-names(water.dists) <- c("den", "geo", "comm.struc", "env", "unifrac", "rc.bray")
+                          water.phylo.dist.ls, water.rc.dist.ls,
+                          water.bnti.dist.ls[,3])
+names(water.dists) <- c("den", "geo", "comm.struc", "env", "unifrac", "rc.bray", "bNTI")
 
 water.env.lm <- (lm((water.dists$comm.struc) ~ water.dists$env))
 water.geo.lm <- (lm((water.dists$comm.struc) ~ water.dists$geo))
@@ -45,11 +49,12 @@ sed.geo.dist.ls <- na.omit(liste(as.dist(
   as.matrix(dist.mat)[which(design$habitat == "sediment"),
                  which(design$habitat == "sediment")]), 
         entry = "geo.dist")[,3])
-sed.struc.dist <- 1- vegdist(OTUsREL.log[which(design$habitat == "sediment"),
+sed.struc.dist <- 1- vegdist(OTUsREL[which(design$habitat == "sediment"),
                                           which(design$habitat == "sediment")],
                               method = dist.met)
 sed.env.dist <- vegdist(env.2[which(design$habitat == "sediment"),], 
                         method = "gower", upper = F, diag = F)
+rc.sed <- as.dist(RC.bray[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
 sed.rc.dist.ls <- liste(rc.sed, entry = "rc.bray")[,3]
 sed.env.dist.ls <- liste(sed.env.dist, entry = "env")[,3]
 sed.struc.dist.ls <- liste(sed.struc.dist, entry = "struc")[,3]
@@ -60,8 +65,9 @@ sed.phylo.dist.ls <- 1-liste(
   entry = "unifrac")[,3]
 sed.dists <- data.frame(sed.den.dist.ls, sed.geo.dist.ls, 
                           sed.struc.dist.ls, sed.env.dist.ls,
-                          sed.phylo.dist.ls, sed.rc.dist.ls)
-names(sed.dists) <- c("den", "geo", "comm.struc", "env", "unifrac", "rc.bray")
+                          sed.phylo.dist.ls, sed.rc.dist.ls,
+                        sed.bnti.dist.ls[,3])
+names(sed.dists) <- c("den", "geo", "comm.struc", "env", "unifrac", "rc.bray", "bNTI")
 plot(sed.dists$comm.struc~sed.dists$env)
 sed.env.lm <- (lm((sed.dists$comm.struc) ~ sed.dists$env))
 sed.geo.lm <- (lm((sed.dists$comm.struc) ~ sed.dists$geo))
@@ -84,7 +90,7 @@ headwater.geo.dists <- na.omit(
   liste(as.dist(
     as.matrix(dist.mat)[which(design$order < 2), which(design$order < 2)]),
         entry = "geo.dist")[,3])
-headwater.db <- 1 - vegdist(OTUsREL.log[which(design$order < 2),], 
+headwater.db <- 1 - vegdist(OTUsREL[which(design$order < 2),], 
                         method = dist.met)
 headwater.phylo.dist.ls <- 1-liste(
   as.dist(hja.unifrac[which(design$order < 2),
@@ -120,7 +126,7 @@ downstream.den.dist <- as.dist(
 downstream.den.dists <- na.omit(
   liste(downstream.den.dist, entry = "den.dist")[,3])
 
-downstream.db <- 1 - vegdist(OTUsREL.log[which(design$order >= 2),],
+downstream.db <- 1 - vegdist(OTUsREL[which(design$order >= 2),],
                          method = dist.met)
 downstream.phylo.dist.ls <- 1-liste(
   as.dist(hja.unifrac[which(design$order >= 2),
@@ -174,7 +180,7 @@ downstream.sed.den.dists <- na.omit(liste(
                     which(design$order >1 & design$habitat == "sediment")]),
   entry = "den.dist"))[,3]
 downstream.sed.db <- 1 - vegdist(
-  OTUsREL.log[which(design$order >1 & design$habitat == "sediment"),], 
+  OTUsREL[which(design$order >1 & design$habitat == "sediment"),], 
   method = dist.met)
 downstream.sed.phylo.dist.ls <- 1-liste(
   as.dist(hja.unifrac[which(design$order >= 2 & design$habitat == "sediment"),
@@ -187,7 +193,7 @@ downstream.sed.dists <- data.frame(
   downstream.sed.env.dists, downstream.sed.geo.dists,
   downstream.sed.phylo.dist.ls, downstream.sed.den.dists,
   downstream.sed.rc)
-colnames(downstream.sed.dists) <- c("comm.struc", "env", "geo", "unifrac", "den", "sed.rc")
+colnames(downstream.sed.dists) <- c("comm.struc", "env", "geo", "unifrac", "den", "rc.bray")
 downstream.sed.env.lm <- (lm(
   (downstream.sed.dists$comm.struc) ~ downstream.sed.dists$env))
 downstream.sed.geo.lm <- (lm(
@@ -214,7 +220,7 @@ downstream.water.geo.dists <- na.omit(
                  which(design$order >1 & design$habitat == "water")]),
         entry = "geo.dist"))[,3]
 downstream.water.db <- 1 - vegdist(
-  OTUsREL.log[which(design$order >1 & design$habitat == "water"),],
+  OTUsREL[which(design$order >1 & design$habitat == "water"),],
   method = dist.met)
 downstream.water.phylo.dist.ls <- 1-liste(
   as.dist(hja.unifrac[which(design$order >= 2 & design$habitat == "water"),
@@ -362,3 +368,39 @@ plot(residuals(downstream.water.den.lm) ~ downstream.water.dists$env)
 plot(residuals(downstream.sed.den.lm) ~ downstream.sed.dists$env)
 plot(residuals(downstream.water.env.lm) ~ downstream.water.dists$den)
 plot(residuals(downstream.sed.env.lm) ~ downstream.sed.dists$den)
+
+
+residuals(water.den.lm)
+residuals(sed.den.lm)
+residuals(water.env.lm)
+residuals(sed.env.lm)
+
+water.dists$habitat <- "water"
+sed.dists$habitat <- "sediment"
+water.dists$comm.struc.detrended.den <- residuals(water.den.lm)
+water.dists$comm.struc.detrended.env <- residuals(water.env.lm)
+sed.dists$comm.struc.detrended.den <- residuals(sed.den.lm)
+sed.dists$comm.struc.detrended.env <- residuals(sed.env.lm)
+ddrs <- as.data.frame(rbind(water.dists, sed.dists))
+names(ddrs)
+
+ggplot(data = ddrs, aes(x = env, y = comm.struc.detrended.den, color = habitat)) +
+  geom_point() +
+  stat_smooth(method = "lm")
+
+downstream.dists$orders <- "downstream"
+headwater.dists$orders <- "headwaters"
+ddrs.updown <- as.data.frame(rbind(downstream.dists, headwater.dists))
+names(ddrs.updown)
+ggplot(data = ddrs.updown, aes(x = den, y = comm.struc, color = orders)) +
+  geom_point()+
+  stat_smooth(method = "lm")
+
+downstream.water.dists$habitat <- "water"
+downstream.sed.dists$habitat <- "sediment"
+ds.ddrs <- as.data.frame(rbind(downstream.water.dists, downstream.sed.dists))
+ggplot(data = ds.ddrs, aes(x = env, y = comm.struc, color = habitat)) +
+  geom_point()+
+  stat_smooth(method = "lm")
+
+

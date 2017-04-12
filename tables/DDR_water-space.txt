@@ -4,16 +4,16 @@ lm(formula = (water.dists$comm.struc) ~ water.dists$geo)
 
 Residuals:
      Min       1Q   Median       3Q      Max 
--0.28128 -0.03661  0.02628  0.05321  0.09883 
+-0.41344 -0.08813  0.01405  0.09334  0.24305 
 
 Coefficients:
                   Estimate Std. Error t value Pr(>|t|)    
-(Intercept)      8.692e-01  5.670e-03 153.305   <2e-16 ***
-water.dists$geo -3.672e-07  9.608e-07  -0.382    0.702    
+(Intercept)      6.111e-01  9.622e-03  63.507  < 2e-16 ***
+water.dists$geo -5.510e-06  1.631e-06  -3.379 0.000785 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 0.07324 on 494 degrees of freedom
-Multiple R-squared:  0.0002956,	Adjusted R-squared:  -0.001728 
-F-statistic: 0.1461 on 1 and 494 DF,  p-value: 0.7025
+Residual standard error: 0.1243 on 494 degrees of freedom
+Multiple R-squared:  0.02259,	Adjusted R-squared:  0.02061 
+F-statistic: 11.42 on 1 and 494 DF,  p-value: 0.0007852
 

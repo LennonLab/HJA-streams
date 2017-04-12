@@ -3,17 +3,17 @@ Call:
 lm(formula = (downstream.dists$comm.struc) ~ downstream.dists$den)
 
 Residuals:
-      Min        1Q    Median        3Q       Max 
--0.259048 -0.048319  0.002141  0.052712  0.229030 
+     Min       1Q   Median       3Q      Max 
+-0.21139 -0.06778 -0.01333  0.06640  0.29341 
 
 Coefficients:
                        Estimate Std. Error t value Pr(>|t|)    
-(Intercept)           3.814e-01  4.414e-03  86.407  < 2e-16 ***
-downstream.dists$den -3.225e-06  5.447e-07  -5.922 4.46e-09 ***
+(Intercept)           4.253e-01  5.092e-03  83.529  < 2e-16 ***
+downstream.dists$den -4.570e-06  6.284e-07  -7.273 7.36e-13 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-Residual standard error: 0.08041 on 944 degrees of freedom
-Multiple R-squared:  0.03581,	Adjusted R-squared:  0.03479 
-F-statistic: 35.07 on 1 and 944 DF,  p-value: 4.461e-09
+Residual standard error: 0.09276 on 944 degrees of freedom
+Multiple R-squared:  0.05307,	Adjusted R-squared:  0.05206 
+F-statistic:  52.9 on 1 and 944 DF,  p-value: 7.364e-13
 

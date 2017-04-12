@@ -134,5 +134,6 @@ community.assembly.plot <- ggplot(data = community.assembly, aes(x = bNTI, y = R
   geom_point(show.legend = T) + 
   labs(x = "bNTI", y = "Raup-Crick_bray-curtis", 
        title = "Community Assembly")
+community.assembly.plot
 ggsave("figures/comm_assembly.pdf", width = 8, height = 8, units = "in")
 
