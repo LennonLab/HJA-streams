@@ -5,16 +5,16 @@ opar <- par()
 
 
 # Check for and install required packages
-require('vegetarian')
-require('vegan')
-require('png')
-require('sp')
-require('rgdal')
-require('SoDA')
-require('grid')
-require('simba')
-require('geoR')
-require("raster")
+package.list <- c('vegan', 'png', 'simba', 'grid', 'vegetarian', 'pander', 'SoDA', 'fossil')
+# 'sp', 'vegetarian', 
+# 'SoDA', 'geoR',
+
+for (package in package.list) {
+  if (!require(package, character.only=T, quietly=T)) {
+    install.packages(package)
+    library(package, character.only=T)
+  }
+}
 
 
 # Load packages and other tools
@@ -43,7 +43,7 @@ env    <- "./data/hja_env.csv"
 design.total <- read.delim(design, header=T, row.names=1)
 
 # Import Shared Files
-OTUs <- read.otu(shared = shared, cutoff = "0.03")         # 97% Similarity
+OTUs <- read.otu(shared = shared, cutoff = "0.03") # 97% Similarity
 
 # Import Taxonomy
 OTU.tax <- read.tax(taxonomy = taxon, format = "rdp")
@@ -89,12 +89,16 @@ env.pca <- princomp(env.mat, scores = T)
 
 # Distance Matrix
 xy <- cbind(env$longitude, env$latitude)
-geo.dists <- geoXY(env$latitude, env$longitude)
-xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
-dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+#geo.dists <- geoXY(env$latitude, env$longitude)
+#xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
+#dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+dist.mat <- fossil::earth.dist(xy) * 1000
 
 # Make Relative Abundence Matrices
 OTUsREL <- decostand(OTUs, method = "total")
 
 # Transform Relative Abundances
 OTUsREL.log <- decostand(OTUs, method = "log")
+
+# Chosen distance metric
+dist.met <- "bray"

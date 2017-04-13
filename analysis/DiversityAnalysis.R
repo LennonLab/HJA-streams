@@ -1,7 +1,7 @@
-source("./analysis/InitialSetup.R")
-
-require("vegan")
-require("vegetarian")
+# source("./analysis/InitialSetup.R")
+# 
+# require("vegan")
+# require("vegetarian")
 
 #### Diversity Analysis
 
@@ -31,6 +31,17 @@ S.rarefy <- rarefy(x = OTUs, sample = (min.N), se = TRUE)
 rare.d <- t(S.rarefy)
 colnames(rare.d) <- c("S.rare", "se.rare")
 alpha.div <- cbind(design, S.obs, simpsE, shan, N1, simpsD, rare.d)
+
+
+num.coms <- 10
+rarecoms <- vector("list", num.coms)
+for(each in 1:num.coms){
+  rarecoms[[each]] <- rrarefy(OTUs, sample = min.N)
+  #rarecoms[[each]] <- OTUs[1:10,1:10]
+}
+
+dists <- lapply(X=rarecoms, FUN = vegdist, method = "bray")
+
 
 # Seperate data based on water and sediment samples
 alpha.water <- alpha.div[alpha.div$habitat == "water",]
