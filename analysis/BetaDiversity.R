@@ -1,23 +1,84 @@
+source("analysis/InitialSetup.R")
+source("analysis/DistanceCalcs.R")
+source("analysis/DDRs")
+
 require(betapart)
 require(vegan)
 OTUs.PA <- decostand(OTUs, method = "pa")
 hja.beta.pair <- beta.pair(OTUs.PA)
 ordiplot(cmdscale(hja.beta.pair$beta.sne))
 
-
-hja.beta.samp.water <- beta.sample(OTUs.PA[which(design$habitat=="water"),],sites=2,samples = 999)
-hja.beta.samp.water$mean.values
-
-hja.beta.samp.sed <- beta.sample(OTUs.PA[which(design$habitat!="water"),],sites=2,samples = 999)
-hja.beta.samp.sed$mean.values
+hja.beta.pair$beta.sim
+hja.beta.pair$beta.sne
+hja.beta.pair$beta.sor
 
 
+# Distance Decay with Env
+plot(hja.beta.pair$beta.sor ~ hja.dists$env)
+plot(hja.beta.pair$beta.sim ~ hja.dists$env) # turnover
+plot(hja.beta.pair$beta.sne ~ hja.dists$env) # nestedness
+
+water.betapart <- beta.pair(decostand(water, method = "pa"))
+sed.betapart <- beta.pair(decostand(sediment, method = "pa"))
+
+plot(water.betapart$beta.sor ~ water.dists$env)
+plot(water.betapart$beta.sim ~ water.dists$env) # turnover
+plot(water.betapart$beta.sne ~ water.dists$env) # nestedness
+
+plot(sed.betapart$beta.sor ~ sed.dists$env)
+plot(sed.betapart$beta.sim ~ sed.dists$env) # turnover
+plot(sed.betapart$beta.sne ~ sed.dists$env) # nestedness
 
 
-#### EMS Framework
-require(metacom)
-EMS.water <- Coherence(comm = OTUs.PA[which(design$habitat=="water"),
-                                          which(colnames(OTUsREL) %in% top.taxa)], 
-                       method = "tswap", sims = 100, verbose = T)
-EMS.sed <- Metacommunity(comm = OTUs.PA[which(design$habitat=="sediment"),
-                                        which(colnames(OTUsREL) %in% top.taxa)], method = "tswap", verbose = TRUE)
+downstream.betapart <- beta.pair(decostand(OTUs.PA[which(design$order>1),], method = "pa"))
+headwater.betapart <- beta.pair(decostand(OTUs.PA[which(design$order==1),], method = "pa"))
+
+plot(headwater.betapart$beta.sor ~ headwater.dists$env)
+plot(headwater.betapart$beta.sim ~ headwater.dists$env) # turnover
+plot(headwater.betapart$beta.sne ~ headwater.dists$env) # nestedness
+
+plot(downstream.betapart$beta.sor ~ downstream.dists$env)
+plot(downstream.betapart$beta.sim ~ downstream.dists$env) # turnover
+plot(downstream.betapart$beta.sne ~ downstream.dists$env) # nestedness
+
+
+downstream.sed.betapart <- beta.pair(decostand(OTUs.PA[which(design$order>1 & design$habitat == "sediment"),], method = "pa"))
+plot(downstream.sed.betapart$beta.sor ~ downstream.sed.dists$env)
+plot(downstream.sed.betapart$beta.sim ~ downstream.sed.dists$env) # turnover
+plot(downstream.sed.betapart$beta.sne ~ downstream.sed.dists$env) # nestedness
+
+downstream.water.betapart <- beta.pair(decostand(OTUs.PA[which(design$order>1 & design$habitat == "water"),], method = "pa"))
+plot(downstream.water.betapart$beta.sor ~ downstream.water.dists$env)
+plot(downstream.water.betapart$beta.sim ~ downstream.water.dists$env) # turnover
+plot(downstream.water.betapart$beta.sne ~ downstream.water.dists$env) # nestedness
+
+
+# Distance Decay with Space
+plot(hja.beta.pair$beta.sor ~ hja.dists$den)
+plot(hja.beta.pair$beta.sim ~ hja.dists$den) # turnover
+plot(hja.beta.pair$beta.sne ~ hja.dists$den) # nestedness
+
+plot(water.betapart$beta.sor ~ water.dists$den)
+plot(water.betapart$beta.sim ~ water.dists$den) # turnover
+plot(water.betapart$beta.sne ~ water.dists$den) # nestedness
+
+plot(sed.betapart$beta.sor ~ sed.dists$den)
+plot(sed.betapart$beta.sim ~ sed.dists$den) # turnover
+plot(sed.betapart$beta.sne ~ sed.dists$den) # nestedness
+
+plot(headwater.betapart$beta.sor ~ headwater.dists$den)
+plot(headwater.betapart$beta.sim ~ headwater.dists$den) # turnover
+plot(headwater.betapart$beta.sne ~ headwater.dists$den) # nestedness
+
+plot(downstream.betapart$beta.sor ~ downstream.dists$den)
+plot(downstream.betapart$beta.sim ~ downstream.dists$den) # turnover
+plot(downstream.betapart$beta.sne ~ downstream.dists$den) # nestedness
+
+plot(downstream.sed.betapart$beta.sor ~ downstream.sed.dists$den)
+plot(downstream.sed.betapart$beta.sim ~ downstream.sed.dists$den) # turnover
+plot(downstream.sed.betapart$beta.sne ~ downstream.sed.dists$den) # nestedness
+
+plot(downstream.water.betapart$beta.sor ~ downstream.water.dists$den)
+plot(downstream.water.betapart$beta.sim ~ downstream.water.dists$den) # turnover
+plot(downstream.water.betapart$beta.sne ~ downstream.water.dists$den) # nestedness
+
