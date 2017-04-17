@@ -5,7 +5,9 @@ opar <- par()
 
 
 # Check for and install required packages
-package.list <- c('vegan', 'png', 'simba', 'grid', 'vegetarian', 'pander', 'SoDA', 'fossil')
+package.list <- c('vegan', 'png', 'simba', 'grid', 
+                  'vegetarian', 'pander', 'SoDA', 'fossil',
+                  'ggplot2')
 # 'sp', 'vegetarian', 
 # 'SoDA', 'geoR',
 
