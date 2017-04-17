@@ -1,4 +1,6 @@
-library(colorspace)
+source("analysis/InitialSetup.R")
+source("analysis/RaupCrickBC.R")
+require("ggplot2")
 # bNTI analysis
 
 # read sediment null dists 
@@ -63,7 +65,10 @@ sum(bNTI.water.dist > 2) / length(bNTI.water.dist) # variable selection
 sum(bNTI.water.dist < -2) / length(bNTI.water.dist) # homogeneous selection
 
 
-
+rc.water <- as.dist(RC.bray[which(design$habitat == "water"), which(design$habitat == "water")])
+water.rc.dist.ls <- liste(rc.water, entry = "rc.bray")[,3]
+rc.sed <- as.dist(RC.bray[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
+sed.rc.dist.ls <- liste(rc.sed, entry = "rc.bray")[,3]
 
 water.bnti.dist.ls <- liste(bNTI.water.dist)
 sed.bnti.dist.ls <- liste(bNTI.sed.dist)
@@ -74,9 +79,6 @@ water.assembly <- as.data.frame(cbind(water.bnti.dist.ls, water.rc.dist.ls))
 names(water.assembly)[c(3,4)] <- c("bNTI", "RC.bray")
 sed.assembly <- as.data.frame(cbind(sed.bnti.dist.ls, sed.rc.dist.ls))
 names(sed.assembly)[c(3,4)] <- c("bNTI", "RC.bray")
-
-assembly.colors <- rainbow_hcl(4)
-
 
 
 sed.mechanism <- vector(length = nrow(sed.assembly))
