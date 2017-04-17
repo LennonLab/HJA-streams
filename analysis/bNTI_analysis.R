@@ -1,4 +1,8 @@
-library(colorspace)
+source("analysis/InitialSetup.R")
+source("analysis/RaupCrickBC.R")
+source("analysis/DDRs.R")
+require("cowplot")
+
 # bNTI analysis
 
 # read sediment null dists 
@@ -75,8 +79,6 @@ names(water.assembly)[c(3,4)] <- c("bNTI", "RC.bray")
 sed.assembly <- as.data.frame(cbind(sed.bnti.dist.ls, sed.rc.dist.ls))
 names(sed.assembly)[c(3,4)] <- c("bNTI", "RC.bray")
 
-assembly.colors <- rainbow_hcl(4)
-
 
 
 sed.mechanism <- vector(length = nrow(sed.assembly))
@@ -132,8 +134,11 @@ community.assembly <- rbind(water.assembly, sed.assembly)
 community.assembly.plot <- ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = mechanism)) +
   facet_grid(~habitat) +
   geom_point(show.legend = T) + 
-  labs(x = "bNTI", y = "Raup-Crick_bray-curtis", 
-       title = "Community Assembly")
+  geom_hline(yintercept = c(0.95, -0.95), lty = "dashed", col = "lightgrey")+
+  geom_vline(xintercept = c(-2, +2), lty = "dashed", col = "lightgrey")+
+  theme_cowplot()+
+  labs(x = expression(paste(beta,"NTI")), y = expression(paste("Raup-Crick"[BC])))+
+  labs(title = "Community Assembly Mechanisms")
 community.assembly.plot
-ggsave("figures/comm_assembly.pdf", width = 8, height = 8, units = "in")
+ggsave("figures/comm_assembly.png", width = 12, height = 6, units = "in")
 
