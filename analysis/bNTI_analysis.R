@@ -1,6 +1,8 @@
 source("analysis/InitialSetup.R")
 source("analysis/RaupCrickBC.R")
-require("ggplot2")
+source("analysis/DDRs.R")
+require("cowplot")
+
 # bNTI analysis
 
 # read sediment null dists 
@@ -134,8 +136,31 @@ community.assembly <- rbind(water.assembly, sed.assembly)
 community.assembly.plot <- ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = mechanism)) +
   facet_grid(~habitat) +
   geom_point(show.legend = T) + 
-  labs(x = "bNTI", y = "Raup-Crick_bray-curtis", 
-       title = "Community Assembly")
+  geom_hline(yintercept = c(0.95, -0.95), lty = "dashed", col = "lightgrey")+
+  geom_vline(xintercept = c(-2, +2), lty = "dashed", col = "lightgrey")+
+  theme_cowplot()+
+  labs(x = expression(paste(beta,"NTI")), y = expression(paste("Raup-Crick"[BC])))+
+  labs(title = "Community Assembly Mechanisms")
 community.assembly.plot
-ggsave("figures/comm_assembly.pdf", width = 8, height = 8, units = "in")
+ggsave("figures/comm_assembly.png", width = 12, height = 6, units = "in")
 
+community.assembly %>% group_by(habitat) %>% count(mechanism) %>% pander()
+
+# add distances:
+community.assembly <- left_join(community.assembly, liste(den.dists, entry = "dendritic.dist"))
+
+community.assembly[which(startsWith(community.assembly$NBX, "W1_") & 
+                           startsWith(community.assembly$NBY, "W1_")),] %>%
+  ggplot(aes(x = dendritic.dist, y = bNTI)) + 
+  facet_grid(~habitat) + 
+  geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
+  geom_smooth(method = "lm") + 
+  labs(title = "W1")
+
+community.assembly[which(startsWith(community.assembly$NBX, "LC_") & 
+                           startsWith(community.assembly$NBY, "LC_")),] %>%
+  ggplot(aes(x = dendritic.dist, y = bNTI)) + 
+  facet_grid(~habitat) + 
+  geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
+  geom_smooth(method = "lm") + 
+  labs(title = "LC")
