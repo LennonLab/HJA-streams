@@ -1,4 +1,8 @@
-library(colorspace)
+source("analysis/InitialSetup.R")
+source("analysis/RaupCrickBC.R")
+source("analysis/DDRs.R")
+require("cowplot")
+
 # bNTI analysis
 
 # read sediment null dists 
@@ -33,7 +37,7 @@ sum(bNTI.sed.dist < -2) / length(bNTI.sed.dist) # homogeneous selection
 
 
 # read sediment null dists 
-water.nulldists <- readRDS("./data/mntds-water-null-dist.rda")
+water.nulldists <- readRDS("./data/mntds-water757.rda")
 
 # read sed bmntd vals
 water.mntds <- readRDS("./data/mntds-water.rda")
@@ -63,7 +67,10 @@ sum(bNTI.water.dist > 2) / length(bNTI.water.dist) # variable selection
 sum(bNTI.water.dist < -2) / length(bNTI.water.dist) # homogeneous selection
 
 
-
+rc.water <- as.dist(RC.bray[which(design$habitat == "water"), which(design$habitat == "water")])
+water.rc.dist.ls <- liste(rc.water, entry = "rc.bray")[,3]
+rc.sed <- as.dist(RC.bray[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
+sed.rc.dist.ls <- liste(rc.sed, entry = "rc.bray")[,3]
 
 water.bnti.dist.ls <- liste(bNTI.water.dist)
 sed.bnti.dist.ls <- liste(bNTI.sed.dist)
@@ -74,9 +81,6 @@ water.assembly <- as.data.frame(cbind(water.bnti.dist.ls, water.rc.dist.ls))
 names(water.assembly)[c(3,4)] <- c("bNTI", "RC.bray")
 sed.assembly <- as.data.frame(cbind(sed.bnti.dist.ls, sed.rc.dist.ls))
 names(sed.assembly)[c(3,4)] <- c("bNTI", "RC.bray")
-
-assembly.colors <- rainbow_hcl(4)
-
 
 
 sed.mechanism <- vector(length = nrow(sed.assembly))
@@ -132,8 +136,35 @@ community.assembly <- rbind(water.assembly, sed.assembly)
 community.assembly.plot <- ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = mechanism)) +
   facet_grid(~habitat) +
   geom_point(show.legend = T) + 
-  labs(x = "bNTI", y = "Raup-Crick_bray-curtis", 
-       title = "Community Assembly")
+  geom_hline(yintercept = c(0.95, -0.95), lty = "dashed", col = "lightgrey")+
+  geom_vline(xintercept = c(-2, +2), lty = "dashed", col = "lightgrey")+
+  theme_cowplot()+
+  labs(x = expression(paste(beta,"NTI")), y = expression(paste("Raup-Crick"[BC])))+
+  labs(title = "Community Assembly Mechanisms")
 community.assembly.plot
-ggsave("figures/comm_assembly.pdf", width = 8, height = 8, units = "in")
+ggsave("figures/comm_assembly.png", width = 12, height = 6, units = "in")
 
+community.assembly %>% count(mechanism, habitat) %>% group_by(habitat) %>% 
+  mutate(sum.n = sum(n)) %>% mutate(prop.n = n / sum(n)) %>% select(-n, -sum.n) %>%
+  spread(habitat, prop.n) %>% 
+  rename(Bacterioplankton = water, "Community Assembly Mechanism" = mechanism, "Sediment-Associated Bacteria" = sediment) %>%
+  pander()
+
+# add distances:
+community.assembly <- left_join(community.assembly, liste(den.dists, entry = "dendritic.dist"))
+
+community.assembly[which(startsWith(community.assembly$NBX, "W1_") & 
+                           startsWith(community.assembly$NBY, "W1_")),] %>%
+  ggplot(aes(x = dendritic.dist, y = bNTI)) + 
+  facet_grid(~habitat) + 
+  geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
+  geom_smooth(method = "lm") + 
+  labs(title = "W1")
+
+community.assembly[which(startsWith(community.assembly$NBX, "LC_") & 
+                           startsWith(community.assembly$NBY, "LC_")),] %>%
+  ggplot(aes(x = dendritic.dist, y = bNTI)) + 
+  facet_grid(~habitat) + 
+  geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
+  geom_smooth(method = "lm") + 
+  labs(title = "LC")

@@ -18,7 +18,6 @@ for (package in package.list) {
   }
 }
 
-
 # Load packages and other tools
 source("./analysis/MothurTools.R")
 
@@ -29,6 +28,7 @@ error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
     stop("vectors must be same length")
   arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
 }
+
 
 ## Import Shared, Design, and Environment Files
 
@@ -68,39 +68,53 @@ goods <- function(x = ""){
 goods.c <- goods(OTUs)
 
 # Remove Low Coverage Samples
-lows <- which(coverage < 7000)
-OTUs <- OTUs[-which(coverage < 7000), ]
-design <- design.total[-which(coverage < 7000), ]
-env <- env.total[-which(coverage < 7000), ]
+#lows <- which(coverage < 7000)
+OTUs <- OTUs[-which(goods.c < 0.95), ]
+design <- design.total[-which(goods.c < 0.95), ]
+env <- env.total[-which(goods.c < 0.95), ]
+summary(goods(OTUs))
 
-# Remove orthogonal vectors
-env <- env[c(1:11, 13, 16, 18, 19)]
-env.mat <- as.matrix(env[10:15])
-env.mat[51,5] <- 150
-env.mat[52,5] <- 150
-for(i in 1:nrow(env.mat)){
-  if(env.mat[i, 5] < 0){
-    env.mat[i, 5] <- 0.0001
-  }
-  if(env.mat[i, 6] < 0){
-    env.mat[i, 6] <- 0.0001
-  }
+
+
+ComLoop <- vector(mode = "list", length =  10)
+for (i in seq_along(ComLoop)) {
+  ComLoop[[i]] <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
 }
-env.mat <- scale(env.mat)
-env.pca <- princomp(env.mat, scores = T)
 
-# Distance Matrix
-xy <- cbind(env$longitude, env$latitude)
-#geo.dists <- geoXY(env$latitude, env$longitude)
-#xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
-#dist.mat <- as.matrix(dist(xy, method = "euclidean"))
-dist.mat <- fossil::earth.dist(xy) * 1000
+lapply(X = ComLoop, FUN = diversity, index = "shannon")
+OTUs.rarefied.hel <- lapply(X = ComLoop, FUN = decostand, method = "hel")
+OTUs.bray.d <- lapply(X = OTUs.rarefied.hel, FUN = vegdist, method = "bray")
+OTUs.bray.mean <- lapply(OTUs.bray.d, mean)
 
-# Make Relative Abundence Matrices
-OTUsREL <- decostand(OTUs, method = "total")
 
-# Transform Relative Abundances
-OTUsREL.log <- decostand(OTUs, method = "log")
+OTUs.log <- decostand(OTUs, method = "log")
+OTUs.hel <- decostand(OTUs, method = "hel")
+OTUs.rel <- decostand(OTUs, method = "total")
 
-# Chosen distance metric
-dist.met <- "bray"
+
+
+
+
+hja.db <- vegdist(OTUs.hel, method = "bray")
+hja.d.sorensen <- vegdist(OTUs.hel, method = "bray", binary = T)
+hja.d.jaccard <- vegdist(OTUs.hel, method = "jaccard")
+hja.pcoa <- cmdscale(hja.db, eig=TRUE)
+hja.pcoa.sorensen <- cmdscale(hja.d.sorensen, eig = TRUE)
+hja.pcoa.jaccard <- cmdscale(hja.d.jaccard, eig = TRUE)
+var1 <- round(hja.pcoa$eig[1] / sum(hja.pcoa$eig),3) * 100
+var2 <- round(hja.pcoa$eig[2] / sum(hja.pcoa$eig),3) * 100
+var3 <- round(hja.pcoa$eig[3] / sum(hja.pcoa$eig),3) * 100
+var1.sor <- round(hja.pcoa.sorensen$eig[1] / sum(hja.pcoa.sorensen$eig),3) * 100
+var2.sor <- round(hja.pcoa.sorensen$eig[2] / sum(hja.pcoa.sorensen$eig),3) * 100
+var3.sor <- round(hja.pcoa.sorensen$eig[3] / sum(hja.pcoa.sorensen$eig),3) * 100
+var1.jac <- round(hja.pcoa.jaccard$eig[1] / sum(hja.pcoa.jaccard$eig),3) * 100
+var2.jac <- round(hja.pcoa.jaccard$eig[2] / sum(hja.pcoa.jaccard$eig),3) * 100
+var3.jac <- round(hja.pcoa.jaccard$eig[3] / sum(hja.pcoa.jaccard$eig),3) * 100
+
+den.d <- as.dist(den.dists)
+plot(hja.db ~ den.d)
+
+env.d <- cluster::daisy(x = env.mat, metric = "gower")
+
+
+plot(hja.db ~ den.d)
