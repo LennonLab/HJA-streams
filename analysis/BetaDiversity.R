@@ -1,9 +1,10 @@
 source("analysis/InitialSetup.R")
 source("analysis/DistanceCalcs.R")
-source("analysis/DDRs")
+source("analysis/DDRs.R")
 
 require(betapart)
 require(vegan)
+
 OTUs.PA <- decostand(OTUs, method = "pa")
 hja.beta.pair <- beta.pair(OTUs.PA)
 ordiplot(cmdscale(hja.beta.pair$beta.sne))
@@ -11,7 +12,6 @@ ordiplot(cmdscale(hja.beta.pair$beta.sne))
 hja.beta.pair$beta.sim
 hja.beta.pair$beta.sne
 hja.beta.pair$beta.sor
-
 
 # Distance Decay with Env
 plot(hja.beta.pair$beta.sor ~ hja.dists$env)
@@ -81,4 +81,44 @@ plot(downstream.sed.betapart$beta.sne ~ downstream.sed.dists$den) # nestedness
 plot(downstream.water.betapart$beta.sor ~ downstream.water.dists$den)
 plot(downstream.water.betapart$beta.sim ~ downstream.water.dists$den) # turnover
 plot(downstream.water.betapart$beta.sne ~ downstream.water.dists$den) # nestedness
+
+
+
+dt.hja.env <- residuals(lm(hja.dists$env ~ hja.dists$den))
+
+# Distance Decay with Env
+plot(hja.beta.pair$beta.sor ~ dt.hja.env)
+plot(hja.beta.pair$beta.sim ~ dt.hja.env) # turnover
+plot(hja.beta.pair$beta.sne ~ dt.hja.env) # nestedness
+
+plot(water.betapart$beta.sor ~ residuals(lm(water.dists$env ~ water.dists$den)))
+plot(water.betapart$beta.sim ~ residuals(lm(water.dists$env ~ water.dists$den))) # turnover
+plot(water.betapart$beta.sne ~ residuals(lm(water.dists$env ~ water.dists$den))) # nestedness
+
+plot(sed.betapart$beta.sor ~ residuals(lm(sed.dists$env ~ sed.dists$den)))
+plot(sed.betapart$beta.sim ~ residuals(lm(sed.dists$env ~ sed.dists$den))) # turnover
+plot(sed.betapart$beta.sne ~ residuals(lm(sed.dists$env ~ sed.dists$den))) # nestedness
+
+
+downstream.betapart <- beta.pair(decostand(OTUs.PA[which(design$order>1),], method = "pa"))
+headwater.betapart <- beta.pair(decostand(OTUs.PA[which(design$order==1),], method = "pa"))
+
+plot(headwater.betapart$beta.sor ~ residuals(lm(headwater.dists$env ~ headwater.dists$den)))
+plot(headwater.betapart$beta.sim ~ residuals(lm(headwater.dists$env ~ headwater.dists$den))) # turnover
+plot(headwater.betapart$beta.sne ~ residuals(lm(headwater.dists$env ~ headwater.dists$den))) # nestedness
+
+plot(downstream.betapart$beta.sor ~ residuals(lm(downstream.dists$env ~ downstream.dists$den)))
+plot(downstream.betapart$beta.sim ~ residuals(lm(downstream.dists$env ~ downstream.dists$den))) # turnover
+plot(downstream.betapart$beta.sne ~ residuals(lm(downstream.dists$env ~ downstream.dists$den))) # nestedness
+
+
+downstream.sed.betapart <- beta.pair(decostand(OTUs.PA[which(design$order>1 & design$habitat == "sediment"),], method = "pa"))
+plot(downstream.sed.betapart$beta.sor ~ downstream.sed.dists$env)
+plot(downstream.sed.betapart$beta.sim ~ downstream.sed.dists$env) # turnover
+plot(downstream.sed.betapart$beta.sne ~ downstream.sed.dists$env) # nestedness
+
+downstream.water.betapart <- beta.pair(decostand(OTUs.PA[which(design$order>1 & design$habitat == "water"),], method = "pa"))
+plot(downstream.water.betapart$beta.sor ~ downstream.water.dists$env)
+plot(downstream.water.betapart$beta.sim ~ downstream.water.dists$env) # turnover
+plot(downstream.water.betapart$beta.sne ~ downstream.water.dists$env) # nestedness
 
