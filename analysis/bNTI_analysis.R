@@ -37,7 +37,7 @@ sum(bNTI.sed.dist < -2) / length(bNTI.sed.dist) # homogeneous selection
 
 
 # read sediment null dists 
-water.nulldists <- readRDS("./data/mntds-water-null-dist.rda")
+water.nulldists <- readRDS("./data/mntds-water757.rda")
 
 # read sed bmntd vals
 water.mntds <- readRDS("./data/mntds-water.rda")
@@ -144,7 +144,11 @@ community.assembly.plot <- ggplot(data = community.assembly, aes(x = bNTI, y = R
 community.assembly.plot
 ggsave("figures/comm_assembly.png", width = 12, height = 6, units = "in")
 
-community.assembly %>% group_by(habitat) %>% count(mechanism) %>% pander()
+community.assembly %>% count(mechanism, habitat) %>% group_by(habitat) %>% 
+  mutate(sum.n = sum(n)) %>% mutate(prop.n = n / sum(n)) %>% select(-n, -sum.n) %>%
+  spread(habitat, prop.n) %>% 
+  rename(Bacterioplankton = water, "Community Assembly Mechanism" = mechanism, "Sediment-Associated Bacteria" = sediment) %>%
+  pander()
 
 # add distances:
 community.assembly <- left_join(community.assembly, liste(den.dists, entry = "dendritic.dist"))
