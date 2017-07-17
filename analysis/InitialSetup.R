@@ -63,7 +63,7 @@ coverage <- rowSums(OTUs)
 
 # Good's Coverage
 goods <- function(x = ""){
-  1 - (sum(x == 1) / rowSums(x))
+  1 - (rowSums(x == 1) / rowSums(x))
 }
 goods.c <- goods(OTUs)
 
