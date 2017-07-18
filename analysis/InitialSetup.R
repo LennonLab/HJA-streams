@@ -20,7 +20,7 @@ for (package in package.list) {
 
 
 # Load packages and other tools
-source("./analysis/MothurTools.R")
+# source("./analysis/MothurTools.R")
 
 se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
 
@@ -36,65 +36,75 @@ error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
 # Design = general design file for experiment
 # shared = OTU table from mothur with sequence similarity clustering
 # Taxonomy = Taxonomic information for each OTU
-design <- "./data/design.txt"
-shared <- "./data/hja_streams.final.shared"
-taxon  <- "./data/hja_streams.final.0.03.taxonomy"
-env    <- "./data/hja_env.csv"
+# # design <- "./data/design.txt"
+# # shared <- "./data/hja_streams.final.shared"
+# # taxon  <- "./data/hja_streams.final.0.03.taxonomy"
+# # env    <- "./data/hja_env.csv"
+# 
+# # Import Design
+# design.total <- read.delim(design, header=T, row.names=1)
+# 
+# # Import Shared Files
+# OTUs <- read.otu(shared = shared, cutoff = "0.03") # 97% Similarity
+# 
+# # Import Taxonomy
+# OTU.tax <- read.tax(taxonomy = taxon, format = "rdp")
+# 
+# # Import Env
+# env.total <- read.csv(env, header=T)
+# 
+# ### Data Transformations
+# # Remove OTUs with less than two occurances across all sites
+# OTUs <- OTUs[, which(colSums(OTUs) >= 2)]
+# 
+# # Sequencing an Good's Coverage
+# # Sequencing Coverage
+# coverage <- rowSums(OTUs)
+# 
+# # Good's Coverage
+# goods <- function(x = ""){
+#   1 - (rowSums(x == 1) / rowSums(x))
+# }
+# goods.c <- goods(OTUs)
+# 
+# # Remove Low Coverage Samples
+# lows <- which(coverage < 7000)
+# OTUs <- OTUs[-which(coverage < 7000), ]
+# design <- design.total[-which(coverage < 7000), ]
+# env <- env.total[-which(coverage < 7000), ]
+# 
+# # Remove orthogonal vectors
+# env <- env[c(1:11, 13, 16, 18, 19)]
+# env.mat <- as.matrix(env[10:15])
+# env.mat[51,5] <- 150
+# env.mat[52,5] <- 150
+# for(i in 1:nrow(env.mat)){
+#   if(env.mat[i, 5] < 0){
+#     env.mat[i, 5] <- 0.0001
+#   }
+#   if(env.mat[i, 6] < 0){
+#     env.mat[i, 6] <- 0.0001
+#   }
+# }
+# env.mat <- scale(env.mat)
+# env.pca <- princomp(env.mat, scores = T)
+# 
+# 
+# # Chosen distance metric
+dist.met <- "bray"
 
-# Import Design
-design.total <- read.delim(design, header=T, row.names=1)
 
-# Import Shared Files
-OTUs <- read.otu(shared = shared, cutoff = "0.03") # 97% Similarity
+# Write and read data files
+# saveRDS(OTUs, file = "./data/SiteBySpecies.rda")
+# saveRDS(env, file = "./data/SiteByEnv.rda")
+# saveRDS(OTU.tax, file = "./data/Taxonomy.rda")
+# saveRDS(design, file = "./data/SiteDesign.rda")
 
-# Import Taxonomy
-OTU.tax <- read.tax(taxonomy = taxon, format = "rdp")
+OTUs <- readRDS(file = "./data/SiteBySpecies.rda")
+env <- readRDS(file = "./data/SiteByEnv.rda")
+OTU.tax <- readRDS(file = "./data/Taxonomy.rda")
+design <- readRDS(file = "./data/SiteDesign.rda")
 
-# Import Env
-env.total <- read.csv(env, header=T)
-
-### Data Transformations
-# Remove OTUs with less than two occurances across all sites
-OTUs <- OTUs[, which(colSums(OTUs) >= 2)]
-
-# Sequencing an Good's Coverage
-# Sequencing Coverage
-coverage <- rowSums(OTUs)
-
-# Good's Coverage
-goods <- function(x = ""){
-  1 - (rowSums(x == 1) / rowSums(x))
-}
-goods.c <- goods(OTUs)
-
-# Remove Low Coverage Samples
-lows <- which(coverage < 7000)
-OTUs <- OTUs[-which(coverage < 7000), ]
-design <- design.total[-which(coverage < 7000), ]
-env <- env.total[-which(coverage < 7000), ]
-
-# Remove orthogonal vectors
-env <- env[c(1:11, 13, 16, 18, 19)]
-env.mat <- as.matrix(env[10:15])
-env.mat[51,5] <- 150
-env.mat[52,5] <- 150
-for(i in 1:nrow(env.mat)){
-  if(env.mat[i, 5] < 0){
-    env.mat[i, 5] <- 0.0001
-  }
-  if(env.mat[i, 6] < 0){
-    env.mat[i, 6] <- 0.0001
-  }
-}
-env.mat <- scale(env.mat)
-env.pca <- princomp(env.mat, scores = T)
-
-# Distance Matrix
-xy <- cbind(env$longitude, env$latitude)
-#geo.dists <- geoXY(env$latitude, env$longitude)
-#xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
-#dist.mat <- as.matrix(dist(xy, method = "euclidean"))
-dist.mat <- fossil::earth.dist(xy) * 1000
 
 # Make Relative Abundence Matrices
 OTUsREL <- decostand(OTUs, method = "total")
@@ -102,5 +112,9 @@ OTUsREL <- decostand(OTUs, method = "total")
 # Transform Relative Abundances
 OTUsREL.log <- decostand(OTUs, method = "log")
 
-# Chosen distance metric
-dist.met <- "bray"
+# Distance Matrix
+xy <- cbind(env$longitude, env$latitude)
+#geo.dists <- geoXY(env$latitude, env$longitude)
+#xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
+#dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+dist.mat <- fossil::earth.dist(xy) * 1000
