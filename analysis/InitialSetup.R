@@ -7,7 +7,7 @@ opar <- par()
 # Check for and install required packages
 package.list <- c('vegan', 'png', 'simba', 'grid', 
                   'vegetarian', 'pander', 'SoDA', 'fossil',
-                  'ggplot2')
+                  'tidyverse')
 # 'sp', 'vegetarian', 
 # 'SoDA', 'geoR',
 
@@ -73,20 +73,6 @@ error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
 # design <- design.total[-which(coverage < 7000), ]
 # env <- env.total[-which(coverage < 7000), ]
 # 
-# # Remove orthogonal vectors
-# env <- env[c(1:11, 13, 16, 18, 19)]
-# env.mat <- as.matrix(env[10:15])
-# env.mat[51,5] <- 150
-# env.mat[52,5] <- 150
-# for(i in 1:nrow(env.mat)){
-#   if(env.mat[i, 5] < 0){
-#     env.mat[i, 5] <- 0.0001
-#   }
-#   if(env.mat[i, 6] < 0){
-#     env.mat[i, 6] <- 0.0001
-#   }
-# }
-# env.mat <- scale(env.mat)
 # env.pca <- princomp(env.mat, scores = T)
 # 
 # 
@@ -104,17 +90,47 @@ OTUs <- readRDS(file = "./data/SiteBySpecies.rda")
 env <- readRDS(file = "./data/SiteByEnv.rda")
 OTU.tax <- readRDS(file = "./data/Taxonomy.rda")
 design <- readRDS(file = "./data/SiteDesign.rda")
+hja.unifrac.dist <- readRDS(file = "data/UnifracDists.rda")
+den.dists <- as.dist(readRDS(file = "data/DendriticDists.rda"))
 
 
+# Remove orthogonal vectors
+env.mat <- as.matrix(env[10:15])
+env.mat[51,5] <- 150 # These were the highest samples, overflow
+env.mat[52,5] <- 150
+for(i in 1:nrow(env.mat)){
+  if(env.mat[i, 5] < 0){
+    env.mat[i, 5] <- 0.0001 # these were below detection of the machine
+  }
+  if(env.mat[i, 6] < 0){
+    env.mat[i, 6] <- 0.0001
+  }
+}
+habitat.dummy <- simba::mad(as.factor(env$habitat))
+env.mat <- cbind(habitat.dummy, env.mat)
+env.mat <- scale(env.mat)
+
+env.mat
 # Make Relative Abundence Matrices
 OTUsREL <- decostand(OTUs, method = "total")
 
 # Transform Relative Abundances
 OTUsREL.log <- decostand(OTUs, method = "log")
+OTUsREL.hel <- decostand(OTUs, method = "hellinger")
 
-# Distance Matrix
-xy <- cbind(env$longitude, env$latitude)
+# Read in Distances
+# Geo distance Matrix
+xy <- cbind(jitter(env$longitude, amount = .0001),
+            jitter(env$latitude, amount = .0001))
 #geo.dists <- geoXY(env$latitude, env$longitude)
 #xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
 #dist.mat <- as.matrix(dist(xy, method = "euclidean"))
 dist.mat <- fossil::earth.dist(xy) * 1000
+
+# Read in phylodist
+hja.unifrac.raw <- read.delim(file = "./data/hja_streams.tree1.weighted.phylip.dist", header = F, skip = 1, row.names = 1)
+colnames(hja.unifrac.raw) <- as.vector(lapply(strsplit(rownames(hja.unifrac.raw)," "), function(x) x[1]))
+rownames(hja.unifrac.raw) <- colnames(hja.unifrac.raw)
+hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)), 
+                               which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
+hja.unifrac.dist <- as.dist(hja.unifrac)
