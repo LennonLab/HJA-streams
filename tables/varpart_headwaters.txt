@@ -14,12 +14,12 @@ No. of observations: 12
 Partition table:
                      Df R.squared Adj.R.squared Testable
 [a+b] = X1            3   0.40585       0.18305     TRUE
-[b+c] = X2            5   0.47889       0.04464     TRUE
-[a+b+c] = X1+X2       8   0.80740       0.29380     TRUE
+[b+c] = X2            2   0.21978       0.04640     TRUE
+[a+b+c] = X1+X2       5   0.56331       0.19939     TRUE
 Individual fractions                                    
-[a] = X1|X2           3                 0.24916     TRUE
-[b]                   0                -0.06612    FALSE
-[c] = X2|X1           5                 0.11075     TRUE
-[d] = Residuals                         0.70620    FALSE
+[a] = X1|X2           3                 0.15299     TRUE
+[b]                   0                 0.03006    FALSE
+[c] = X2|X1           2                 0.01635     TRUE
+[d] = Residuals                         0.80061    FALSE
 ---
 Use function ‘capscale’ to test significance of fractions of interest
