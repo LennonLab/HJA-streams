@@ -62,18 +62,19 @@ colnames(RC.bray) <- rownames(design)
 RC.bray.dist <- as.dist(RC.bray)
 
 
-write.csv(RC.bray, "data/RCbray.csv")
-saveRDS(RC.bray.dist, "data/RCbraydist.rda")
+# write.csv(RC.bray, "data/RCbray.csv")
+# saveRDS(RC.bray.dist, "data/RCbraydist.rda")
 rc.water <- as.dist(RC.bray[which(design$habitat == "water"), which(design$habitat == "water")])
 rc.sed <- as.dist(RC.bray[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
 hist(rc.water)
 hist(rc.sed)
 
-# rc.dat <- rbind(
-#   cbind(RC.bray = liste(rc.water)[3], habitat = rep("water")),
-#   cbind(RC.bray = liste(rc.sed)[3], habitat = rep("sediment")))
-# names(rc.dat)[1] <- "rc.bray"
-# require(cowplot)
+rc.dat <- rbind.data.frame(
+  cbind(RC.bray = liste(rc.water)[3], Habitat = rep("Planktonic")),
+  cbind(RC.bray = liste(rc.sed)[3], Habitat = rep("Sediment")))
+names(rc.dat)[1] <- "rc.bray"
+
+require(cowplot)
 # 
 # rc.bp <- ggplot(data = rc.dat, aes(x = habitat, y = rc.bray)) + 
 #   geom_boxplot() + 
@@ -82,3 +83,11 @@ hist(rc.sed)
 #   geom_jitter(aes(colour = abs(rc.bray) > 0.95)) + 
 #   scale_color_manual(values = c('grey', 'red'))
 # ggsave(filename = "figures/RC_bray_boxplot.pdf", plot = rc.bp, width = 8, height = 8, units = "in")
+
+RC.brayplot <- ggplot(data = rc.dat) +
+  geom_density(aes(x = rc.bray, y = ..scaled.., fill = Habitat), alpha = .5) +
+  labs(x = expression(paste("RC"["bray"])), y = "Frequency") + 
+  scale_fill_manual(values = c("skyblue", "wheat"))+
+  theme_cowplot() + 
+  theme(axis.title = element_text(size = 16), axis.text = element_text(size = 12))
+RC.brayplot
