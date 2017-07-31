@@ -84,10 +84,10 @@ require(cowplot)
 #   scale_color_manual(values = c('grey', 'red'))
 # ggsave(filename = "figures/RC_bray_boxplot.pdf", plot = rc.bp, width = 8, height = 8, units = "in")
 
-RC.brayplot <- ggplot(data = rc.dat) +
-  geom_density(aes(x = rc.bray, y = ..scaled.., fill = Habitat), alpha = .5) +
-  labs(x = expression(paste("RC"["bray"])), y = "Frequency") + 
-  scale_fill_manual(values = c("skyblue", "wheat"))+
-  theme_cowplot() + 
-  theme(axis.title = element_text(size = 16), axis.text = element_text(size = 12))
-RC.brayplot
+# RC.brayplot <- ggplot(data = rc.dat) +
+#   geom_density(aes(x = rc.bray, y = ..scaled.., fill = Habitat), alpha = .5) +
+#   labs(x = expression(paste("RC"["bray"])), y = "Frequency") + 
+#   scale_fill_manual(values = c("skyblue", "wheat"))+
+#   theme_cowplot() + 
+#   theme(axis.title = element_text(size = 16), axis.text = element_text(size = 12))
+# RC.brayplot

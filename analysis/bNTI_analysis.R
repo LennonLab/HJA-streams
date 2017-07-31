@@ -1,7 +1,7 @@
-source("analysis/InitialSetup.R")
-source("analysis/RaupCrickBC.R")
-source("analysis/DDRs.R")
-require("cowplot")
+# source("analysis/InitialSetup.R")
+# source("analysis/RaupCrickBC.R")
+# source("analysis/DDRs.R")
+# require("cowplot")
 
 # bNTI analysis
 
@@ -85,56 +85,54 @@ names(sed.assembly)[c(3,4)] <- c("bNTI", "RC.bray")
 
 sed.mechanism <- vector(length = nrow(sed.assembly))
 for(row.i in 1:nrow(sed.assembly)){
-  if(sed.assembly[row.i,3] >= -2 && sed.assembly[row.i,3] <= 2){
-    if(sed.assembly[row.i,4] < -0.95){
-      sed.mechanism[row.i] <- "mass effects"
-    }
-    if(sed.assembly[row.i,4] > 0.95){
-      sed.mechanism[row.i] <- "dispersal limitation"
-    }
-    if(sed.assembly[row.i,4] <= 0.95 && sed.assembly[row.i,4] >= -0.95){
-      sed.mechanism[row.i] <- "undominated"
-    }
+  if(sed.assembly[row.i,3] >= -2 && sed.assembly[row.i,4] <= -0.95){
+    sed.mechanism[row.i] <- str_wrap("Mass Effects", width = 12)
   }
-  if(sed.assembly[row.i,3] < -2){
-    sed.mechanism[row.i] <- "homogenizing selection"
+  if(sed.assembly[row.i,3] <= 2 & sed.assembly[row.i,4] >= 0.95){
+    sed.mechanism[row.i] <- str_wrap("Dispersal Limitation", width = 12)
   }
-  if(sed.assembly[row.i,3] > 2){
-    sed.mechanism[row.i] <- "variable selection"
+  if(sed.assembly[row.i,3] < 2 & sed.assembly[row.i,3] > -2 & 
+     sed.assembly[row.i,4] < 0.95 & sed.assembly[row.i,4] > -0.95){
+    sed.mechanism[row.i] <- str_wrap("Undominated", width = 12)
+  }
+  if(sed.assembly[row.i,4] <= .95 & sed.assembly[row.i,3] <= -2){
+    sed.mechanism[row.i] <- str_wrap("Selection (Convergent)", width = 12)
+  }
+  if(sed.assembly[row.i,4] >= -.95 & sed.assembly[row.i,3] >= 2){
+    sed.mechanism[row.i] <- str_wrap("Selection (Divergent)", width = 12)
   }
   
 }
-sed.assembly$habitat <- "sediment"
-sed.assembly$mechanism <- sed.mechanism
+sed.assembly$Habitat <- "Sediment"
+sed.assembly$Mechanism <- sed.mechanism
 
 water.mechanism <- vector(length = nrow(water.assembly))
 for(row.i in 1:nrow(water.assembly)){
-  if(water.assembly[row.i,3] >= -2 && water.assembly[row.i,3] <= 2){
-    if(water.assembly[row.i,4] < -0.95){
-      water.mechanism[row.i] <- "mass effects"
-    }
-    if(water.assembly[row.i,4] > 0.95){
-      water.mechanism[row.i] <- "dispersal limitation"
-    }
-    if(water.assembly[row.i,4] <= 0.95 && water.assembly[row.i,4] >= -0.95){
-      water.mechanism[row.i] <- "undominated"
-    }
+  if(water.assembly[row.i,3] >= -2 && water.assembly[row.i,4] <= -0.95){
+    water.mechanism[row.i] <- str_wrap("Mass Effects", width = 12)
   }
-  if(water.assembly[row.i,3] < -2){
-    water.mechanism[row.i] <- "homogenizing selection"
+  if(water.assembly[row.i,3] <= 2 & water.assembly[row.i,4] >= 0.95){
+    water.mechanism[row.i] <- str_wrap("Dispersal Limitation", width = 12)
   }
-  if(water.assembly[row.i,3] > 2){
-    water.mechanism[row.i] <- "variable selection"
+  if(water.assembly[row.i,3] < 2 & water.assembly[row.i,3] > -2 & 
+     water.assembly[row.i,4] < 0.95 & water.assembly[row.i,4] > -0.95){
+    water.mechanism[row.i] <- str_wrap("Undominated", width = 12)
+  }
+  if(water.assembly[row.i,4] <= .95 & water.assembly[row.i,3] <= -2){
+    water.mechanism[row.i] <- str_wrap("Selection (Convergent)", width = 12)
+  }
+  if(water.assembly[row.i,4] >= -.95 & water.assembly[row.i,3] >= 2){
+    water.mechanism[row.i] <- str_wrap("Selection (Divergent)", width = 12)
   }
   
 }
-water.assembly$mechanism <- water.mechanism
-water.assembly$habitat <- "water"
+water.assembly$Mechanism <- water.mechanism
+water.assembly$Habitat <- "Planktonic"
 
 community.assembly <- rbind(water.assembly, sed.assembly)
 
-community.assembly.plot <- ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = mechanism)) +
-  facet_grid(~habitat) +
+community.assembly.plot <- ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = Mechanism)) +
+  facet_grid(~Habitat) +
   geom_point(show.legend = T) + 
   geom_hline(yintercept = c(0.95, -0.95), lty = "dashed", col = "lightgrey")+
   geom_vline(xintercept = c(-2, +2), lty = "dashed", col = "lightgrey")+
@@ -144,27 +142,30 @@ community.assembly.plot <- ggplot(data = community.assembly, aes(x = bNTI, y = R
 community.assembly.plot
 ggsave("figures/comm_assembly.png", width = 12, height = 6, units = "in")
 
-community.assembly %>% count(mechanism, habitat) %>% group_by(habitat) %>% 
-  mutate(sum.n = sum(n)) %>% mutate(prop.n = n / sum(n)) %>% select(-n, -sum.n) %>%
-  spread(habitat, prop.n) %>% 
-  rename(Bacterioplankton = water, "Community Assembly Mechanism" = mechanism, "Sediment-Associated Bacteria" = sediment) %>%
-  pander()
+assembly.table <- community.assembly %>% count(Mechanism, Habitat)
+assembly.counts <- ggplot(assembly.table, aes(x = factor(Mechanism), y = n, fill = Habitat)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_fill_manual(values = c("skyblue", "wheat")) +
+  theme_cowplot() + 
+  labs(y = "Count", x = "Community Assembly Mechanism") +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14))
+assembly.counts
 
-# add distances:
-community.assembly <- left_join(community.assembly, liste(den.dists, entry = "dendritic.dist"))
-
-community.assembly[which(startsWith(community.assembly$NBX, "W1_") & 
-                           startsWith(community.assembly$NBY, "W1_")),] %>%
-  ggplot(aes(x = dendritic.dist, y = bNTI)) + 
-  facet_grid(~habitat) + 
-  geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
-  geom_smooth(method = "lm") + 
-  labs(title = "W1")
-
-community.assembly[which(startsWith(community.assembly$NBX, "LC_") & 
-                           startsWith(community.assembly$NBY, "LC_")),] %>%
-  ggplot(aes(x = dendritic.dist, y = bNTI)) + 
-  facet_grid(~habitat) + 
-  geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
-  geom_smooth(method = "lm") + 
-  labs(title = "LC")
+# # add distances:
+# community.assembly <- left_join(community.assembly, liste(den.dists, entry = "dendritic.dist"))
+# 
+# community.assembly[which(startsWith(community.assembly$NBX, "W1_") & 
+#                            startsWith(community.assembly$NBY, "W1_")),] %>%
+#   ggplot(aes(x = dendritic.dist, y = bNTI)) + 
+#   facet_grid(~habitat) + 
+#   geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
+#   geom_smooth(method = "lm") + 
+#   labs(title = "W1")
+# 
+# community.assembly[which(startsWith(community.assembly$NBX, "LC_") & 
+#                            startsWith(community.assembly$NBY, "LC_")),] %>%
+#   ggplot(aes(x = dendritic.dist, y = bNTI)) + 
+#   facet_grid(~habitat) + 
+#   geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
+#   geom_smooth(method = "lm") + 
+#   labs(title = "LC")

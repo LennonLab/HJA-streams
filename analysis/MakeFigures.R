@@ -21,18 +21,39 @@ plot(scores(hja.dbrda.env, display = "sites"),
 add.axes()
 abline(h = 0, v = 0, lty = 3)
 points(scores(hja.dbrda.env, display = "sites")[which(design$habitat == "sediment"),],
-       pch = 21, bg = "gray", cex = 2)
+       pch = 21, bg = "wheat", cex = 2)
 points(scores(hja.dbrda.env, display = "sites")[which(design$habitat == "water"),],
-       pch = 24, bg = "white", cex = 2)
+       pch = 24, bg = "skyblue", cex = 2)
 ordiellipse(hja.dbrda.env, design$habitat, conf = 0.95, kind = "se", lwd=1,
-            draw = "polygon", col=c("gray", "white"), border="black", alpha=63)
+            draw = "polygon", col=c("wheat", "skyblue"), border="black", alpha=63)
 vectors <- scores(hja.dbrda.env, display = "bp")
 arrows(0, 0, 1.5*vectors[,1], 1.5*vectors[,2],
        lwd = 2, lty = 1, length = 0.1)
 text(1.5*vectors[,1], 1.5*vectors[,2], pos = c(1, 3, 2), 
      labels = rownames(vectors), offset = 1)
 legend("topright", legend = c("Planktonic", "Sediment"), pch = c(24, 21), 
-       bty = "n", pt.bg = c("white", "gray"))
+       bty = "n", pt.bg = c("skyblue", "wheat"))
 dev.off()
 
 # FIGURE 3. 
+
+
+
+
+# FIGURE 4.
+#source("analysis/RaupCrickBC.R")
+pdf("figures/Figure4_RaupCrickBC.pdf", width = 6, height = 6)
+RC.brayplot <- ggplot(data = rc.dat) +
+  geom_density(aes(x = rc.bray, y = ..scaled.., fill = Habitat), alpha = .5) +
+  labs(x = expression(paste("RC"["bray"])), y = "Frequency") + 
+  scale_fill_manual(values = c("skyblue", "wheat"))+
+  theme_cowplot() + 
+  theme(axis.title = element_text(size = 16), axis.text = element_text(size = 12))
+RC.brayplot
+dev.off()
+
+# FIGURE 5
+#source("analysis/bNTI_analysis.R")
+pdf("figures/Figure5_CommAssembly.pdf", width = 10, height = 6)
+assembly.counts
+dev.off()
