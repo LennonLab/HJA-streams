@@ -2,35 +2,37 @@
 
 se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
 
-
-resample.comms <- function(comm = "", n = 100, ...){
-  # commsize <- dim(comm)
-  # comms <- array(data = NA, dim = c(commsize[1:2], n))
-  # for (i in 1:n) {
-  #   comms[,,i] <- decostand(
-  #     rrarefy(OTUs, sample = min(rowSums(OTUs))),
-  #     method = transformation)
-  #   
-  # }
-  coefs <- matrix(NA, nrow = n, ncol = 2)
-  
-  for(i in 1:n){
-    comm.i <- decostand(
-      rrarefy(OTUs, sample = min(rowSums(OTUs))),
-      method = "hellinger")
-    comm.dist <- vegdist(comm.i, method = "euclidean")
-    ddr <- lm(comm.dist ~ den.dists)
-    coefs[i, ] <- coefficients(ddr)
-  }
-  
-  
-  
-  return(coefs)
+error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+  if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+    stop("vectors must be same length")
+  arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
 }
-  
-c <- resample.comms(comm = headwaters, n = 100)
 
 
+# resample.comms <- function(comm = "", n = 100, ...){
+#   # commsize <- dim(comm)
+#   # comms <- array(data = NA, dim = c(commsize[1:2], n))
+#   # for (i in 1:n) {
+#   #   comms[,,i] <- decostand(
+#   #     rrarefy(OTUs, sample = min(rowSums(OTUs))),
+#   #     method = transformation)
+#   #   
+#   # }
+#   coefs <- matrix(NA, nrow = n, ncol = 2)
+#   
+#   for(i in 1:n){
+#     comm.i <- decostand(
+#       rrarefy(OTUs, sample = min(rowSums(OTUs))),
+#       method = "hellinger")
+#     comm.dist <- vegdist(comm.i, method = "euclidean")
+#     ddr <- lm(comm.dist ~ den.dists)
+#     coefs[i, ] <- coefficients(ddr)
+#   }
+#   
+#   
+#   
+#   return(coefs)
+# }
 
 ####
 
@@ -58,3 +60,38 @@ add.axes <- function(s1 = T, s2 = T, s3 = T, s4 = T, ...){
   box(lwd = 2)
 }
 
+
+
+
+DDR <- function(dists = NULL, comm = "otus", env = "env", space = "den"){
+  out.models <- list()
+  comm.dist <- dists[[comm]]
+  env.dist <- dists[[env]]
+  spa.dist <- dists[[space]]
+  
+  # spatial detrend
+  spatial.lm <- lm(comm.dist ~ spa.dist)
+  spa.detrended.comm.dist <- residuals(spatial.lm) + coef(spatial.lm)[1]
+  
+  # now DDR for env.
+  ddr.env <- lm(spa.detrended.comm.dist ~ env.dist)
+  
+  # env detrend
+  env.lm <- lm(comm.dist ~ env.dist)
+  env.detrended.comm.dist <- residuals(env.lm) + coef(env.lm)[1]
+  
+  # now DDR for space
+  ddr.space <- lm(env.detrended.comm.dist ~ spa.dist)
+  
+  out.models$spatial <- ddr.space
+  out.models$env <- ddr.env
+  
+  plot(spa.detrended.comm.dist ~ env.dist, ylab = comm, xlab = env)
+  abline(ddr.env)
+  print(summary(ddr.env))
+  plot(env.detrended.comm.dist ~ spa.dist, ylab = comm, xlab = space)
+  abline(ddr.space)
+  print(summary(ddr.space))
+  
+  return(out.models)
+}

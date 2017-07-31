@@ -7,7 +7,7 @@ opar <- par()
 # Check for and install required packages
 package.list <- c('vegan', 'png', 'simba', 'grid', 
                   'vegetarian', 'pander', 'SoDA', 'fossil',
-                  'tidyverse')
+                  'tidyverse', 'cluster', 'adespatial', 'spdep')
 # 'sp', 'vegetarian', 
 # 'SoDA', 'geoR',
 
@@ -22,13 +22,7 @@ for (package in package.list) {
 # Load packages and other tools
 # source("./analysis/MothurTools.R")
 
-se <- function(x, ...){sd(x, na.rm = TRUE)/sqrt(length(na.omit(x)))}
-
-error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
-  if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
-    stop("vectors must be same length")
-  arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
-}
+source("analysis/HJA-Functions.R")
 
 ## Import Shared, Design, and Environment Files
 
@@ -92,6 +86,7 @@ OTU.tax <- readRDS(file = "./data/Taxonomy.rda")
 design <- readRDS(file = "./data/SiteDesign.rda")
 hja.unifrac.dist <- readRDS(file = "data/UnifracDists.rda")
 den.dists <- as.dist(readRDS(file = "data/DendriticDists.rda"))
+design$upstreamdist <- as.matrix(den.dists)[1,]
 
 
 # Remove orthogonal vectors
@@ -134,3 +129,7 @@ rownames(hja.unifrac.raw) <- colnames(hja.unifrac.raw)
 hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)), 
                                which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
 hja.unifrac.dist <- as.dist(hja.unifrac)
+
+RC.bray.dist <- readRDS(file = "./data/RCbraydist.csv")
+bNTI.water.dist <- readRDS(file = "data/bNTIwater.rda")
+bNTI.sed.dist <- readRDS(file = "data/bNTIsed.rda")

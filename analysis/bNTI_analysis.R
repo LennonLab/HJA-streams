@@ -66,6 +66,8 @@ sum(bNTI.water.dist < 2 & bNTI.water.dist > -2) / length(bNTI.water.dist) # undo
 sum(bNTI.water.dist > 2) / length(bNTI.water.dist) # variable selection
 sum(bNTI.water.dist < -2) / length(bNTI.water.dist) # homogeneous selection
 
+saveRDS(bNTI.water.dist, file = "data/bNTIwater.rda")
+saveRDS(bNTI.sed.dist, file = "data/bNTIsed.rda")
 
 rc.water <- as.dist(RC.bray[which(design$habitat == "water"), which(design$habitat == "water")])
 water.rc.dist.ls <- liste(rc.water, entry = "rc.bray")[,3]
