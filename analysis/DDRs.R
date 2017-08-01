@@ -8,7 +8,10 @@ water.dists$den <- as.dist(as.matrix(den.dists)[which(design$habitat == "water")
 water.dists$env <- dist(env.mat[which(design$habitat == "water"),])
 water.dists$rc.bray <- as.dist(as.matrix(RC.bray.dist)[which(design$habitat == "water"), which(design$habitat == "water")])
 water.dists$phylo <- as.dist(hja.unifrac[which(design$habitat == "water"), which(design$habitat == "water")])
-
+water.beta.part <- beta.pair(OTUs.PA[which(design$habitat == "water"),], index.family = "sorensen")
+water.dists$nest <- water.beta.part$beta.sne
+water.dists$turn <- water.beta.part$beta.sim
+water.dists$sor <- water.beta.part$beta.sor
 water.lms <- DDR(dists = water.dists)
 
 
@@ -20,7 +23,10 @@ sediment.dists$den <- as.dist(as.matrix(den.dists)[which(design$habitat == "sedi
 sediment.dists$env <- dist(env.mat[which(design$habitat == "sediment"),])
 sediment.dists$rc.bray <- as.dist(as.matrix(RC.bray.dist)[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
 sediment.dists$phylo <- as.dist(hja.unifrac[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
-
+sediment.beta.part <- beta.pair(OTUs.PA[which(design$habitat == "sediment"),], index.family = "sorensen")
+sediment.dists$nest <- sediment.beta.part$beta.sne
+sediment.dists$turn <- sediment.beta.part$beta.sim
+sediment.dists$sor <- sediment.beta.part$beta.sor
 sediment.lms <- DDR(dists = sediment.dists)
 
 # Headwaters DDRs
@@ -31,7 +37,10 @@ headwater.dists$den <- as.dist(as.matrix(den.dists)[which(design$order == 1), wh
 headwater.dists$env <- dist(env.mat[which(design$order == 1),])
 headwater.dists$rc.bray <- as.dist(as.matrix(RC.bray.dist)[which(design$order == 1), which(design$order == 1)])
 headwater.dists$phylo <- as.dist(hja.unifrac[which(design$order == 1), which(design$order == 1)])
-
+headwater.beta.part <- beta.pair(OTUs.PA[which(design$order == 1),], index.family = "sorensen")
+headwater.dists$nest <- headwater.beta.part$beta.sne
+headwater.dists$turn <- headwater.beta.part$beta.sim
+headwater.dists$sor <- headwater.beta.part$beta.sor
 headwater.lms <- DDR(dists = headwater.dists)
 
 # headwater seds
@@ -42,6 +51,10 @@ headwater.seds.dists$den <- as.dist(as.matrix(den.dists)[which(design$order == 1
 headwater.seds.dists$env <- dist(env.mat[which(design$order == 1 & design$habitat == "sediment"),])
 headwater.seds.dists$rc.bray <- as.dist(as.matrix(RC.bray.dist)[which(design$order == 1 & design$habitat == "sediment"),which(design$order == 1 & design$habitat == "sediment")])
 headwater.seds.dists$phylo <- as.dist(hja.unifrac[which(design$order == 1 & design$habitat == "sediment"),which(design$order == 1 & design$habitat == "sediment")])
+headwater.seds.beta.part <- beta.pair(OTUs.PA[which(design$order == 1 & design$habitat == "sediment"),], index.family = "sorensen")
+headwater.seds.dists$nest <- headwater.seds.beta.part$beta.sne
+headwater.seds.dists$turn <- headwater.seds.beta.part$beta.sim
+headwater.seds.dists$sor <- headwater.seds.beta.part$beta.sor
 
 headwater.seds.lms <- DDR(dists = headwater.seds.dists)
 
@@ -54,6 +67,10 @@ headwater.water.dists$den <- as.dist(as.matrix(den.dists)[which(design$order == 
 headwater.water.dists$env <- dist(env.mat[which(design$order == 1 & design$habitat == "water"),])
 headwater.water.dists$rc.bray <- as.dist(as.matrix(RC.bray.dist)[which(design$order == 1 & design$habitat == "water"),which(design$order == 1 & design$habitat == "water")])
 headwater.water.dists$phylo <- as.dist(hja.unifrac[which(design$order == 1 & design$habitat == "water"),which(design$order == 1 & design$habitat == "water")])
+headwater.water.beta.part <- beta.pair(OTUs.PA[which(design$order == 1 & design$habitat == "water"),], index.family = "sorensen")
+headwater.water.dists$nest <- headwater.water.beta.part$beta.sne
+headwater.water.dists$turn <- headwater.water.beta.part$beta.sim
+headwater.water.dists$sor <- headwater.water.beta.part$beta.sor
 
 headwater.water.lms <- DDR(dists = headwater.water.dists)
 
@@ -66,6 +83,10 @@ downstream.dists$den <- as.dist(as.matrix(den.dists)[which(design$order != 1), w
 downstream.dists$env <- dist(env.mat[which(design$order != 1),])
 downstream.dists$rc.bray <- as.dist(as.matrix(RC.bray.dist)[which(design$order != 1), which(design$order != 1)])
 downstream.dists$phylo <- as.dist(hja.unifrac[which(design$order != 1), which(design$order != 1)])
+downstream.beta.part <- beta.pair(OTUs.PA[which(design$order != 1),], index.family = "sorensen")
+downstream.dists$nest <- downstream.beta.part$beta.sne
+downstream.dists$turn <- downstream.beta.part$beta.sim
+downstream.dists$sor <- downstream.beta.part$beta.sor
 
 downstream.lms <- DDR(dists = downstream.dists)
 
@@ -79,6 +100,10 @@ downstream.seds.dists$den <- as.dist(as.matrix(den.dists)[which(design$order != 
 downstream.seds.dists$env <- dist(env.mat[which(design$order != 1 & design$habitat == "sediment"),])
 downstream.seds.dists$rc.bray <- as.dist(as.matrix(RC.bray.dist)[which(design$order != 1 & design$habitat == "sediment"),which(design$order != 1 & design$habitat == "sediment")])
 downstream.seds.dists$phylo <- as.dist(hja.unifrac[which(design$order != 1 & design$habitat == "sediment"),which(design$order != 1 & design$habitat == "sediment")])
+downstream.seds.beta.part <- beta.pair(OTUs.PA[which(design$order != 1 & design$habitat == "sediment"),], index.family = "sorensen")
+downstream.seds.dists$nest <- downstream.seds.beta.part$beta.sne
+downstream.seds.dists$turn <- downstream.seds.beta.part$beta.sim
+downstream.seds.dists$sor <- downstream.seds.beta.part$beta.sor
 
 downstream.seds.lms <- DDR(dists = downstream.seds.dists)
 
@@ -91,7 +116,10 @@ downstream.water.dists$den <- as.dist(as.matrix(den.dists)[which(design$order !=
 downstream.water.dists$env <- dist(env.mat[which(design$order != 1 & design$habitat == "water"),])
 downstream.water.dists$rc.bray <- as.dist(as.matrix(RC.bray.dist)[which(design$order != 1 & design$habitat == "water"),which(design$order != 1 & design$habitat == "water")])
 downstream.water.dists$phylo <- as.dist(hja.unifrac[which(design$order != 1 & design$habitat == "water"),which(design$order != 1 & design$habitat == "water")])
-
+downstream.water.beta.part <- beta.pair(OTUs.PA[which(design$order != 1 & design$habitat == "water"),], index.family = "sorensen")
+downstream.water.dists$nest <- downstream.water.beta.part$beta.sne
+downstream.water.dists$turn <- downstream.water.beta.part$beta.sim
+downstream.water.dists$sor <- downstream.water.beta.part$beta.sor
 downstream.water.lms <- DDR(dists = downstream.water.dists)
 
 ### Catchment Scale DDRs
@@ -104,6 +132,9 @@ hja.dists$den <- as.dist(as.matrix(den.dists))
 hja.dists$env <- dist(env.mat)
 hja.dists$rc.bray <- as.dist(as.matrix(RC.bray.dist))
 hja.dists$phylo <- as.dist(hja.unifrac)
-
+hja.beta.part <- beta.pair(OTUs.PA, index.family = "sorensen")
+hja.dists$turn <- hja.beta.part$beta.sim
+hja.dists$nest <- hja.beta.part$beta.sne
+hja.dists$sor <- hja.beta.part$beta.sor
 hja.lms <- DDR(dists = hja.dists)
 
