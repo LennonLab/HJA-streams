@@ -1,38 +1,29 @@
 # AEM 
 
-site.by.edges.lc <- as.matrix(read.csv("./data/sites-by-edges_LC.csv", header=T))
-row.names(site.by.edges.lc) <- site.by.edges.lc[,1]
-site.by.edges.lc <- site.by.edges.lc[,-1]
-site.by.edges.lc <- (site.by.edges.lc == 1) * 1
-
-site.by.edges.w1 <- as.matrix(read.csv("./data/sites-by-edges_WS1.csv", header=T))
-row.names(site.by.edges.w1) <- site.by.edges.w1[,1]
-site.by.edges.w1 <- site.by.edges.w1[,-1]
-site.by.edges.w1 <- (site.by.edges.w1 == 1) * 1
-
-w1.dists <- c(1,
-              1,
-              255,
-              10,
-              4,
-              6.46,
-              201.47,
-              196.598,
-              3,
-              4,
-              100.3,
-              116.85,
-              802.3,
-              1065,
-              40.39,
-              1)
+design.sed <- subset(design, habitat == "sediment")
+design.water <- subset(design, habitat == "water")
 
 
-w1.F.mat <- princomp(site.by.edges.w1)
-summary(w1.F.mat)
-plot(w1.F.mat)
+E.sed.connection <- matrix(NA, nrow = nrow(design.sed), 
+                           ncol = nrow(design.sed))
+rownames(E.sed.connection) <- rownames(design.sed)
+colnames(E.sed.connection) <- rownames(design.sed)
 
-w1.env <- princomp(env.mat[which(design$watershed == "WS01"),])
-summary(w1.env)
-plot(w1.env)
+#write.csv(E.sed.connection, file = "data/AEMsed.csv", row.names = T, col.names = T)
+
+E.sed.connection <- read.csv("data/AEMsed.csv", header = T, row.names = 1)
+E.sed.connection <- as.matrix(E.sed.connection)
+
+sed <- OTUsREL[which(design$habitat == "sediment"),]
+
+cmdscale(dist(E.sed.connection), eig = T)
+F.eigen
+
+sed.aem <- aem(binary.mat = E.sed.connection)
+
+water.dist <- vegdist(water)
+
+
+
+sitebyedge <- read.csv(file = "data/sites-by-edges.csv", header = T, row.names = 1)
 
