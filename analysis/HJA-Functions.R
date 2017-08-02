@@ -95,3 +95,10 @@ DDR <- function(dists = NULL, comm = "otus", env = "env", space = "den"){
   
   return(out.models)
 }
+
+
+nb.calc <- function(species = ""){
+  Pij2 = species^2
+  B = 1/sum(Pij2)
+  return(B)
+}
