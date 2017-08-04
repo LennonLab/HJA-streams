@@ -11,8 +11,8 @@ hja.map
 dev.off()
 
 # FIGURE 2. Constrained Ordination
-pdf("figures/Figure2_hja-dbrda.pdf", height = 6, width = 6)
-par(oma = c(1,1,1,1))
+pdf("figures/Figure2_hja-dbrda.pdf", height = 6, width = 6, bg = "white")
+par(oma = c(1,1,1,1), pty = "s")
 plot(scores(hja.dbrda.env, display = "sites"),
      xlab = paste("dbRDA 1 (", explain.var(hja.dbrda.env, axis = 1), "%)", sep = ""),
      ylab = paste("dbRDA 2 (", explain.var(hja.dbrda.env, axis = 2), "%)", sep = ""),

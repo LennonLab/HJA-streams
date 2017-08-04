@@ -40,5 +40,5 @@ Number of permutations: 999
 Call: vegan::capscale(formula = hja.dist ~ hja.space.mod + Condition(hja.env.mod))
 Permutation test for all constrained eigenvalues
 Pseudo-F:	 1.589781 (with 3, 49 Degrees of Freedom)
-Significance:	 0.004 
+Significance:	 0.003 
 

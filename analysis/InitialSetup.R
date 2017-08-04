@@ -7,7 +7,8 @@ opar <- par()
 # Check for and install required packages
 package.list <- c('vegan', 'png', 'simba', 'grid', 
                   'vegetarian', 'pander', 'SoDA', 'fossil',
-                  'tidyverse', 'cluster', 'adespatial', 'spdep', 'betapart')
+                  'tidyverse', 'cluster', 'adespatial', 'spdep', 'betapart', 
+                  'stringr')
 # 'sp', 'vegetarian', 
 # 'SoDA', 'geoR',
 

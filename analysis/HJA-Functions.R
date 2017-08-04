@@ -136,7 +136,7 @@ plot.DDRs <- function(models = NULL){
        axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
        axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
        box(lwd = 2)
-       mtext("Community Similarity", side = 2, line = 3, cex = 1.5)
+       mtext("Community Dissimilarity", side = 2, line = 3, cex = 1.5)
        mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
        
        if(my.p != "N.S.") abline(models$env, lwd = 2)
@@ -162,10 +162,38 @@ plot.DDRs <- function(models = NULL){
        axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
        axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
        box(lwd = 2)
-       mtext("Community Similarity", side = 2, line = 3, cex = 1.5)
+       mtext("Community Dissimilarity", side = 2, line = 3, cex = 1.5)
        mtext("Dendritic Distance", side = 1, line = 3, cex = 1.5)
        
        if(my.p != "N.S.") abline(models$spatial, lwd = 2)
        
        })
+}
+
+
+fill.table <- function(lms.in = NULL, response.metric = response.matrix, ddr.summary = ddr.summary){
+  
+  spatial.df <- data.frame(
+    metric = response.metric,
+    dat = deparse(substitute(lms.in)),
+    response = as.character(formula(lms.in$spatial)[2]),
+    predictor = as.character(formula(lms.in$spatial)[3]),
+    int = coef(lms.in$spatial)[1],
+    slope = coef(lms.in$spatial)[2],
+    r2 = summary(lms.in$spatial)$r.squared,
+    p = summary(lms.in$spatial)$coefficients[2,4]
+  )
+  
+  env.df <- data.frame(
+    metric = response.metric,
+    dat = deparse(substitute(lms.in)),
+    response = as.character(formula(lms.in$env)[2]),
+    predictor = as.character(formula(lms.in$env)[3]),
+    int = coef(lms.in$env)[1],
+    slope = coef(lms.in$env)[2],
+    r2 = summary(lms.in$env)$r.squared,
+    p = summary(lms.in$env)$coefficients[2,4]
+  )
+  
+  return(rbind.data.frame(ddr.summary, rbind.data.frame(spatial.df, env.df)))
 }

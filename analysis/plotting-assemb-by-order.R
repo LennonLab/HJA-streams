@@ -9,10 +9,6 @@ bnti.hw.water <- as.dist(
   as.matrix(bNTI.water.dist)[which(water.design$order == 1), which(water.design$order == 1)])
 bnti.ds.water <- as.dist(
   as.matrix(bNTI.water.dist)[which(water.design$order != 1), which(water.design$order != 1)])
-hist(bnti.hw.wat)
-hist(bnti.hw.sed)
-hist(bnti.ds.water)
-hist(bnti.ds.sed)
 
 bntihwsed.df <- cbind.data.frame(liste(bnti.hw.sed, entry = "bNTI"), order = "headwater", habitat = "sediment")
 bntihwwat.df <- cbind.data.frame(liste(bnti.hw.water, entry = "bNTI"), order = "headwater", habitat = "plankton")
@@ -34,10 +30,6 @@ rcbray.hw.water <- as.dist(
 rcbray.ds.water <- as.dist(
   as.matrix(RC.bray.dist)[which(design$order != 1 & design$habitat == "water"),
                                which(design$order != 1 & design$habitat == "water")])
-hist(rcbray.hw.sed)
-hist(rcbray.hw.water)
-hist(rcbray.ds.sed)
-hist(rcbray.ds.water)
 
 rcbhwsed.df <- cbind.data.frame(liste(rcbray.hw.sed, entry = "RCbray"), order = "headwater", habitat = "sediment")
 rcbhwwat.df <- cbind.data.frame(liste(rcbray.hw.water, entry = "RCbray"), order = "headwater", habitat = "plankton")
@@ -77,7 +69,7 @@ assembly.table <- rbind(
 assembly.counts <- ggplot(assembly.table, aes(x = mechanism, y = n, fill = habitat)) + 
   geom_bar(stat = "identity", position = "dodge") + 
   scale_fill_manual(values = c("wheat", "skyblue")) +
-  theme_cowplot() + 
+  theme_minimal() + 
   labs(y = "Count", x = "Community Assembly Mechanism") +
   theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14)) +
   facet_grid(facets = order ~ ., scales = "free_y")
@@ -114,14 +106,14 @@ water.betadisp <- betadisper(water.dists$otus, group = water.design$order, type 
 sed.betadisp <- betadisper(sediment.dists$otus, group = sed.design$order, type = "centroid")
 permutest(water.betadisp)
 pdf(file = "figures/betadisper_water.pdf", bg = "white")
-par(oma = c(1,1,1,1))
+par(oma = c(1,1,1,1), pty = "s")
 plot(water.betadisp, xaxt = "n", yaxt = "n", xlab = "", ylab = "", main = "", sub = "")
 add.axes(xlab = "PCoA 1", ylab = "PCoA 2", main = "Plankton")
 dev.off()
 
 permutest(sed.betadisp)
 pdf(file = "figures/betadisper_sediment.pdf", bg = "white")
-par(oma = c(1,1,1,1))
+par(oma = c(1,1,1,1), pty = "s")
 plot(sed.betadisp, xaxt = "n", yaxt = "n", xlab = "", ylab = "", main = "", sub = "")
 add.axes(xlab = "PCoA 1", ylab = "PCoA 2", main = "Sediments")
 dev.off()
