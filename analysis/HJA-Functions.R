@@ -52,12 +52,15 @@ explain.var <- function(ord = "", axis = 1){
   return(round((eigenvals(ord)[axis]/sum(eigenvals(ord))*100), 3))
 }
 
-add.axes <- function(s1 = T, s2 = T, s3 = T, s4 = T, ...){
+add.axes <- function(main = NULL, xlab = NULL, ylab = NULL, s1 = T, s2 = T, s3 = T, s4 = T, ...){
   if(s1) axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
   if(s2) axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
   if(s3) axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
   if(s4) axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2, las = 1)
   box(lwd = 2)
+  mtext(xlab, side = 1, line = 3, cex = 1.5)
+  mtext(ylab, side = 2, line = 3, cex = 1.5)
+  mtext(main, side = 3, line = 2, cex = 2)
 }
 
 

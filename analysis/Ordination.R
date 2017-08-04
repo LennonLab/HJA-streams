@@ -4,20 +4,20 @@ source("./analysis/HJA-Functions.R")
 #### PCoA 
 
 # All HJA Catchment
-hja.pcoa <- run.pcoa(comm = OTUsREL.hel, method = "euclidean")
+hja.pcoa <- run.pcoa(comm = OTUsREL)
 
 # Sediments Only
-sed.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$habitat == "sediment"),])
+sed.pcoa <- run.pcoa(comm = OTUsREL[which(design$habitat == "sediment"),])
 
 # Water Only
-water.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$habitat == "water"),])
+water.pcoa <- run.pcoa(comm = OTUsREL[which(design$habitat == "water"),])
 
 
 # Lookout Creek Watershed Only
-lookout.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$watershed == "LC"),])
+lookout.pcoa <- run.pcoa(comm = OTUsREL[which(design$watershed == "LC"),])
 
 # Watershed 01 Only
-ws01.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$watershed == "WS01"),])
+ws01.pcoa <- run.pcoa(comm = OTUsREL[which(design$watershed == "WS01"),])
 
 # Is habitat or order an important factor in community structure?
 hja.permanova <- adonis(hja.pcoa$dist.matrix ~ design$habitat * design$watershed + design$order, permutations = 999)
