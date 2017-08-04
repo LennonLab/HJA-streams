@@ -93,6 +93,11 @@ DDR <- function(dists = NULL, comm = "otus", env = "env", space = "den"){
   abline(ddr.space)
   print(summary(ddr.space))
   
+  detrended.dists <- list(env.detrend = env.detrended.comm.dist, 
+                          spatial.detrend = spa.detrended.comm.dist,
+                          env.dist = env.dist, spatial.dist = spa.dist)
+  
+  out.models$detrended.dists <- detrended.dists
   return(out.models)
 }
 
@@ -101,4 +106,63 @@ nb.calc <- function(species = ""){
   Pij2 = species^2
   B = 1/sum(Pij2)
   return(B)
+}
+
+
+plot.DDRs <- function(models = NULL){
+  with(models, {
+    
+       # plot env distance decay
+       plot(x = detrended.dists$env.dist, y = detrended.dists$spatial.detrend, 
+            xaxt = "n", yaxt = "n", xlab = "", ylab = "")
+       
+       # add r2 and p val
+       r2 <- round(summary(models$env)$r.squared, 3)
+       my.p <- round(summary(models$env)$coefficients[2,4],3)
+       if(my.p < 0.001) my.p <- "< 0.001"
+       if(my.p > 0.05) my.p <- "N.S."
+       rp = vector('expression',2)
+       rp[1] = substitute(expression(italic(r)^2 == MYVALUE), 
+                          list(MYVALUE = format(r2,dig=3)))[2]
+       rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                          list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+       legend('topright', legend = rp, bty = 'n')
+       
+       axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+       axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+       axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+       axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+       box(lwd = 2)
+       mtext("Community Similarity", side = 2, line = 3, cex = 1.5)
+       mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
+       
+       if(my.p != "N.S.") abline(models$env, lwd = 2)
+       
+       # plot spatial distance decay
+       plot(x = detrended.dists$spatial.dist, y = detrended.dists$env.detrend, 
+            xaxt = "n", yaxt = "n", xlab = "", ylab = "")
+       
+       # add r2 and p val
+       r2 <- round(summary(models$spatial)$r.squared, 3)
+       my.p <- round(summary(models$spatial)$coefficients[2,4],3)
+       if(my.p < 0.001) my.p <- "< 0.001"
+       if(my.p > 0.05) my.p <- "N.S."
+       rp = vector('expression',2)
+       rp[1] = substitute(expression(italic(r)^2 == MYVALUE), 
+                          list(MYVALUE = format(r2,dig=3)))[2]
+       rp[2] = substitute(expression(italic(p) == MYOTHERVALUE), 
+                          list(MYOTHERVALUE = format(my.p, digits = 2)))[2]
+       legend('topright', legend = rp, bty = 'n')
+       
+       axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+       axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+       axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+       axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
+       box(lwd = 2)
+       mtext("Community Similarity", side = 2, line = 3, cex = 1.5)
+       mtext("Dendritic Distance", side = 1, line = 3, cex = 1.5)
+       
+       if(my.p != "N.S.") abline(models$spatial, lwd = 2)
+       
+       })
 }
