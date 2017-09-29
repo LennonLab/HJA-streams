@@ -4,6 +4,8 @@
 ddr.summary <- data.frame()
 
 response.matrix <- "otus"
+update.plots <- FALSE
+
 # Water DDR
 water.dists <- list()  
 water.dists$otus <- vegdist(OTUsREL[which(design$habitat == "water"),], method = "bray")
@@ -16,14 +18,16 @@ water.beta.part <- beta.pair(OTUs.PA[which(design$habitat == "water"),], index.f
 water.dists$nest <- water.beta.part$beta.sne
 water.dists$turn <- water.beta.part$beta.sim
 water.dists$sor <- water.beta.part$beta.sor
+water.dists$bNTI <- normalize.matrix(bNTI.water.dist)
 water.lms <- DDR(dists = water.dists, comm = response.matrix)
 ddr.summary <- fill.table(water.lms, ddr.summary = ddr.summary)
 
-pdf(file = paste("figures/DDR-water-",response.matrix,".pdf", sep = ""), bg = "white")
-par(oma = c(1,1,1,1))
-plot.DDRs(water.lms)
-dev.off()
-
+if(update.plots){
+  pdf(file = paste("figures/DDR-water-",response.matrix,".pdf", sep = ""), bg = "white")
+  par(oma = c(1,1,1,1))
+  plot.DDRs(water.lms)
+  dev.off()
+}
 
 # Sediment Distance Decay
 sediment.dists <- list()  
@@ -37,13 +41,16 @@ sediment.beta.part <- beta.pair(OTUs.PA[which(design$habitat == "sediment"),], i
 sediment.dists$nest <- sediment.beta.part$beta.sne
 sediment.dists$turn <- sediment.beta.part$beta.sim
 sediment.dists$sor <- sediment.beta.part$beta.sor
+sediment.dists$bNTI <- normalize.matrix(bNTI.sed.dist)
 sediment.lms <- DDR(dists = sediment.dists, comm = response.matrix)
 ddr.summary <- fill.table(sediment.lms, ddr.summary = ddr.summary)
 
-pdf(file = paste("figures/DDR-sediment-",response.matrix,".pdf", sep = ""), bg = "white")
-par(oma = c(1,1,1,1))
-plot.DDRs(sediment.lms)
-dev.off()
+if(update.plots){
+  pdf(file = paste("figures/DDR-sediment-",response.matrix,".pdf", sep = ""), bg = "white")
+  par(oma = c(1,1,1,1))
+  plot.DDRs(sediment.lms)
+  dev.off()
+}
 
 # Headwaters DDRs
 headwater.dists <- list()  
@@ -60,10 +67,12 @@ headwater.dists$sor <- headwater.beta.part$beta.sor
 headwater.lms <- DDR(dists = headwater.dists, comm = response.matrix)
 ddr.summary <- fill.table(headwater.lms, ddr.summary = ddr.summary)
 
-pdf(file = paste("figures/DDR-headwater-",response.matrix,".pdf", sep = ""), bg = "white")
-par(oma = c(1,1,1,1))
-plot.DDRs(headwater.lms)
-dev.off()
+if(update.plots){
+  pdf(file = paste("figures/DDR-headwater-",response.matrix,".pdf", sep = ""), bg = "white")
+  par(oma = c(1,1,1,1))
+  plot.DDRs(headwater.lms)
+  dev.off()
+}
 
 # headwater seds
 headwater.seds.dists <- list()  
@@ -80,11 +89,12 @@ headwater.seds.dists$sor <- headwater.seds.beta.part$beta.sor
 headwater.seds.lms <- DDR(dists = headwater.seds.dists, comm = response.matrix)
 ddr.summary <- fill.table(headwater.seds.lms, ddr.summary = ddr.summary)
 
-pdf(file = paste("figures/DDR-headwater-seds-",response.matrix,".pdf", sep = ""), bg = "white")
-par(oma = c(1,1,1,1))
-plot.DDRs(headwater.seds.lms)
-dev.off()
-
+if(update.plots){
+  pdf(file = paste("figures/DDR-headwater-seds-",response.matrix,".pdf", sep = ""), bg = "white")
+  par(oma = c(1,1,1,1))
+  plot.DDRs(headwater.seds.lms)
+  dev.off()
+}
 
 # headwater water
 headwater.water.dists <- list()  
@@ -101,11 +111,12 @@ headwater.water.dists$sor <- headwater.water.beta.part$beta.sor
 headwater.water.lms <- DDR(dists = headwater.water.dists, comm = response.matrix)
 ddr.summary <- fill.table(headwater.water.lms, ddr.summary = ddr.summary)
 
-pdf(file = paste("figures/DDR-headwater-water-",response.matrix,".pdf", sep = ""), bg = "white")
-par(oma = c(1,1,1,1))
-plot.DDRs(headwater.water.lms)
-dev.off()
-
+if(update.plots){
+  pdf(file = paste("figures/DDR-headwater-water-",response.matrix,".pdf", sep = ""), bg = "white")
+  par(oma = c(1,1,1,1))
+  plot.DDRs(headwater.water.lms)
+  dev.off()
+}
 
 # Downstream DDRs
 downstream.dists <- list()  
@@ -122,11 +133,12 @@ downstream.dists$sor <- downstream.beta.part$beta.sor
 downstream.lms <- DDR(dists = downstream.dists, comm = response.matrix)
 ddr.summary <- fill.table(downstream.lms, ddr.summary = ddr.summary)
 
-pdf(file = paste("figures/DDR-downstream-",response.matrix,".pdf", sep = ""), bg = "white")
-par(oma = c(1,1,1,1))
-plot.DDRs(downstream.lms)
-dev.off()
-
+if(update.plots){
+  pdf(file = paste("figures/DDR-downstream-",response.matrix,".pdf", sep = ""), bg = "white")
+  par(oma = c(1,1,1,1))
+  plot.DDRs(downstream.lms)
+  dev.off()
+}
 
 
 # Downstream seds
@@ -144,11 +156,12 @@ downstream.seds.dists$sor <- downstream.seds.beta.part$beta.sor
 downstream.seds.lms <- DDR(dists = downstream.seds.dists, comm = response.matrix)
 ddr.summary <- fill.table(downstream.seds.lms, ddr.summary = ddr.summary)
 
-pdf(file = paste("figures/DDR-downstream-seds-",response.matrix,".pdf", sep = ""), bg = "white")
-par(oma = c(1,1,1,1))
-plot.DDRs(downstream.seds.lms)
-dev.off()
-
+if(update.plots){
+  pdf(file = paste("figures/DDR-downstream-seds-",response.matrix,".pdf", sep = ""), bg = "white")
+  par(oma = c(1,1,1,1))
+  plot.DDRs(downstream.seds.lms)
+  dev.off()
+}
 
 # Downstream water
 downstream.water.dists <- list()  
@@ -165,10 +178,12 @@ downstream.water.dists$sor <- downstream.water.beta.part$beta.sor
 downstream.water.lms <- DDR(dists = downstream.water.dists, comm = response.matrix)
 ddr.summary <- fill.table(downstream.water.lms, ddr.summary = ddr.summary)
 
-pdf(file = paste("figures/DDR-downstream-water-",response.matrix,".pdf", sep = ""), bg = "white")
-par(oma = c(1,1,1,1))
-plot.DDRs(downstream.water.lms)
-dev.off()
+if(update.plots){
+  pdf(file = paste("figures/DDR-downstream-water-",response.matrix,".pdf", sep = ""), bg = "white")
+  par(oma = c(1,1,1,1))
+  plot.DDRs(downstream.water.lms)
+  dev.off()
+}
 
 ### Catchment Scale DDRs
 hja.dists <- list()  
@@ -185,10 +200,12 @@ hja.dists$sor <- hja.beta.part$beta.sor
 hja.lms <- DDR(dists = hja.dists, comm = response.matrix)
 ddr.summary <- fill.table(hja.lms, ddr.summary = ddr.summary)
 
-pdf(file = paste("figures/DDR-hja-",response.matrix,".pdf", sep = ""), bg = "white")
-par(oma = c(1,1,1,1))
-plot.DDRs(hja.lms)
-dev.off()
+if(update.plots){
+  pdf(file = paste("figures/DDR-hja-",response.matrix,".pdf", sep = ""), bg = "white")
+  par(oma = c(1,1,1,1))
+  plot.DDRs(hja.lms)
+  dev.off()
+}
 
 rownames(ddr.summary) <- NULL
 write.table(ddr.summary, file = paste("tables/DDR-summary-table-",response.matrix,".txt", sep = ""), sep = ",", row.names = F)
