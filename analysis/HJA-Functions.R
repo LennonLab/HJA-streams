@@ -197,3 +197,8 @@ fill.table <- function(lms.in = NULL, response.metric = response.matrix, ddr.sum
   
   return(rbind.data.frame(ddr.summary, rbind.data.frame(spatial.df, env.df)))
 }
+
+
+normalize.matrix <- function(m){
+  return((m - min(m)) / (max(m) - min(m)))
+}
