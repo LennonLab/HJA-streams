@@ -43,18 +43,18 @@ total.df.long <- rbind.data.frame(water.df.long, sed.df.long)
 #   cbind.data.frame(nb = nb, abund = waterabund, habitat = "water"),
 #   cbind.data.frame(nb = nb, abund = sedabund, habitat = "sediment"))
 
-nbplot <- ggplot(data = total.df.long, mapping = aes(y = relabund, x = nb)) +
-  geom_point() +
-  facet_grid(~habitat)+
-  labs(y = "Relative Abundance", x = "Niche Breadth")+
-  theme_bw()
-nbplot
-
-ls2 <- subset(water.df.long, site == "LC_02_W")
-nbplot <- ggplot(data = ls2, mapping = aes(y = relabund, x = nb)) +
-  geom_smooth() + 
-  labs(y = "Relative Abundance", x = "Niche Breadth")
-nbplot
+# nbplot <- ggplot(data = total.df.long, mapping = aes(y = relabund, x = nb)) +
+#   geom_point() +
+#   facet_grid(~habitat)+
+#   labs(y = "Relative Abundance", x = "Niche Breadth")+
+#   theme_bw()
+# nbplot
+# 
+# ls2 <- subset(water.df.long, site == "LC_02_W")
+# nbplot <- ggplot(data = ls2, mapping = aes(y = relabund, x = nb)) +
+#   geom_smooth() + 
+#   labs(y = "Relative Abundance", x = "Niche Breadth")
+# nbplot
 
 
 
@@ -78,4 +78,4 @@ hja.dists$nest <- hja.beta.part$beta.sne
 hja.dists$sor <- hja.beta.part$beta.sor
 hja.dists$generalists <- generalists.pcoa$dist.matrix
 hja.dists$specialists <- specialists.pcoa$dist.matrix
-DDR(hja.dists, comm = "generalists")
+DDR(hja.dists, comm = "specialists")

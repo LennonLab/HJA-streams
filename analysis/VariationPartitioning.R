@@ -54,8 +54,8 @@ capture.output(
 
 
 # headwaters vs. downstream
-headwaters.db <- vegdist(OTUsREL[which(design$order==1),], method = "bray")
-downstream.db <- vegdist(OTUsREL[which(design$order!=1),], method = "bray")
+headwaters.db <- vegdist(decostand(OTUsREL[which(design$order==1),], method = "hellinger"), method = "euclidean")
+downstream.db <- vegdist(decostand(OTUsREL[which(design$order!=1),], method = "hellinger"), method = "euclidean")
 headwaters.env <- hja.env.mod[which(design$order==1),] 
 downstream.env <- hja.env.mod[which(design$order!=1),]
 headwaters.coords <- hja.coords[which(design$order==1),] 
@@ -73,7 +73,7 @@ headwaters.pcnm <- scores(headwaters.pcnm)[,which(headwaters.pcnm$values>0)]
 headwaters.pcnm <- as.data.frame(headwaters.pcnm)
 headwaters.dbrda <- dbrda(headwaters.db ~ ., headwaters.pcnm)
 envfit(headwaters.dbrda, headwaters.pcnm)
-headwaters.pcnm <- subset(headwaters.pcnm, select = c("PCNM1", "PCNM3")) 
+headwaters.pcnm <- subset(headwaters.pcnm, select = c("PCNM1", "PCNM3", "PCNM4")) 
 
 
 downstream.dist <- as.dist(as.matrix(den.dists)[which(design$order!=1),which(design$order!=1)])
@@ -122,8 +122,8 @@ capture.output(
   file = "./tables/varpart_downstream_permutation_tests.txt")
 
 # water vs. sediments
-water.db <- vegdist(OTUsREL[which(design$habitat=="water"),], method = "bray")
-sed.db <- vegdist(OTUsREL[which(design$habitat=="sediment"),], method = "bray")
+water.db <- vegdist(decostand(OTUsREL[which(design$habitat=="water"),], method = "hellinger"), method = "euclidean")
+sed.db <- vegdist(decostand(OTUsREL[which(design$habitat=="sediment"),], method = "hellinger"), method = "euclidean")
 water.env <- env.mat[which(design$habitat=="water"),-c(1,2)] 
 sed.env <- env.mat[which(design$habitat=="sediment"),-c(1,2)]
 
@@ -135,7 +135,7 @@ water.pcnm <- scores(water.pcnm)[,which(water.pcnm$values>0)]
 water.pcnm <- as.data.frame(water.pcnm)
 water.dbrda <- dbrda(water.db ~ ., water.pcnm)
 envfit(water.dbrda, water.pcnm)
-water.pcnm <- subset(water.pcnm, select = c("PCNM1", "PCNM7", "PCNM11")) 
+water.pcnm <- subset(water.pcnm, select = c("PCNM1", "PCNM3", "PCNM7", "PCNM11")) 
 
 sed.dist <- as.dist(as.matrix(den.dists)[which(design$habitat=="sediment"),which(design$habitat=="sediment")])
 sed.pcnm <- pcnm(sed.dist, dist.ret = T)
@@ -145,7 +145,7 @@ sed.pcnm <- scores(sed.pcnm)[,which(sed.pcnm$values>0)]
 sed.pcnm <- as.data.frame(sed.pcnm)
 sed.dbrda <- dbrda(sed.db ~ ., sed.pcnm)
 envfit(sed.dbrda, sed.pcnm)
-sed.pcnm <- subset(sed.pcnm, select = c("PCNM4", "PCNM8", "PCNM13")) 
+sed.pcnm <- subset(sed.pcnm, select = c("PCNM4", "PCNM7", "PCNM8", "PCNM13")) 
 
 water.varpart <- varpart(water.db, water.env[,-c(1:2)], water.pcnm)
 sed.varpart <- varpart(sed.db, sed.env[,-c(1:2)], sed.pcnm)

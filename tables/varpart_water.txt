@@ -1,25 +1,25 @@
 
-Partition of squared Bray distance in dbRDA 
+Partition of squared Euclidean distance in dbRDA 
 
-Call: varpart(Y = water.db, X = water.env.mod, water.spa.mod)
+Call: varpart(Y = water.db, X = water.env[, -c(1:2)], water.pcnm)
 
 Explanatory tables:
-X1:  water.env.mod
-X2:  water.spa.mod 
+X1:  water.env[, -c(1:2)]
+X2:  water.pcnm 
 
 No. of explanatory tables: 2 
-Total variation (SS): 5.4018 
+Total variation (SS): 11.743 
 No. of observations: 32 
 
 Partition table:
                      Df R.squared Adj.R.squared Testable
-[a+b] = X1            3   0.18188       0.09422     TRUE
-[b+c] = X2            2   0.13153       0.07163     TRUE
-[a+b+c] = X1+X2       5   0.26708       0.12614     TRUE
+[a+b] = X1            4   0.17664       0.05466     TRUE
+[b+c] = X2            4   0.20327       0.08524     TRUE
+[a+b+c] = X1+X2       8   0.34333       0.11493     TRUE
 Individual fractions                                    
-[a] = X1|X2           3                 0.05451     TRUE
-[b]                   0                 0.03971    FALSE
-[c] = X2|X1           2                 0.03192     TRUE
-[d] = Residuals                         0.87386    FALSE
+[a] = X1|X2           4                 0.02969     TRUE
+[b]                   0                 0.02497    FALSE
+[c] = X2|X1           4                 0.06027     TRUE
+[d] = Residuals                         0.88507    FALSE
 ---
 Use function ‘capscale’ to test significance of fractions of interest

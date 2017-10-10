@@ -6,7 +6,7 @@ Number of permutations: 999
  
 Call: vegan::capscale(formula = headwaters.db ~ headwaters.env.mat)
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.821568 (with 3, 8 Degrees of Freedom)
+Pseudo-F:	 1.68271 (with 3, 8 Degrees of Freedom)
 Significance:	 0.001 
 
 
@@ -17,8 +17,8 @@ Number of permutations: 999
  
 Call: vegan::capscale(formula = headwaters.db ~ headwaters.pcnm.mat)
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.26764 (with 2, 9 Degrees of Freedom)
-Significance:	 0.105 
+Pseudo-F:	 1.294722 (with 3, 8 Degrees of Freedom)
+Significance:	 0.04 
 
 
 Permutation test for capscale 
@@ -26,10 +26,11 @@ Permutation test for capscale
 Permutation: free
 Number of permutations: 999
  
-Call: vegan::capscale(formula = headwaters.db ~ headwaters.env.mat + Condition(headwaters.pcnm.mat))
+Call: vegan::capscale(formula = headwaters.db ~ headwaters.env.mat +
+Condition(headwaters.pcnm.mat))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.573283 (with 3, 6 Degrees of Freedom)
-Significance:	 0.02 
+Pseudo-F:	 1.441846 (with 3, 5 Degrees of Freedom)
+Significance:	 0.059 
 
 
 Permutation test for capscale 
@@ -37,8 +38,9 @@ Permutation test for capscale
 Permutation: free
 Number of permutations: 999
  
-Call: vegan::capscale(formula = headwaters.db ~ headwaters.pcnm.mat + Condition(headwaters.env.mat))
+Call: vegan::capscale(formula = headwaters.db ~ headwaters.pcnm.mat +
+Condition(headwaters.env.mat))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.081666 (with 2, 6 Degrees of Freedom)
-Significance:	 0.368 
+Pseudo-F:	 1.164549 (with 3, 5 Degrees of Freedom)
+Significance:	 0.269 
 

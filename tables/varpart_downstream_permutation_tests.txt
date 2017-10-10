@@ -6,7 +6,7 @@ Number of permutations: 999
  
 Call: vegan::capscale(formula = downstream.db ~ downstream.env.mat)
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 5.658165 (with 3, 40 Degrees of Freedom)
+Pseudo-F:	 4.392425 (with 3, 40 Degrees of Freedom)
 Significance:	 0.001 
 
 
@@ -17,7 +17,7 @@ Number of permutations: 999
  
 Call: vegan::capscale(formula = downstream.db ~ downstream.pcnm.mat)
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 2.09747 (with 3, 40 Degrees of Freedom)
+Pseudo-F:	 1.937546 (with 3, 40 Degrees of Freedom)
 Significance:	 0.002 
 
 
@@ -26,9 +26,10 @@ Permutation test for capscale
 Permutation: free
 Number of permutations: 999
  
-Call: vegan::capscale(formula = downstream.db ~ downstream.env.mat + Condition(downstream.pcnm.mat))
+Call: vegan::capscale(formula = downstream.db ~ downstream.env.mat +
+Condition(downstream.pcnm.mat))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 4.904121 (with 3, 37 Degrees of Freedom)
+Pseudo-F:	 3.763618 (with 3, 37 Degrees of Freedom)
 Significance:	 0.001 
 
 
@@ -37,8 +38,9 @@ Permutation test for capscale
 Permutation: free
 Number of permutations: 999
  
-Call: vegan::capscale(formula = downstream.db ~ downstream.pcnm.mat + Condition(downstream.env.mat))
+Call: vegan::capscale(formula = downstream.db ~ downstream.pcnm.mat +
+Condition(downstream.env.mat))
 Permutation test for all constrained eigenvalues
-Pseudo-F:	 1.67229 (with 3, 37 Degrees of Freedom)
+Pseudo-F:	 1.534316 (with 3, 37 Degrees of Freedom)
 Significance:	 0.001 
 
