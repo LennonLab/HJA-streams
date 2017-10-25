@@ -8,7 +8,7 @@ opar <- par()
 package.list <- c('vegan', 'png', 'simba', 'grid', 
                   'vegetarian', 'pander', 'SoDA', 'fossil',
                   'tidyverse', 'cluster', 'adespatial', 'spdep', 'betapart', 
-                  'stringr')
+                  'stringr', 'picante')
 # 'sp', 'vegetarian', 
 # 'SoDA', 'geoR',
 
