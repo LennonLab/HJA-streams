@@ -105,6 +105,11 @@ env.mat <- scale(env.mat)
 env.mat <- env.mat[,c("sediment", "elevation", "temperature", "conductivity",
            "ph", "TN", "TP")]
 
+# Rarefy communities
+OTUs <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
+OTUs <- OTUs[,-which(colSums(OTUs) == 0)]
+saveRDS(OTUs, file = "data/SiteBySpeciesRarefied.rda")
+
 # Transformations and Standardizations
 OTUsREL <- decostand(OTUs, method = "total")
 OTUs.PA <- decostand(OTUs, method = "pa")

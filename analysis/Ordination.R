@@ -20,13 +20,15 @@ lookout.pcoa <- run.pcoa(comm = OTUsREL[which(design$watershed == "LC"),])
 ws01.pcoa <- run.pcoa(comm = OTUsREL[which(design$watershed == "WS01"),])
 
 # Is habitat or order an important factor in community structure?
-hja.permanova <- adonis(hja.pcoa$dist.matrix ~ design$habitat * design$watershed + design$order, permutations = 999)
+hja.permanova <- adonis(hja.pcoa$dist.matrix ~ design$habitat * design$order, permutations = 999)
 capture.output(hja.permanova$aov.tab, file = "./tables/hja_permanova.txt")
 
+adonis(formula = lookout.pcoa$dist.matrix ~ design$habitat[which(design$watershed == "LC")], permutations = 999)
+adonis(formula = ws01.pcoa$dist.matrix ~ design$habitat[which(design$watershed == "WS01")], permutations = 999)
 
-
-ord <- hja.pcoa$pcoa
-scrs <- scores(ord)
+ord <- ws01.pcoa
+ord.pc <- ord$pcoa
+scrs <- scores(ord.pc)
 xlim <- extendrange(x = .1, r = range(scrs[,1]))
 ylim <- extendrange(x = .1, r = range(scrs[,2]))
 
@@ -44,7 +46,8 @@ axis(side = 1, lwd.ticks = 2, cex.axis = 1.2)
 axis(side = 2, lwd.ticks = 2, cex.axis = 1.2)
 axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2)
 axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2)
-title(xlab = "PCoA 1", ylab = "PCoA 2")
+title(xlab = paste("PCoA 1 (",ord$var1,"%)", sep = ""), 
+      ylab = paste("PCoA 2 (",ord$var2,"%)", sep = ""), cex.lab = 1.2)
 box(lwd = 2)
 
 

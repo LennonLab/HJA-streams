@@ -1,9 +1,11 @@
-source("analysis/InitialSetup.R")
+# source("analysis/InitialSetup.R")
 # source("analysis/DistanceCalcs.R")
 # source("analysis/Ordination.R")
 require(picante)
-require(png)
-require(grid)
+require(progress)
+
+# require(png)
+# require(grid)
 
 #------------------------------------------------#
 # Read TREE
@@ -56,9 +58,14 @@ require(grid)
 # matched.phylo.sed <- match.phylo.comm(hja.tree, OTUs.sed)
 # saveRDS(matched.phylo.water, file = "data/matched.phylo.water.rda")
 # saveRDS(matched.phylo.sed, file = "data/matched.phylo.sed.rda")
-matched.phylo.water <- readRDS(file = "data/matched.phylo.water.rda")
-matched.phylo.sed <- readRDS(file = "data/matched.phylo.sed.rda")
-
+# matched.phylo.water <- readRDS(file = "data/matched.phylo.water.rda")
+# matched.phylo.sed <- readRDS(file = "data/matched.phylo.sed.rda")
+# 
+# OTUs.common <- sort(colSums(OTUs), decreasing = T, index.return = T)$ix
+# OTUs.common <- OTUs.common[1:5000]
+# matched.phylo <- match.phylo.comm(hja.tree, OTUs[,OTUs.common])
+# saveRDS(matched.phylo, file = "data/matched.phylo.rda")
+matched.phylo <- readRDS("data/matched.phylo.rda")
 
 # hja.cor <- comm.phylo.cor(samp = matched.phylo$comm, phylo = matched.phylo$phy,
 #                           metric = "cij", null.model = "sample.taxa.labels", runs = 999)
@@ -160,10 +167,12 @@ matched.phylo.sed <- readRDS(file = "data/matched.phylo.sed.rda")
 # 
 
 ### bNTI 
-water.phy <- matched.phylo.water$phy
-water.comm <- matched.phylo.water$comm
-sed.phy <- matched.phylo.sed$phy
-sed.comm <- matched.phylo.sed$comm
+# water.phy <- matched.phylo.water$phy
+# water.comm <- matched.phylo.water$comm
+# sed.phy <- matched.phylo.sed$phy
+# sed.comm <- matched.phylo.sed$comm
+hja.comm <- matched.phylo$comm
+hja.phy <- matched.phylo$phy
 
 # Calc. obs. mntds
 # mntds.water <- (comdistnt(water.comm,
@@ -177,30 +186,34 @@ sed.comm <- matched.phylo.sed$comm
 mntds.water <- readRDS(file = "data/mntds-water.rda")
 mntds.sed <- readRDS(file = "data/mntds-sed.rda")
 
+mntd.hja <- comdistnt(hja.comm, cophenetic(hja.phy), abundance.weighted = T)
+
 # Create null comms
-mntd.null.water <- array(NA, c(32, 32, 999))
+mntd.null <- array(NA, c(50, 50, 999))
 for(i in 1:999){
-  print(paste("creating null community ", i, " of 999"))
-  temp.mntd <- comdistnt(water.comm,
-                         cophenetic(tipShuffle(water.phy)),
+  if(i == 1) pb <- progress_bar$new(total = 999, force = T)
+  pb$update(ratio = i/999)
+  #print(paste("creating null community ", i, " of 999"))
+  temp.mntd <- comdistnt(hja.comm,
+                         cophenetic(tipShuffle(hja.phy)),
                          abundance.weighted=T)
-  mntd.null.water[,,i] <- as.matrix(temp.mntd)
-  saveRDS(mntd.null.water, file = "data/mntds-water-null-dist.rda")
+  mntd.null[,,i] <- as.matrix(temp.mntd)
+  if(i %% 50 == 0 | i == 999) saveRDS(mntd.null, file = "data/mntds-null-dist.rda")
 }
 
 # mntd.null.water <- readRDS(file = "data/mntds-water-null-dist.rda")
 # hist(mntd.null.water)
 
-mntd.null.sed <- array(NA, c(24, 24, 999))
-for(i in 1:999){
-  print(paste("creating null community ", i, " of 999"))
-  temp.mntd <- comdistnt(sed.comm,
-                         cophenetic(tipShuffle(sed.phy)),
-                         abundance.weighted=T)
-  mntd.null.sed[,,i] <- as.matrix(temp.mntd)
-  saveRDS(mntd.null.sed, file = "data/mntds-sed-null-dist.rda")
-}
-# mntd.null.sed <- readRDS(file = "data/mntds-sed-null-dist.rda")
+# mntd.null.sed <- array(NA, c(24, 24, 999))
+# for(i in 1:999){
+#   print(paste("creating null community ", i, " of 999"))
+#   temp.mntd <- comdistnt(sed.comm,
+#                          cophenetic(tipShuffle(sed.phy)),
+#                          abundance.weighted=T)
+#   mntd.null.sed[,,i] <- as.matrix(temp.mntd)
+#   saveRDS(mntd.null.sed, file = "data/mntds-sed-null-dist.rda")
+# }
+# # mntd.null.sed <- readRDS(file = "data/mntds-sed-null-dist.rda")
 
 # hist(mntd.null.sed)
 # hist(mntds.sed)
