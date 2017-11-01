@@ -1,10 +1,10 @@
 #source("./analysis/InitialSetup.R")
-
+require('betapart')
 
 ddr.summary <- data.frame()
 
-response.matrix <- "otus"
-update.plots <- FALSE
+response.matrix <- "sor"
+update.plots <- TRUE
 
 # Water DDR
 water.dists <- list()  

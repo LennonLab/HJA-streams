@@ -1,5 +1,5 @@
 
-Partition of squared Euclidean distance in dbRDA 
+Partition of squared Bray distance in dbRDA 
 
 Call: varpart(Y = hja.dist, X = hja.env.mod, hja.space.mod)
 
@@ -8,18 +8,18 @@ X1:  hja.env.mod
 X2:  hja.space.mod 
 
 No. of explanatory tables: 2 
-Total variation (SS): 22.684 
-No. of observations: 56 
+Total variation (SS): 9.5215 
+No. of observations: 50 
 
 Partition table:
                      Df R.squared Adj.R.squared Testable
-[a+b] = X1            3   0.20638       0.16060     TRUE
-[b+c] = X2            3   0.09296       0.04063     TRUE
-[a+b+c] = X1+X2       6   0.27488       0.18609     TRUE
+[a+b] = X1            3   0.25829       0.20992     TRUE
+[b+c] = X2            3   0.10553       0.04719     TRUE
+[a+b+c] = X1+X2       6   0.33463       0.24179     TRUE
 Individual fractions                                    
-[a] = X1|X2           3                 0.14546     TRUE
-[b]                   0                 0.01513    FALSE
-[c] = X2|X1           3                 0.02549     TRUE
-[d] = Residuals                         0.81391    FALSE
+[a] = X1|X2           3                 0.19459     TRUE
+[b]                   0                 0.01533    FALSE
+[c] = X2|X1           3                 0.03187     TRUE
+[d] = Residuals                         0.75821    FALSE
 ---
 Use function ‘capscale’ to test significance of fractions of interest
