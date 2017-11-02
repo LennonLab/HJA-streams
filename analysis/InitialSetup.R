@@ -106,9 +106,10 @@ env.mat <- env.mat[,c("sediment", "elevation", "temperature", "conductivity",
            "ph", "TN", "TP")]
 
 # Rarefy communities
-OTUs <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
-OTUs <- OTUs[,-which(colSums(OTUs) == 0)]
-saveRDS(OTUs, file = "data/SiteBySpeciesRarefied.rda")
+#OTUs <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
+#OTUs <- OTUs[,-which(colSums(OTUs) == 0)]
+#saveRDS(OTUs, file = "data/SiteBySpeciesRarefied.rda")
+OTUs <- readRDS("data/SiteBySpeciesRarefied.rda")
 
 # Transformations and Standardizations
 OTUsREL <- decostand(OTUs, method = "total")
@@ -126,13 +127,13 @@ xy <- cbind(jitter(env$longitude, amount = .0001),
 dist.mat <- fossil::earth.dist(xy) * 1000
 
 # # Read in phylodist
-# hja.unifrac.raw <- read.delim(file = "./data/hja_streams.tree1.weighted.phylip.dist", header = F, skip = 1, row.names = 1)
-# colnames(hja.unifrac.raw) <- as.vector(lapply(strsplit(rownames(hja.unifrac.raw)," "), function(x) x[1]))
-# rownames(hja.unifrac.raw) <- colnames(hja.unifrac.raw)
-# hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)), 
-#                                which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
-# hja.unifrac.dist <- as.dist(hja.unifrac)
-# 
+hja.unifrac.raw <- read.delim(file = "./data/hja_streams.tree1.weighted.phylip.dist", header = F, skip = 1, row.names = 1)
+colnames(hja.unifrac.raw) <- as.vector(lapply(strsplit(rownames(hja.unifrac.raw)," "), function(x) x[1]))
+rownames(hja.unifrac.raw) <- colnames(hja.unifrac.raw)
+hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)),
+                               which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
+hja.unifrac.dist <- as.dist(hja.unifrac)
+
 RC.bray.dist <- readRDS(file = "./data/RCbraydist.csv")
 bNTI.water.dist <- readRDS(file = "data/bNTIwater.rda")
 bNTI.sed.dist <- readRDS(file = "data/bNTIsed.rda")
