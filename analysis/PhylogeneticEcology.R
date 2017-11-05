@@ -186,7 +186,9 @@ hja.phy <- matched.phylo$phy
 mntds.water <- readRDS(file = "data/mntds-water.rda")
 mntds.sed <- readRDS(file = "data/mntds-sed.rda")
 
-mntd.hja <- comdistnt(hja.comm, cophenetic(hja.phy), abundance.weighted = T)
+# mntd.hja <- comdistnt(hja.comm, cophenetic(hja.phy), abundance.weighted = T)
+# saveRDS(mntd.hja, file = "data/mntds.rda")
+mntd.hja <- readRDS(file = "data/mntds.rda")
 
 # Create null comms
 mntd.null <- array(NA, c(50, 50, 999))
@@ -200,6 +202,27 @@ for(i in 1:999){
   mntd.null[,,i] <- as.matrix(temp.mntd)
   if(i %% 50 == 0 | i == 999) saveRDS(mntd.null, file = "data/mntds-null-dist.rda")
 }
+
+mntds.null <- readRDS(file = "data/mntds-null-dist.rda")
+
+# Calculate bNTIs
+mntds.rank <- NULL
+mntds.pval <- NULL
+bNTI <- NULL
+i <- 1
+
+hist(mntds.null[1,2,])
+
+for(each in liste(mntd.hja)[,3]){
+  # mntds.rank[i] <- rank(c(each, mntd.null))[1]
+  # pval <- mntds.rank[i] / (length(mntd.null) + 1)
+  # if (pval > 0.5) mntds.pval[i] <- (1-pval)*2
+  # if (pval <= 0.5) mntds.pval[i] <- pval*2
+  # i <- i+1
+  bNTI[i] <- (each - mean(mntds.null)) / sd(mntds.null)
+  i <- i+1
+}
+
 
 # mntd.null.water <- readRDS(file = "data/mntds-water-null-dist.rda")
 # hist(mntd.null.water)
@@ -270,6 +293,5 @@ for(i in 1:999){
 # water.mntd <- ses.mntd(samp = water.comm, dis = cophenetic(water.phy), 
 #                      abundance.weighted = T, iterations = 999,
 #                      null.model = "taxa.labels")
-
 
 

@@ -3,7 +3,7 @@ require('betapart')
 
 ddr.summary <- data.frame()
 
-response.matrix <- "sor"
+response.matrix <- "bNTI"
 update.plots <- TRUE
 
 # Water DDR
@@ -18,7 +18,7 @@ water.beta.part <- beta.pair(OTUs.PA[which(design$habitat == "water"),], index.f
 water.dists$nest <- water.beta.part$beta.sne
 water.dists$turn <- water.beta.part$beta.sim
 water.dists$sor <- water.beta.part$beta.sor
-water.dists$bNTI <- normalize.matrix(bNTI.water.dist)
+water.dists$bNTI <- as.dist(normalize.matrix(as.matrix(bNTI.dist)[which(design$habitat == "water"), which(design$habitat == "water")]))
 water.lms <- DDR(dists = water.dists, comm = response.matrix)
 ddr.summary <- fill.table(water.lms, ddr.summary = ddr.summary)
 
@@ -41,7 +41,7 @@ sediment.beta.part <- beta.pair(OTUs.PA[which(design$habitat == "sediment"),], i
 sediment.dists$nest <- sediment.beta.part$beta.sne
 sediment.dists$turn <- sediment.beta.part$beta.sim
 sediment.dists$sor <- sediment.beta.part$beta.sor
-sediment.dists$bNTI <- normalize.matrix(bNTI.sed.dist)
+sediment.dists$bNTI <- as.dist(normalize.matrix(as.matrix(bNTI.dist)[which(design$habitat == "sediment"), which(design$habitat == "sediment")]))
 sediment.lms <- DDR(dists = sediment.dists, comm = response.matrix)
 ddr.summary <- fill.table(sediment.lms, ddr.summary = ddr.summary)
 
@@ -64,6 +64,7 @@ headwater.beta.part <- beta.pair(OTUs.PA[which(design$order == 1),], index.famil
 headwater.dists$nest <- headwater.beta.part$beta.sne
 headwater.dists$turn <- headwater.beta.part$beta.sim
 headwater.dists$sor <- headwater.beta.part$beta.sor
+headwater.dists$bNTI <- as.dist(normalize.matrix(as.matrix(bNTI.dist)[which(design$order == 1), which(design$order == 1)]))
 headwater.lms <- DDR(dists = headwater.dists, comm = response.matrix)
 ddr.summary <- fill.table(headwater.lms, ddr.summary = ddr.summary)
 
@@ -86,6 +87,7 @@ headwater.seds.beta.part <- beta.pair(OTUs.PA[which(design$order == 1 & design$h
 headwater.seds.dists$nest <- headwater.seds.beta.part$beta.sne
 headwater.seds.dists$turn <- headwater.seds.beta.part$beta.sim
 headwater.seds.dists$sor <- headwater.seds.beta.part$beta.sor
+headwater.seds.dists$bNTI <- as.dist(normalize.matrix(as.matrix(bNTI.dist)[which(design$order == 1 & design$habitat == "sediment"), which(design$order == 1 & design$habitat == "sediment")]))
 headwater.seds.lms <- DDR(dists = headwater.seds.dists, comm = response.matrix)
 ddr.summary <- fill.table(headwater.seds.lms, ddr.summary = ddr.summary)
 
@@ -108,6 +110,7 @@ headwater.water.beta.part <- beta.pair(OTUs.PA[which(design$order == 1 & design$
 headwater.water.dists$nest <- headwater.water.beta.part$beta.sne
 headwater.water.dists$turn <- headwater.water.beta.part$beta.sim
 headwater.water.dists$sor <- headwater.water.beta.part$beta.sor
+headwater.water.dists$bNTI <- as.dist(normalize.matrix(as.matrix(bNTI.dist)[which(design$order == 1 & design$habitat == "water"), which(design$order == 1 & design$habitat == "water")]))
 headwater.water.lms <- DDR(dists = headwater.water.dists, comm = response.matrix)
 ddr.summary <- fill.table(headwater.water.lms, ddr.summary = ddr.summary)
 

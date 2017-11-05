@@ -20,7 +20,7 @@ for (package in package.list) {
 }
 
 
-# source("./analysis/MothurTools.R")
+source("./analysis/MothurTools.R")
 source("analysis/HJA-Functions.R")
 
 ## Import Shared, Design, and Environment Files
@@ -29,22 +29,18 @@ source("analysis/HJA-Functions.R")
 # Design = general design file for experiment
 # shared = OTU table from mothur with sequence similarity clustering
 # Taxonomy = Taxonomic information for each OTU
-# design <- "./data/design.txt"
-# shared <- "./data/hja_streams.final.shared"
-# taxon  <- "./data/hja_streams.final.0.03.taxonomy"
-# env    <- "./data/hja_env.csv"
 
 # # Import Design
-# design.total <- read.delim(design, header=T, row.names=1)
+# design.total <- read.delim("./data/design.txt", header=T, row.names=1)
 # 
 # # Import Shared Files
-# OTUs <- read.otu(shared = shared, cutoff = "0.03") # 97% Similarity
+# OTUs <- read.otu(shared = "./data/hja_streams.final.shared", cutoff = "0.03") # 97% Similarity
 # 
 # # Import Taxonomy
-# OTU.tax <- read.tax(taxonomy = taxon, format = "rdp")
+# OTU.tax <- read.tax(taxonomy = "./data/hja_streams.final.0.03.taxonomy", format = "rdp")
 # 
 # # Import Env
-# env.total <- read.csv(env, header=T)
+# env.total <- read.csv("./data/hja_env.csv", header=T)
 # 
 # ### Data Transformations
 # 
@@ -68,11 +64,8 @@ source("analysis/HJA-Functions.R")
 # # Remove OTUs with less than two occurances across all sites
 # OTUs <- OTUs[, which(colSums(OTUs) >= 2)]
 # 
-# # Chosen distance metric
-# dist.met <- "bray"
-
-
-# Write and read data files
+# 
+# # Write and read data files
 # saveRDS(OTUs, file = "./data/SiteBySpecies.rda")
 # saveRDS(env, file = "./data/SiteByEnv.rda")
 # saveRDS(OTU.tax, file = "./data/Taxonomy.rda")
@@ -88,7 +81,7 @@ design$upstreamdist <- as.matrix(den.dists)[1,]
 
 
 # Remove orthogonal vectors
-env.mat <- as.matrix(env[10:19])
+env.mat <- as.matrix(env[10:20])
 env.mat["83",9] <- 150 # These were the highest samples, overflow
 #env.mat[52,5] <- 150
 for(i in 1:nrow(env.mat)){
@@ -103,7 +96,7 @@ habitat.dummy <- simba::mad(as.factor(env$habitat))
 env.mat <- cbind(habitat.dummy, env.mat)
 env.mat <- scale(env.mat)
 env.mat <- env.mat[,c("sediment", "elevation", "temperature", "conductivity",
-           "ph", "TN", "TP")]
+           "ph", "TN", "TP", "DOC")]
 
 # Rarefy communities
 #OTUs <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
