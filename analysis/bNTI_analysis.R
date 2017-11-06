@@ -4,19 +4,19 @@
 require("cowplot")
 require("progress")
 
-# Calculate abundance-weighted Raup-Crick dissimilarities 
-regional.abunds <- t(as.matrix(colSums(OTUs)))
-regional.relabunds <- decostand(regional.abunds, method = "total")
-occupancy.probs <- t(as.matrix(colSums(decostand(OTUs, method = "pa")) / nrow(OTUs)))
-site.abunds <- rowSums(OTUs)
-site.rich <- specnumber(OTUs)
-a <- regional.relabunds * occupancy.probs
-
-# Create a null community based on Stegen et al. 2015
+# # Calculate abundance-weighted Raup-Crick dissimilarities 
+# regional.abunds <- t(as.matrix(colSums(OTUs)))
+# regional.relabunds <- decostand(regional.abunds, method = "total")
+# occupancy.probs <- t(as.matrix(colSums(decostand(OTUs, method = "pa")) / nrow(OTUs)))
+# site.abunds <- rowSums(OTUs)
+# site.rich <- specnumber(OTUs)
+# a <- regional.relabunds * occupancy.probs
+# 
+# # Create a null community based on Stegen et al. 2015
 r <- nrow(OTUs)
 c <- ncol(OTUs)
-spec.vec <- 1:ncol(OTUs)
-RCbc.nulls <- array(NA, c(r, c, 999))
+# spec.vec <- 1:ncol(OTUs)
+# RCbc.nulls <- array(NA, c(r, c, 999))
 
 # stochastic community assembly nulls
 # for(i in 1:999){
@@ -136,6 +136,58 @@ hja.rcbray.dist.ls <- liste(RC.bray.dist, entry = "RC.bray")
 hja.assembly <- as.data.frame(cbind(hja.bnti.dist.ls, hja.rcbray.dist.ls))
 hja.assembly <- full_join(hja.bnti.dist.ls, hja.rcbray.dist.ls)
 
+
+# identify comparisons
+
+hja.assembly$Habitat <- NA
+hja.assembly[str_detect(hja.assembly$NBX, "_W") & str_detect(hja.assembly$NBY, "_W"),]$Habitat <- str_wrap("Water-Water")
+hja.assembly[str_detect(hja.assembly$NBX, "_W") & str_detect(hja.assembly$NBY, "_S"),]$Habitat <- str_wrap("Water-Sediment")
+hja.assembly[str_detect(hja.assembly$NBX, "_S") & str_detect(hja.assembly$NBY, "_W"),]$Habitat <- str_wrap("Water-Sediment") 
+hja.assembly[str_detect(hja.assembly$NBX, "_S") & str_detect(hja.assembly$NBY, "_S"),]$Habitat <- str_wrap("Sediment-Sediment")
+
+hja.assembly$Location <- NA
+hja.assembly[design[hja.assembly$NBX,]$order < 2 & design[hja.assembly$NBY,]$order < 2,]$Location <- str_wrap("Headwater-Headwater")
+hja.assembly[design[hja.assembly$NBX,]$order >= 2 & design[hja.assembly$NBY,]$order >= 2,]$Location <- str_wrap("Downstream-Downstream")
+hja.assembly[design[hja.assembly$NBX,]$order < 2 & design[hja.assembly$NBY,]$order >= 2,]$Location <- str_wrap("Headwater-Downstream")
+hja.assembly[design[hja.assembly$NBX,]$order >= 2 & design[hja.assembly$NBY,]$order < 2,]$Location <- str_wrap("Headwater-Downstream")
+
+head(hja.assembly)
+
+# non wrapped text for figure
+hja.mechanism <- vector(length = nrow(hja.assembly))
+for(row.i in 1:nrow(hja.assembly)){
+  if(hja.assembly[row.i,"bNTI"] < -2){
+    hja.mechanism[row.i] <- str_wrap("Selection (Convergent)", width = 80)
+  }
+  if(hja.assembly[row.i,"bNTI"] > 2){
+    hja.mechanism[row.i] <- str_wrap("Selection (Divergent)", width = 80)
+  }
+  if(hja.assembly[row.i,"bNTI"] <= 2 & hja.assembly[row.i,"bNTI"] >= -2){
+    
+    if (hja.assembly[row.i,"RC.bray"] <= 0.95 & hja.assembly[row.i,"RC.bray"] >= -0.95){
+      hja.mechanism[row.i] <- str_wrap("Undominated", width = 80)
+    }
+    if(hja.assembly[row.i,"RC.bray"] < -.95){
+      hja.mechanism[row.i] <- str_wrap("Mass Effects", width = 80)
+    }
+    if(hja.assembly[row.i,"RC.bray"] > .95){
+      hja.mechanism[row.i] <- str_wrap("Dispersal Limitation", width = 80)
+    }
+  }
+}
+hja.assembly$Mechanism <- hja.mechanism
+
+
+community.assembly <- hja.assembly
+ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = Mechanism)) +
+  geom_point(show.legend = T) + 
+  geom_hline(yintercept = c(0.95, -0.95), lty = "dashed", col = "darkgrey")+
+  geom_vline(xintercept = c(-2, +2), lty = "dashed", col = "darkgrey")+
+  theme_cowplot()+
+  labs(x = expression(paste(beta,"NTI")), y = expression(paste("Raup-Crick"[BC])))+
+  ggsave("figures/comm_assembly.pdf", width = 8, height = 6, units = "in")
+
+# Wrapped text for figure
 hja.mechanism <- vector(length = nrow(hja.assembly))
 for(row.i in 1:nrow(hja.assembly)){
   if(hja.assembly[row.i,"bNTI"] < -2){
@@ -147,70 +199,44 @@ for(row.i in 1:nrow(hja.assembly)){
   if(hja.assembly[row.i,"bNTI"] <= 2 & hja.assembly[row.i,"bNTI"] >= -2){
     
     if (hja.assembly[row.i,"RC.bray"] <= 0.95 & hja.assembly[row.i,"RC.bray"] >= -0.95){
-    hja.mechanism[row.i] <- str_wrap("Undominated", width = 12)
+      hja.mechanism[row.i] <- str_wrap("Undominated", width = 12)
     }
     if(hja.assembly[row.i,"RC.bray"] < -.95){
-    hja.mechanism[row.i] <- str_wrap("Mass Effects", width = 12)
+      hja.mechanism[row.i] <- str_wrap("Mass Effects", width = 12)
     }
     if(hja.assembly[row.i,"RC.bray"] > .95){
-    hja.mechanism[row.i] <- str_wrap("Dispersal Limitation", width = 12)
+      hja.mechanism[row.i] <- str_wrap("Dispersal Limitation", width = 12)
     }
   }
 }
 hja.assembly$Mechanism <- hja.mechanism
 
-
-
-# identify comparisons
-
-hja.assembly$comparison.habitat <- NA
-hja.assembly[str_detect(hja.assembly$NBX, "_W") & str_detect(hja.assembly$NBY, "_W"),]$comparison.habitat <- "water_water" 
-hja.assembly[str_detect(hja.assembly$NBX, "_W") & str_detect(hja.assembly$NBY, "_S"),]$comparison.habitat <- "water_sed" 
-hja.assembly[str_detect(hja.assembly$NBX, "_S") & str_detect(hja.assembly$NBY, "_W"),]$comparison.habitat <- "water_sed" 
-hja.assembly[str_detect(hja.assembly$NBX, "_S") & str_detect(hja.assembly$NBY, "_S"),]$comparison.habitat <- "sed_sed" 
-
-hja.assembly$comparison.location <- NA
-hja.assembly[design[hja.assembly$NBX,]$order < 2 & design[hja.assembly$NBY,]$order < 2,]$comparison.location <- "headwater_headwater"
-hja.assembly[design[hja.assembly$NBX,]$order >= 2 & design[hja.assembly$NBY,]$order >= 2,]$comparison.location <- "downstream_downstream"
-hja.assembly[design[hja.assembly$NBX,]$order < 2 & design[hja.assembly$NBY,]$order >= 2,]$comparison.location <- "headwater_downstream"
-hja.assembly[design[hja.assembly$NBX,]$order >= 2 & design[hja.assembly$NBY,]$order < 2,]$comparison.location <- "headwater_downstream"
-
-head(hja.assembly)
-
 community.assembly <- hja.assembly
-ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = Mechanism)) +
-  geom_point(show.legend = T) + 
-  geom_hline(yintercept = c(0.95, -0.95), lty = "dashed", col = "lightgrey")+
-  geom_vline(xintercept = c(-2, +2), lty = "dashed", col = "lightgrey")+
-  theme_cowplot()+
-  labs(x = expression(paste(beta,"NTI")), y = expression(paste("Raup-Crick"[BC])))+
-  labs(title = "Community Assembly Mechanisms")
-community.assembly.plot
-ggsave("figures/comm_assembly.pdf", width = 8, height = 6, units = "in")
-
-assembly.table <- community.assembly %>% group_by(comparison.habitat) %>% count(Mechanism)
-ggplot(assembly.table, aes(x = factor(Mechanism), y = n, fill = comparison.habitat)) + 
+assembly.table <- community.assembly %>% group_by(Habitat) %>% count(Mechanism)
+ggplot(assembly.table, aes(x = factor(Mechanism), y = n, fill = Habitat)) + 
   geom_bar(stat = "identity") +
   theme_cowplot() + 
   labs(y = "Count", x = "Community Assembly Mechanism") +
   theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14))
-assembly.counts
 
-community.assembly %>% group_by(comparison.habitat, comparison.location) %>% 
-  count(Mechanism) %>% complete(comparison.habitat, comparison.location)
-  
-  mutate(tot = sum(n)) %>% mutate(proportion = n/tot) %>%
-  ggplot(aes(x = factor(Mechanism), y = proportion, fill = comparison.habitat, alpha = comparison.location)) + 
+
+assembly.counts <- community.assembly %>% group_by(Habitat, Location, Mechanism) %>%
+  count(Mechanism) 
+assembly.counts <- expand.grid(Habitat = unique(assembly.counts$Habitat), 
+            Location = unique(assembly.counts$Location), 
+            Mechanism = unique(assembly.counts$Mechanism)) %>% 
+  full_join(assembly.counts) %>%
+  mutate(n = ifelse(is.na(n), 0, n))
+assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(n)) %>%
+  full_join(assembly.counts) %>% 
+  mutate(proportion = n/group.count) %>%
+  ggplot(aes(x = factor(Mechanism), y = proportion, fill = Habitat, alpha = Location)) + 
   geom_bar(stat = "identity", position = 'dodge') +
   theme_classic() + 
-  labs(y = "Count", x = "Community Assembly Mechanism") +
-  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14))
+  scale_alpha_manual(values = c(.3,.7,1))+
+  labs(y = "Proportion", x = "") +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14)) + 
+  ggsave("figures/AssemblyCounts.pdf", width = 10, height = 6)
 
 
-assembly.table <- community.assembly %>% group_by(comparison.habitat, comparison.location) %>% count(Mechanism)
-ggplot(assembly.table, aes(x = factor(Mechanism), y = n, fill = comparison.habitat, alpha = comparison.location)) + 
-  geom_bar(stat = "identity") +
-  theme_cowplot() + 
-  labs(y = "Count", x = "Community Assembly Mechanism") +
-  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14))
 
