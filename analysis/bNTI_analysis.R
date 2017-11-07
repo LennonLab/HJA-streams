@@ -239,4 +239,13 @@ assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(
   ggsave("figures/AssemblyCounts.pdf", width = 10, height = 6)
 
 
-
+assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(n)) %>%
+  full_join(assembly.counts) %>% 
+  mutate(proportion = n/group.count) %>%
+  ggplot(aes(x = factor(Mechanism), y = proportion, fill = Location)) + 
+  facet_grid(Habitat ~ .) +
+  geom_bar(stat = "identity", position = 'dodge') +
+  theme_classic() + 
+  labs(y = "Proportion", x = "") +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14))
+  
