@@ -245,7 +245,11 @@ assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(
   ggplot(aes(x = factor(Mechanism), y = proportion, fill = Location)) + 
   facet_grid(Habitat ~ .) +
   geom_bar(stat = "identity", position = 'dodge') +
-  theme_classic() + 
+  theme_classic() +
+  scale_fill_manual(values = viridis::viridis(3, begin = 0, end = .8))+
   labs(y = "Proportion", x = "") +
-  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14))
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14),
+        strip.text.y = element_text(size = 14), legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 16)) + 
+  ggsave("figures/AssemblyCounts.pdf", width = 10, height = 10)
   
