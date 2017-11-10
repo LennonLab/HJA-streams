@@ -94,9 +94,10 @@ for(i in 1:nrow(env.mat)){
 }
 habitat.dummy <- simba::mad(as.factor(env$habitat))
 env.mat <- cbind(habitat.dummy, env.mat)
-env.mat <- scale(env.mat)
 env.mat <- env.mat[,c("sediment", "elevation", "temperature", "conductivity",
-           "ph", "TN", "TP", "DOC")]
+                      "ph", "TN", "TP", "DOC")]
+env.dat <- env.mat
+env.mat <- scale(env.mat)
 
 # Rarefy communities
 #OTUs <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
@@ -127,6 +128,3 @@ hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTU
                                which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
 hja.unifrac.dist <- as.dist(hja.unifrac)
 
-RC.bray.dist <- readRDS(file = "./data/RCbraydist.csv")
-bNTI.water.dist <- readRDS(file = "data/bNTIwater.rda")
-bNTI.sed.dist <- readRDS(file = "data/bNTIsed.rda")
