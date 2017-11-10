@@ -12,12 +12,12 @@ dev.off()
 
 # FIGURE 2. Constrained Ordination
 pdf("figures/Figure2_hja-dbrda.pdf", height = 6, width = 6, bg = "white")
-par(oma = c(1,1,1,1), pty = "s")
+par(oma = c(.1,.1,.1,.1), pty = "s")
 plot(scores(hja.dbrda.env, display = "sites"),
      xlab = paste("dbRDA 1 (", explain.var(hja.dbrda.env, axis = 1), "%)", sep = ""),
      ylab = paste("dbRDA 2 (", explain.var(hja.dbrda.env, axis = 2), "%)", sep = ""),
      pch = 21, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = F,
-     xlim = c(-1.75, 1.25), ylim = c(-1.5, 3))
+     xlim = c(-1, 2), ylim = c(-2.1, 1.1), asp = 1)
 add.axes()
 abline(h = 0, v = 0, lty = 3)
 points(scores(hja.dbrda.env, display = "sites")[which(design$habitat == "sediment"),],
@@ -26,10 +26,10 @@ points(scores(hja.dbrda.env, display = "sites")[which(design$habitat == "water")
        pch = 24, bg = "skyblue", cex = 2)
 ordiellipse(hja.dbrda.env, design$habitat, conf = 0.95, kind = "se", lwd=1,
             draw = "polygon", col=c("wheat", "skyblue"), border="black", alpha=63)
-vectors <- scores(hja.dbrda.env, display = "bp")
+vectors <- scores(hja.dbrda.env, display = "bp")[-3,]
 arrows(0, 0, 1.5*vectors[,1], 1.5*vectors[,2],
        lwd = 2, lty = 1, length = 0.1)
-text(1.5*vectors[,1], 1.5*vectors[,2], pos = c(1, 3, 2), 
+text(1.5*vectors[,1], 1.5*vectors[,2], pos = c(1, 1), 
      labels = rownames(vectors), offset = 1)
 legend("topright", legend = c("Planktonic", "Sediment"), pch = c(24, 21), 
        bty = "n", pt.bg = c("skyblue", "wheat"))

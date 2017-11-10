@@ -184,8 +184,10 @@ ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = Mechanism)) +
   geom_hline(yintercept = c(0.95, -0.95), lty = "dashed", col = "darkgrey")+
   geom_vline(xintercept = c(-2, +2), lty = "dashed", col = "darkgrey")+
   theme_cowplot()+
+  scale_color_manual(values = viridis::viridis(5, end = .9))+
   labs(x = expression(paste(beta,"NTI")), y = expression(paste("Raup-Crick"[BC])))+
-  ggsave("figures/comm_assembly.pdf", width = 8, height = 6, units = "in")
+  ggsave("figures/comm_assembly.pdf", width = 8, height = 6, units = "in", bg = "white")
+
 
 # Wrapped text for figure
 hja.mechanism <- vector(length = nrow(hja.assembly))
@@ -212,12 +214,14 @@ for(row.i in 1:nrow(hja.assembly)){
 hja.assembly$Mechanism <- hja.mechanism
 
 community.assembly <- hja.assembly
-assembly.table <- community.assembly %>% group_by(Habitat) %>% count(Mechanism)
-ggplot(assembly.table, aes(x = factor(Mechanism), y = n, fill = Habitat)) + 
+assembly.table <- community.assembly %>% count(Mechanism)
+ggplot(assembly.table, aes(x = factor(Mechanism), y = n, fill = Mechanism)) + 
   geom_bar(stat = "identity") +
   theme_cowplot() + 
-  labs(y = "Count", x = "Community Assembly Mechanism") +
-  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14))
+  labs(y = "Count", x = "") +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14)) + 
+  scale_fill_manual(values = viridis::viridis(5, end = 0.9), guide = F) +
+  ggsave("figures/comm_assembly_summary.pdf", width = 10, height = 6, bg = "white")
 
 
 assembly.counts <- community.assembly %>% group_by(Habitat, Location, Mechanism) %>%
@@ -227,29 +231,34 @@ assembly.counts <- expand.grid(Habitat = unique(assembly.counts$Habitat),
             Mechanism = unique(assembly.counts$Mechanism)) %>% 
   full_join(assembly.counts) %>%
   mutate(n = ifelse(is.na(n), 0, n))
-assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(n)) %>%
+
+
+assembly.counts %>% group_by(Habitat) %>% summarize(group.count = sum(n)) %>%
   full_join(assembly.counts) %>% 
   mutate(proportion = n/group.count) %>%
-  ggplot(aes(x = factor(Mechanism), y = proportion, fill = Habitat, alpha = Location)) + 
+  ggplot(aes(x = factor(Mechanism), y = proportion, fill = Mechanism)) + 
+  facet_grid(Habitat ~ .) +
   geom_bar(stat = "identity", position = 'dodge') +
-  theme_classic() + 
-  scale_alpha_manual(values = c(.3,.7,1))+
+  theme_classic() +
+  scale_fill_manual(values = viridis::viridis(5, begin = 0, end = .8))+
   labs(y = "Proportion", x = "") +
-  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14)) + 
-  ggsave("figures/AssemblyCounts.pdf", width = 10, height = 6)
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14),
+        strip.text.y = element_text(size = 16), legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 16), legend.position = "none") + 
+  ggsave("figures/AssemblyCounts.pdf", width = 8, height = 8)
 
 
 assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(n)) %>%
   full_join(assembly.counts) %>% 
-  mutate(proportion = n/group.count) %>%
+  mutate(proportion = n/group.count) %>% filter(Habitat == "Water-Sediment") %>%
   ggplot(aes(x = factor(Mechanism), y = proportion, fill = Location)) + 
   facet_grid(Habitat ~ .) +
   geom_bar(stat = "identity", position = 'dodge') +
   theme_classic() +
-  scale_fill_manual(values = viridis::viridis(3, begin = 0, end = .8))+
+#  scale_fill_manual(values = viridis::inferno(3, begin = .5, end = .9))+
   labs(y = "Proportion", x = "") +
   theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14),
-        strip.text.y = element_text(size = 14), legend.text = element_text(size = 14), 
-        legend.title = element_text(size = 16)) + 
-  ggsave("figures/AssemblyCounts.pdf", width = 10, height = 10)
+        strip.text.y = element_text(size = 16), legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 16), legend.position = "top") + 
+  ggsave("figures/AssemblyCounts-by-location.pdf", width = 10, height = 6)
   

@@ -8,18 +8,18 @@ X1:  hja.env.mod
 X2:  hja.space.mod 
 
 No. of explanatory tables: 2 
-Total variation (SS): 9.5215 
+Total variation (SS): 10.405 
 No. of observations: 50 
 
 Partition table:
                      Df R.squared Adj.R.squared Testable
-[a+b] = X1            3   0.25829       0.20992     TRUE
-[b+c] = X2            3   0.10553       0.04719     TRUE
-[a+b+c] = X1+X2       6   0.33463       0.24179     TRUE
+[a+b] = X1            3   0.23369       0.18372     TRUE
+[b+c] = X2            3   0.09992       0.04122     TRUE
+[a+b+c] = X1+X2       6   0.31292       0.21705     TRUE
 Individual fractions                                    
-[a] = X1|X2           3                 0.19459     TRUE
-[b]                   0                 0.01533    FALSE
-[c] = X2|X1           3                 0.03187     TRUE
-[d] = Residuals                         0.75821    FALSE
+[a] = X1|X2           3                 0.17583     TRUE
+[b]                   0                 0.00789    FALSE
+[c] = X2|X1           3                 0.03333     TRUE
+[d] = Residuals                         0.78295    FALSE
 ---
 Use function ‘capscale’ to test significance of fractions of interest

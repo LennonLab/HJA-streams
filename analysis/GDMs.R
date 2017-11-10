@@ -1,3 +1,4 @@
+source("analysis/InitialSetup.R")
 library(gdm)
 geo.dists <- geoXY(env$latitude, env$longitude)
 hja.biol.dat <- cbind.data.frame(sample = rownames(design), 
@@ -37,7 +38,6 @@ water.sitepair <- formatsitepair(bioData = water.biol.dat,
                                predData = water.env.dat, 
                                siteColumn = "sample", 
                                YColumn = "Y", XColumn = "X")
-
 head(water.sitepair)
 water.gdm <- gdm(water.sitepair, geo = TRUE)
 summary(water.gdm)
@@ -46,10 +46,13 @@ plot(water.gdm, plot.layout = c(3,4))
 water.pred <- predict(water.gdm, water.sitepair)
 graphics.off()
 plot(water.pred, water.sitepair$distance, ylab="Observed dissimilarity",
-     xlab="Predicted dissimilarity", xlim=c(0.4,1), ylim=c(0.3,1), pch=20, col=rgb(0,0,1,0.5))
+     xlab="Predicted dissimilarity", pch=20, col=rgb(0,0,1,0.5))
 lines(c(-1,2), c(-1,2))
 mtext(paste("Deviance Explained: ",round(water.gdm$explained,3),"%",sep = ""), 
       side = 3, line = 1.2, cex = 1.2)
+
+water.splines <- isplineExtract(water.gdm)
+matplot(x = water.splines$x[,-1], y = water.splines$y[,-1], type = 'l', xlim = c(-1,1))
 
 sediment.dists <- geoXY(env$latitude, env$longitude)[which(design$habitat == "sediment"),]
 sediment.biol.dat <- cbind.data.frame(sample = rownames(design[which(design$habitat == "sediment"),]), 
@@ -105,43 +108,83 @@ mtext(paste("Deviance Explained: ",round(hja.gdm$explained,3),"%",sep = ""),
 
 # mntd - sed
 geo.dists <- geoXY(env$latitude, env$longitude)[which(design$habitat == 'sediment'),]
-hja.biol.dat <- cbind.data.frame(sample = rownames(design)[which(design$habitat == 'sediment')], as.matrix(mntd.hja)[which(design$habitat == 'sediment'),which(design$habitat == 'sediment')])
-#hja.biol.dat <- cbind.data.frame(sample = rownames(design), as.matrix(normalize.matrix(bNTI.dist)))
-#hja.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat)
-hja.env.dat <- cbind.data.frame(sample = rownames(design)[which(design$habitat == 'sediment')], geo.dists, env.mat[which(design$habitat == 'sediment'),], order = design[which(design$habitat == 'sediment'),5])
-hja.sitepair <- formatsitepair(bioData = hja.biol.dat, 
+sed.biol.dat <- cbind.data.frame(sample = rownames(design)[which(design$habitat == 'sediment')], as.matrix(mntd.hja)[which(design$habitat == 'sediment'),which(design$habitat == 'sediment')])
+#sed.biol.dat <- cbind.data.frame(sample = rownames(design), as.matrix(normalize.matrix(bNTI.dist)))
+#sed.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat)
+sed.env.dat <- cbind.data.frame(sample = rownames(design)[which(design$habitat == 'sediment')], geo.dists, env.mat[which(design$habitat == 'sediment'),], order = design[which(design$habitat == 'sediment'),5])
+sed.sitepair <- formatsitepair(bioData = sed.biol.dat, 
                                bioFormat = 3, abundance = T, 
-                               predData = hja.env.dat, 
+                               predData = sed.env.dat, 
                                siteColumn = "sample",
                                YColumn = "Y", XColumn = "X")
-head(hja.sitepair)
-hja.gdm <- gdm(hja.sitepair, geo = TRUE, splines = rep(5, 10))
-summary(hja.gdm)
-coef(hja.gdm)
-length(hja.gdm$predictors)
-plot(hja.gdm, plot.layout = c(3,4))
-hja.pred <- predict(hja.gdm, hja.sitepair)
+head(sed.sitepair)
+sed.gdm <- gdm(sed.sitepair, geo = TRUE, splines = rep(5,10))
+summary(sed.gdm)
+coef(sed.gdm)
+length(sed.gdm$predictors)
+plot(sed.gdm, plot.layout = c(3,4))
+sed.splines <- isplineExtract(sed.gdm)
+sed.pred <- predict(sed.gdm, sed.sitepair)
 graphics.off()
-plot(hja.pred, hja.sitepair$distance, ylab="Observed dissimilarity",
+plot(sed.pred, sed.sitepair$distance, ylab="Observed dissimilarity",
      xlab="Predicted dissimilarity", pch=20, col=rgb(0,0,1,0.5))
 lines(c(-1,2), c(-1,2), lwd = 2)
-text("1:1", x = (max(hja.pred) - .001), y = (max(hja.sitepair$distance) - 0.02))
-mtext(paste("Deviance Explained: ",round(hja.gdm$explained,3),"%",sep = ""), 
+text("1:1", x = (max(sed.pred) - .001), y = (max(sed.sitepair$distance) - 0.02))
+mtext(paste("Deviance Explained: ",round(sed.gdm$explained,3),"%",sep = ""), 
       side = 3, line = 1.2, cex = 1.2)
 
 # mntd  - water
 geo.dists <- geoXY(env$latitude, env$longitude)[which(design$habitat == 'water'),]
-hja.biol.dat <- cbind.data.frame(sample = rownames(design)[which(design$habitat == 'water')], as.matrix(mntd.hja)[which(design$habitat == 'water'),which(design$habitat == 'water')])
-#hja.biol.dat <- cbind.data.frame(sample = rownames(design), as.matrix(normalize.matrix(bNTI.dist)))
+water.biol.dat <- cbind.data.frame(sample = rownames(design)[which(design$habitat == 'water')], as.matrix(mntd.hja)[which(design$habitat == 'water'),which(design$habitat == 'water')])
+#water.biol.dat <- cbind.data.frame(sample = rownames(design), as.matrix(normalize.matrix(bNTI.dist)))
+#water.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat)
+water.env.dat <- cbind.data.frame(sample = rownames(design)[which(design$habitat == 'water')], geo.dists, env.mat[which(design$habitat == 'water'),], order = design[which(design$habitat == 'water'),5])
+#water.env.dat <- water.env.dat[,c("sample", "X","Y", "temperature", "TN", "order")]
+water.sitepair <- formatsitepair(bioData = water.biol.dat, 
+                               bioFormat = 3, abundance = T, 
+                               predData = water.env.dat, 
+                               siteColumn = "sample",
+                               YColumn = "Y", XColumn = "X")
+head(water.sitepair)
+water.gdm <- gdm(water.sitepair, geo = TRUE, splines = rep(5, 10))
+summary(water.gdm)
+coef(water.gdm)
+length(water.gdm$predictors)
+plot(water.gdm, plot.layout = c(3,4))
+water.splines <- isplineExtract(water.gdm)
+water.pred <- predict(water.gdm, water.sitepair)
+graphics.off()
+plot(water.pred, water.sitepair$distance, ylab="Observed dissimilarity",
+     xlab="Predicted dissimilarity", pch=20, col=rgb(0,0,1,0.5))
+lines(c(-1,2), c(-1,2), lwd = 2)
+text("1:1", x = (max(water.pred) - .001), y = (max(water.sitepair$distance) - 0.02))
+mtext(paste("Deviance Explained: ",round(water.gdm$explained,3),"%",sep = ""), 
+      side = 3, line = 1.2, cex = 1.2)
+
+
+
+
+# comparison
+
+
+
+
+
+
+# turnover
+geo.dists <- geoXY(env$latitude, env$longitude)
+hja.biol.dat <- cbind.data.frame(sample = rownames(design), 
+                                 as.matrix(beta.pair(OTUs.PA, index.family = 'sorensen')$beta.sim))
 #hja.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat)
-hja.env.dat <- cbind.data.frame(sample = rownames(design)[which(design$habitat == 'water')], geo.dists, env.mat[which(design$habitat == 'water'),], order = design[which(design$habitat == 'water'),5])
+hja.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat, order = design[,5])
 hja.sitepair <- formatsitepair(bioData = hja.biol.dat, 
                                bioFormat = 3, abundance = T, 
                                predData = hja.env.dat, 
-                               siteColumn = "sample",
+                               siteColumn = "sample", 
                                YColumn = "Y", XColumn = "X")
+
 head(hja.sitepair)
-hja.gdm <- gdm(hja.sitepair, geo = TRUE, splines = rep(5, 10))
+hja.gdm <- gdm(hja.sitepair, geo = TRUE)
 summary(hja.gdm)
 coef(hja.gdm)
 length(hja.gdm$predictors)
@@ -150,7 +193,114 @@ hja.pred <- predict(hja.gdm, hja.sitepair)
 graphics.off()
 plot(hja.pred, hja.sitepair$distance, ylab="Observed dissimilarity",
      xlab="Predicted dissimilarity", pch=20, col=rgb(0,0,1,0.5))
-lines(c(-1,2), c(-1,2), lwd = 2)
-text("1:1", x = (max(hja.pred) - .001), y = (max(hja.sitepair$distance) - 0.02))
+lines(c(-1,2), c(-1,2))
+#text("1:1", x = .98, y = .93)
 mtext(paste("Deviance Explained: ",round(hja.gdm$explained,3),"%",sep = ""), 
       side = 3, line = 1.2, cex = 1.2)
+
+
+geo.dists <- geoXY(env$latitude, env$longitude)
+water.dists <- geoXY(env$latitude, env$longitude)[which(design$habitat == "water"),]
+water.biol.dat <- cbind.data.frame(sample = rownames(design[which(design$habitat == "water"),]), 
+                                   as.matrix(beta.pair(OTUs.PA[which(design$habitat == "water"),], index.family = "sorensen")$beta.sim))
+water.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat[,-1])[which(design$habitat == "water"),]
+water.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat[,-1], order = design[,5])[which(design$habitat == "water"),]
+water.sitepair <- formatsitepair(bioData = water.biol.dat, 
+                                 bioFormat = 3, abundance = T, 
+                                 predData = water.env.dat, 
+                                 siteColumn = "sample", 
+                                 YColumn = "Y", XColumn = "X")
+
+head(water.sitepair)
+water.gdm <- gdm(water.sitepair, geo = TRUE)
+summary(water.gdm)
+length(water.gdm$predictors)
+plot(water.gdm, plot.layout = c(3,4))
+water.pred <- predict(water.gdm, water.sitepair)
+graphics.off()
+plot(water.pred, water.sitepair$distance, ylab="Observed dissimilarity",
+     xlab="Predicted dissimilarity", pch=20, col=rgb(0,0,1,0.5))
+lines(c(-1,2), c(-1,2), lwd = 2)
+mtext(paste("Deviance Explained: ",round(water.gdm$explained,3),"%",sep = ""), 
+      side = 3, line = 1.2, cex = 1.2)
+
+geo.dists <- geoXY(env$latitude, env$longitude)
+sediment.dists <- geoXY(env$latitude, env$longitude)[which(design$habitat == "sediment"),]
+sediment.biol.dat <- cbind.data.frame(sample = rownames(design[which(design$habitat == "sediment"),]), 
+                                   as.matrix(beta.pair(OTUs.PA[which(design$habitat == "sediment"),], index.family = "sorensen")$beta.sim))
+sediment.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat[,-1])[which(design$habitat == "sediment"),]
+sediment.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat[,-1], order = design[,5])[which(design$habitat == "sediment"),]
+sediment.sitepair <- formatsitepair(bioData = sediment.biol.dat, 
+                                 bioFormat = 3, abundance = T, 
+                                 predData = sediment.env.dat, 
+                                 siteColumn = "sample", 
+                                 YColumn = "Y", XColumn = "X")
+
+head(sediment.sitepair)
+sediment.gdm <- gdm(sediment.sitepair, geo = TRUE)
+summary(sediment.gdm)
+length(sediment.gdm$predictors)
+plot(sediment.gdm, plot.layout = c(3,4))
+sediment.pred <- predict(sediment.gdm, sediment.sitepair)
+graphics.off()
+plot(sediment.pred, sediment.sitepair$distance, ylab="Observed dissimilarity",
+     xlab="Predicted dissimilarity", pch=20, col=rgb(0,0,1,0.5))
+lines(c(-1,2), c(-1,2), lwd = 2)
+mtext(paste("Deviance Explained: ",round(sediment.gdm$explained,3),"%",sep = ""), 
+      side = 3, line = 1.2, cex = 1.2)
+
+# downstream
+geo.dists <- geoXY(env$latitude, env$longitude)
+water.dists <- geoXY(env$latitude, env$longitude)[which(design$habitat == "water" & design$order > 1),]
+water.biol.dat <- cbind.data.frame(sample = rownames(design[which(design$habitat == "water" & design$order > 1),]), 
+                                   as.matrix(vegdist(OTUsREL[which(design$habitat == "water" & design$order > 1),], method = 'bray')))
+water.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat[,-1])[which(design$habitat == "water" & design$order > 1),]
+water.sitepair <- formatsitepair(bioData = water.biol.dat, 
+                                 bioFormat = 3, abundance = T, 
+                                 predData = water.env.dat, 
+                                 siteColumn = "sample", 
+                                 YColumn = "Y", XColumn = "X")
+
+head(water.sitepair)
+water.gdm <- gdm(water.sitepair, geo = TRUE)
+summary(water.gdm)
+length(water.gdm$predictors)
+pdf("figures/gdm-water-splines.pdf", bg = "white", height = 10, width = 10)
+plot(water.gdm, plot.layout = c(3,3))
+dev.off()
+water.pred <- predict(water.gdm, water.sitepair)
+graphics.off()
+pdf("figures/gdm-water.pdf", bg = "white", height = 6, width = 6)
+plot(water.pred, water.sitepair$distance, ylab="Observed dissimilarity",
+     xlab="Predicted dissimilarity", pch=20, col=rgb(0,0,1,0.5))
+lines(c(-1,2), c(-1,2), lwd = 2)
+mtext(paste("Deviance Explained: ",round(water.gdm$explained,3),"%",sep = ""), 
+      side = 3, line = 1.2, cex = 1.2)
+dev.off()
+geo.dists <- geoXY(env$latitude, env$longitude)
+sediment.dists <- geoXY(env$latitude, env$longitude)[which(design$habitat == "sediment" & design$order > 1),]
+sediment.biol.dat <- cbind.data.frame(sample = rownames(design[which(design$habitat == "sediment" & design$order > 1),]), 
+                                      as.matrix(vegdist(OTUsREL[which(design$habitat == "sediment" & design$order > 1),],method = 'bray')))
+sediment.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat[,-1])[which(design$habitat == "sediment" & design$order > 1),]
+sediment.sitepair <- formatsitepair(bioData = sediment.biol.dat, 
+                                    bioFormat = 3, abundance = T, 
+                                    predData = sediment.env.dat, 
+                                    siteColumn = "sample", 
+                                    YColumn = "Y", XColumn = "X")
+
+head(sediment.sitepair)
+sediment.gdm <- gdm(sediment.sitepair, geo = TRUE)
+summary(sediment.gdm)
+length(sediment.gdm$predictors)
+pdf("figures/gdm-sed-splines.pdf", bg = "white", height = 10, width = 10)
+plot(sediment.gdm, plot.layout = c(3,3))
+dev.off()
+sediment.pred <- predict(sediment.gdm, sediment.sitepair)
+graphics.off()
+pdf("figures/gdm-sed.pdf", bg = "white", height = 6, width = 6)
+plot(sediment.pred, sediment.sitepair$distance, ylab="Observed dissimilarity",
+     xlab="Predicted dissimilarity", pch=20, col=rgb(0,0,1,0.5))
+lines(c(-1,2), c(-1,2), lwd = 2)
+mtext(paste("Deviance Explained: ",round(sediment.gdm$explained,3),"%",sep = ""), 
+      side = 3, line = 1.2, cex = 1.2)
+dev.off()
