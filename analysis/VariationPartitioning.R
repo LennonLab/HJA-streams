@@ -14,8 +14,9 @@ hja.dbrda.mod0 <- dbrda(hja.dist ~ 1, as.data.frame(env.mat))
 hja.dbrda.mod1 <- dbrda(hja.dist ~ ., as.data.frame(env.mat))
 hja.dbrda.env <- ordiR2step(hja.dbrda.mod0, hja.dbrda.mod1, perm.max = 200)
 hja.dbrda.env$call
-hja.env.mod <- model.matrix(~ sediment + elevation + TP,
+hja.env.mod <- model.matrix(~ sediment + TP + conductivity + TN,
                             data = as.data.frame(env.mat))[,-1]
+hja.dbrda.env <- dbrda(hja.dist ~ sediment + TP + conductivity + TN, as.data.frame(env.mat))
 permutest(hja.dbrda.env, permutations = 999)
 envfit(hja.dbrda.env, hja.env.mod, perm = 999)
 

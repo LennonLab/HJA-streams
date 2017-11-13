@@ -188,6 +188,28 @@ ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = Mechanism)) +
   labs(x = expression(paste(beta,"NTI")), y = expression(paste("Raup-Crick"[BC])))+
   ggsave("figures/comm_assembly.pdf", width = 8, height = 6, units = "in", bg = "white")
 
+assembly.counts <- community.assembly %>% group_by(Habitat, Location, Mechanism) %>%
+  count(Mechanism) 
+assembly.counts <- expand.grid(Habitat = unique(assembly.counts$Habitat), 
+                               Location = unique(assembly.counts$Location), 
+                               Mechanism = unique(assembly.counts$Mechanism)) %>% 
+  full_join(assembly.counts) %>%
+  mutate(n = ifelse(is.na(n), 0, n))
+
+assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(n)) %>%
+  full_join(assembly.counts) %>% 
+  mutate(proportion = n/group.count) %>% filter(Habitat == "Water-Sediment", Location != "Headwater-Downstream") %>%
+  mutate(Position = ifelse(Location == "Downstream-Downstream", "Downstream", "Headwaters")) %>%
+  ggplot(aes(x = factor(Position, levels = c("Headwaters", "Downstream")), y = proportion, fill = Mechanism)) + 
+  # facet_grid(Habitat ~ .) +
+  geom_bar(stat = "identity", position = 'stack') +
+  theme_classic() +
+  labs(y = "Proportion", x = "") +
+  scale_fill_manual(values = viridis::viridis(5, end = .9)) +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14),
+        strip.text.y = element_text(size = 16), legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 16), legend.position = "right") + 
+  ggsave("figures/comm_assemb_sedwatercomp.pdf", width = 6, height = 6, bg = "white")
 
 # Wrapped text for figure
 hja.mechanism <- vector(length = nrow(hja.assembly))
@@ -262,3 +284,7 @@ assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(
         legend.title = element_text(size = 16), legend.position = "top") + 
   ggsave("figures/AssemblyCounts-by-location.pdf", width = 10, height = 6)
   
+
+
+#hja.phylo.struc <- comm.phylo.cor(hja.comm, hja.phy, metric = "cij", null.model = "sample.taxa.labels", runs = 999)
+#saveRDS(hja.phylo.struc, file = 'phylostruct.rdata')

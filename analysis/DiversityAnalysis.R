@@ -30,7 +30,7 @@ S.rarefy <- rarefy(x = OTUs, sample = (min.N), se = TRUE)
 #rarecurve(x = OTUs, step = 20, col = "blue", cex = 0.6, las = 1)
 rare.d <- t(S.rarefy)
 colnames(rare.d) <- c("S.rare", "se.rare")
-alpha.div <- cbind(design, S.obs, simpsE, shan, N1, simpsD, rare.d)
+alpha.div <- cbind(design, S.obs, simpsE, shan, N1, simpsD)
 
 
 num.coms <- 10
@@ -48,7 +48,7 @@ alpha.water <- alpha.div[alpha.div$habitat == "water",]
 alpha.sed <- alpha.div[alpha.div$habitat == "sediment", ]
 
 # Differences in diversity (richness and evenness) between habitats
-t.test(alpha.water$S.rare, alpha.sed$S.rare)
+t.test(alpha.water$S.obs, alpha.sed$S.obs)
 t.test(alpha.water$N1, alpha.sed$N1)
 boxplot(alpha.water$N1, alpha.sed$N1)
 capture.output(summary(lm(alpha.div$S.rare ~ design$habitat == "water")),
@@ -478,23 +478,24 @@ model.orders.s <- lm(orders.bray.s$dist ~ orders.bray.s$order)
 #### Figures
 
 ### Figure 1: Rarefied diversity in sediment and surface-water communities
-png(filename = "./figures/AlphaDiv.png",
-    width = 1200, height = 1200, res = 96*2)
+adiv.plotting <- cbind(S.obs = alpha.div$S.obs, habitat = factor(((alpha.div$habitat == "sediment") * 1)))
+pdf(file = "./figures/AlphaDiv.pdf",
+    width = 6, height = 6, bg = "white")
 par(mar = c(5, 5, 3, 2) + 0.3)
-boxplot(S.rare ~ habitat, data = alpha.div, at = c(3,1),
-        names = c("Sediment", "Water"), col = c("grey", "white"),
+boxplot(S.obs ~ habitat, data = adiv.plotting, at = c(3,1),
+        names = c("Planktonic", "Sediment"), col = c("skyblue", "wheat"),
         xlim = c(0,4),
         yaxt = "n", ylab = "", xlab = "", cex.axis = 1.2)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 1, labels = F, at = c(1,3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd = 2)
-text(3, 1700, "*", cex = 2)
+text(1, 3000, "*", cex = 2)
 mtext("Habitat Type", side = 1, line = 3, cex = 1.5)
 mtext("Species Richness", side = 2, line = 4, cex = 1.5)
 dev.off()
 graphics.off()
-#img <- readPNG("./figures/AlphaDiv.png")
-#grid.raster(img)
+# img <- readPNG("./figures/AlphaDiv.png")
+# grid.raster(img)
 
 # Figure 3: Beta-diversity is higher among headwaters than among higher order streams.
 png(filename = "./figures/BetaDiv_BrayCurtis.png",
@@ -554,3 +555,13 @@ graphics.off()
 
 img <- readPNG("./figures/BetaDiv_NumEquiv.png")
 grid.raster(img)
+
+ggplot(alpha.div, aes(y = N1, x = order, color = habitat, fill = habitat)) + 
+  geom_jitter(width = 0.2) +
+  ylab("Species Equivalents (q = 1)") +
+  xlab("Stream Order") + 
+  scale_colour_manual(values = c("brown", "skyblue")) +
+  scale_fill_manual(values = c("tan", "skyblue")) +
+  theme(legend.title = element_text(size = 16)) +
+  geom_smooth(method = "gam", se = T, size = 2) +
+  ggsave(filename = "figures/alpha-by-order.pdf", width = 7, height = 6, bg = "white")
