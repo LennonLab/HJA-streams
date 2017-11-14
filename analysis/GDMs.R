@@ -265,11 +265,38 @@ head(water.sitepair)
 water.gdm <- gdm(water.sitepair, geo = TRUE)
 summary(water.gdm)
 length(water.gdm$predictors)
+water.pred <- water.gdm$predicted
+water.splines <- isplineExtract(water.gdm)
+water.splines.x <- as.data.frame(water.splines$x)
+water.splines.y <- as.data.frame(water.splines$y)
+water.splines.x.long <- water.splines.x %>% rowid_to_column() %>% gather(key = spline, value = xpos, -rowid)
+water.splines.y.long <- water.splines.y %>% rowid_to_column() %>% gather(key = spline, value = ypos, -rowid)
+full_join(water.splines.x.long, water.splines.y.long) %>% filter(spline == "Geographic") %>%
+  ggplot(aes(x = xpos, y = ypos)) + 
+  geom_line(size = 2) +
+  ylab("F(Geographic Distance)\n") +
+  xlab("\nGeographic Distance (m)") +
+  theme_cowplot() +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 18),
+        aspect.ratio = 1) + 
+  ggsave(filename = "figures/gdm-water-splines-geo.pdf", bg = "white", width = 6, height = 6)
+full_join(water.splines.x.long, water.splines.y.long) %>% 
+  filter(spline != "Geographic", spline != "DOC", spline != "elevation", spline != "ph") %>%
+  ggplot(aes(x = xpos, y = ypos, col = spline)) + 
+  geom_line(size = 2) +
+  ylab("F(Env Variable)") +
+  xlab("Env Variable (z-score)") +
+  theme_cowplot() +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 18),
+        legend.title = element_text(size = 16), aspect.ratio = 1) +
+  ggsave(filename = "figures/gdm-water-splines-env.pdf", bg = "white", width = 6, height = 6)
+
 pdf("figures/gdm-water-splines.pdf", bg = "white", height = 10, width = 10)
-plot(water.gdm, plot.layout = c(3,3))
+plot(water.gdm, plot.layout = c(3,3), cex = 1.2)
 dev.off()
 water.pred <- predict(water.gdm, water.sitepair)
 graphics.off()
+
 pdf("figures/gdm-water.pdf", bg = "white", height = 6, width = 6)
 plot(water.pred, water.sitepair$distance, ylab="Observed dissimilarity",
      xlab="Predicted dissimilarity", pch=20, col=rgb(0,0,1,0.5))
@@ -277,6 +304,7 @@ lines(c(-1,2), c(-1,2), lwd = 2)
 mtext(paste("Deviance Explained: ",round(water.gdm$explained,3),"%",sep = ""), 
       side = 3, line = 1.2, cex = 1.2)
 dev.off()
+
 geo.dists <- geoXY(env$latitude, env$longitude)
 sediment.dists <- geoXY(env$latitude, env$longitude)[which(design$habitat == "sediment" & design$order > 1),]
 sediment.biol.dat <- cbind.data.frame(sample = rownames(design[which(design$habitat == "sediment" & design$order > 1),]), 
@@ -292,6 +320,32 @@ head(sediment.sitepair)
 sediment.gdm <- gdm(sediment.sitepair, geo = TRUE)
 summary(sediment.gdm)
 length(sediment.gdm$predictors)
+sediment.splines <- isplineExtract(sediment.gdm)
+sediment.splines.x <- as.data.frame(sediment.splines$x)
+sediment.splines.y <- as.data.frame(sediment.splines$y)
+sediment.splines.x.long <- sediment.splines.x %>% rowid_to_column() %>% gather(key = spline, value = xpos, -rowid)
+sediment.splines.y.long <- sediment.splines.y %>% rowid_to_column() %>% gather(key = spline, value = ypos, -rowid)
+full_join(sediment.splines.x.long, sediment.splines.y.long) %>% filter(spline == "Geographic") %>%
+  ggplot(aes(x = xpos, y = ypos)) + 
+  geom_line(size = 2) +
+  ylab("F(Geographic Distance)\n") +
+  xlab("\nGeographic Distance (m)") +
+  theme_cowplot() +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 18),
+        aspect.ratio = 1) + 
+  ggsave(filename = "figures/gdm-sediment-splines-geo.pdf", bg = "white", width = 6, height = 6)
+full_join(sediment.splines.x.long, sediment.splines.y.long) %>% 
+  filter(spline != "Geographic") %>%
+  ggplot(aes(x = xpos, y = ypos, col = spline)) + 
+  geom_line(size = 2) +
+  ylab("F(Env Variable)") +
+  xlab("Env Variable (z-score)") +
+  theme_cowplot() +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 18),
+        legend.title = element_text(size = 16), aspect.ratio = 1) +
+  ggsave(filename = "figures/gdm-sediment-splines-env.pdf", bg = "white", width = 6, height = 4)
+
+
 pdf("figures/gdm-sed-splines.pdf", bg = "white", height = 10, width = 10)
 plot(sediment.gdm, plot.layout = c(3,3))
 dev.off()
