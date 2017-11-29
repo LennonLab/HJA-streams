@@ -358,3 +358,43 @@ lines(c(-1,2), c(-1,2), lwd = 2)
 mtext(paste("Deviance Explained: ",round(sediment.gdm$explained,3),"%",sep = ""), 
       side = 3, line = 1.2, cex = 1.2)
 dev.off()
+
+
+
+gdm.w.geo.plt <- full_join(water.splines.x.long, water.splines.y.long) %>% filter(spline == "Geographic") %>%
+  ggplot(aes(x = xpos, y = ypos)) + 
+  geom_line(size = 2) +
+  ylab("F(Geographic Distance)\n") +
+  xlab("\nGeographic Distance (m)") +
+  theme_cowplot() +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 18),
+        aspect.ratio = 1)
+gdm.w.env.plt <- full_join(water.splines.x.long, water.splines.y.long) %>% 
+  filter(spline != "Geographic", spline != "DOC", spline != "elevation", spline != "ph") %>%
+  ggplot(aes(x = xpos, y = ypos, col = spline)) + 
+  geom_line(size = 2) +
+  ylab("F(Env Variable)") +
+  xlab("Env Variable (z-score)") +
+  theme_cowplot() +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 18),
+        legend.title = element_text(size = 16), aspect.ratio = 1)
+gdm.s.geo.plt <- full_join(sediment.splines.x.long, sediment.splines.y.long) %>% filter(spline == "Geographic") %>%
+  ggplot(aes(x = xpos, y = ypos)) + 
+  geom_line(size = 2) +
+  ylab("F(Geographic Distance)\n") +
+  xlab("\nGeographic Distance (m)") +
+  theme_cowplot() +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 18),
+        aspect.ratio = 1)
+gdm.s.env.plt <- full_join(sediment.splines.x.long, sediment.splines.y.long) %>% 
+  filter(spline != "Geographic") %>%
+  ggplot(aes(x = xpos, y = ypos, col = spline)) + 
+  geom_line(size = 2) +
+  ylab("F(Env Variable)") +
+  xlab("Env Variable (z-score)") +
+  theme_cowplot() +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 18),
+        legend.title = element_text(size = 16), aspect.ratio = 1)
+plot_grid(gdm.w.env.plt, gdm.w.geo.plt, gdm.s.env.plt, gdm.s.geo.plt, 
+          labels = c("A", "B", "C", "D")) + 
+  ggsave("figures/gdm-grid.pdf", bg = "white", width = 10, height = 10)
