@@ -29,18 +29,18 @@ grid.raster(img)
 
 
 # Elevation gradient analysis
-water.bray <- 1 - (vegdist(OTUsREL.log[which(design$habitat=="water"),], method = "bray"))
-water.bray.list <- liste(water.bray, entry = "struc")
+water.bray <- 1 - (vegdist(OTUsREL[which(design$habitat=="water"),], method = "bray"))
+water.unifrac <- hja.unifrac[which(design$habitat=="water"), which(design$habitat=="water")]
+water.unifrac <- as.dist(water.unifrac)
 water.elev.dist <- dist(env[which(design$habitat == "water"),10])
-water.elev.dist.list <- liste(water.elev.dist, entry = "elev")
-water.elev.lm <- lm(log(water.bray.list$struc) ~ water.elev.dist.list$elev)
+water.elev.lm <- lm(bNTI.water.dist ~ water.elev.dist)
 summary(water.elev.lm)
 
-sed.bray <- 1 - (vegdist(OTUsREL.log[which(design$habitat=="sediment"),], method = "bray"))
-sed.bray.list <- liste(sed.bray, entry = "struc")
+sed.bray <- 1 - (vegdist(OTUsREL[which(design$habitat=="sediment"),], method = "bray"))
+sed.unifrac <- hja.unifrac[which(design$habitat=="sediment"), which(design$habitat=="sediment")]
+sed.unifrac <- as.dist(sed.unifrac)
 sed.elev.dist <- dist(env[which(design$habitat == "sediment"),10])
-sed.elev.dist.list <- liste(sed.elev.dist, entry = "elev")
-sed.elev.lm <- lm(log(sed.bray.list$struc) ~ sed.elev.dist.list$elev)
+sed.elev.lm <- lm(bNTI.sed.dist ~ sed.elev.dist)
 summary(sed.elev.lm)
 
 
@@ -51,32 +51,34 @@ png(filename = "./figures/Figure10.png",
 par(mfrow = c(2, 1))
 par(mar = c(1, 5, 4, 3) + 0.3)
 
-plot(log(water.bray.list$struc) ~ water.elev.dist.list$elev, 
+plot((bNTI.water.dist) ~ water.elev.dist, 
      xlim = c(0,800), xlab="",
      ylab = "", xaxt = "n", yaxt = "n")
 axis(side=1, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
-mtext("log Community Similarity\nSurface Water", side = 2, line = 3, cex = 1.2)
+mtext("Community Similarity\nSurface Water", side = 2, line = 3, cex = 1.2)
 box(lwd=2)
 abline(water.elev.lm, lty = 2, lwd = 2)
-
+abline(h = 2, col = "red", lwd = 2)
+abline(h = -2, col = "red", lwd = 2)
 par(mar = c(5, 5, 1, 3) + 0.3)
 
 
-plot(log(sed.bray.list$struc) ~ sed.elev.dist.list$elev,
+plot((bNTI.sed.dist) ~ sed.elev.dist,
      xlim = c(0,800), xlab="",
      ylab = "", xaxt = "n", yaxt = "n")
 axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
 axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
-mtext("log Community Similarity\nSediments", side = 2, line = 3, cex = 1.2)
+mtext("Community Similarity\nSediments", side = 2, line = 3, cex = 1.2)
 mtext("Elevation difference (m)", side = 1, line = 3, cex = 1.5)
 box(lwd=2)
 abline(sed.elev.lm, lwd = 2)
-
+abline(h = 2, col = "red", lwd = 2)
+abline(h = -2, col = "red", lwd = 2)
 
 dev.off()
 graphics.off()

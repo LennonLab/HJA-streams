@@ -1,68 +1,56 @@
-# source("./analysis/InitialSetup.R")
+source("./analysis/InitialSetup.R")
+source("./analysis/HJA-Functions.R")
 
 #### PCoA 
 
 # All HJA Catchment
-hja.db <- vegdist(OTUsREL, method = "bray")
-hja.d.sorensen <- vegdist(OTUsREL, method = "bray", binary = T)
-hja.d.jaccard <- vegdist(OTUsREL, method = "jaccard")
-hja.pcoa <- cmdscale(hja.db, eig=TRUE)
-hja.pcoa.sorensen <- cmdscale(hja.d.sorensen, eig = TRUE)
-hja.pcoa.jaccard <- cmdscale(hja.d.jaccard, eig = TRUE)
-var1 <- round(hja.pcoa$eig[1] / sum(hja.pcoa$eig),3) * 100
-var2 <- round(hja.pcoa$eig[2] / sum(hja.pcoa$eig),3) * 100
-var3 <- round(hja.pcoa$eig[3] / sum(hja.pcoa$eig),3) * 100
-var1.sor <- round(hja.pcoa.sorensen$eig[1] / sum(hja.pcoa.sorensen$eig),3) * 100
-var2.sor <- round(hja.pcoa.sorensen$eig[2] / sum(hja.pcoa.sorensen$eig),3) * 100
-var3.sor <- round(hja.pcoa.sorensen$eig[3] / sum(hja.pcoa.sorensen$eig),3) * 100
-var1.jac <- round(hja.pcoa.jaccard$eig[1] / sum(hja.pcoa.jaccard$eig),3) * 100
-var2.jac <- round(hja.pcoa.jaccard$eig[2] / sum(hja.pcoa.jaccard$eig),3) * 100
-var3.jac <- round(hja.pcoa.jaccard$eig[3] / sum(hja.pcoa.jaccard$eig),3) * 100
-
+hja.pcoa <- run.pcoa(comm = OTUsREL)
 
 # Sediments Only
-sediment <- OTUsREL[which(design$habitat == "sediment"),]
-sediment.db <- vegdist(sediment, method = "bray")
-sediment.dsorensen <- vegdist(decostand(sediment, method = "pa"), method = "bray")
-sediment.d.jac <- vegdist(sediment, method = "jaccard")
-sediment.pcoa <- cmdscale(sediment.db, eig=TRUE)
-sed.design <- design[which(design$habitat == "sediment"),]
-s.var1 <- round(sediment.pcoa$eig[1] / sum(sediment.pcoa$eig),3) * 100
-s.var2 <- round(sediment.pcoa$eig[2] / sum(sediment.pcoa$eig),3) * 100
-s.var3 <- round(sediment.pcoa$eig[3] / sum(sediment.pcoa$eig),3) * 100
+sed.pcoa <- run.pcoa(comm = OTUsREL[which(design$habitat == "sediment"),])
 
 # Water Only
-water <- OTUsREL[which(design$habitat == "water"),]
-water.db <- vegdist(water, method = "bray")
-water.dsorensen <- vegdist(decostand(water, method = "pa"), method = "bray")
-water.d.jac <- vegdist(water, method = "jaccard")
-water.pcoa <- cmdscale(water.db, eig=TRUE)
-water.design <- design[which(design$habitat == "water"),]
-w.var1 <- round(water.pcoa$eig[1] / sum(water.pcoa$eig),3) * 100
-w.var2 <- round(water.pcoa$eig[2] / sum(water.pcoa$eig),3) * 100
-w.var3 <- round(water.pcoa$eig[3] / sum(water.pcoa$eig),3) * 100
+water.pcoa <- run.pcoa(comm = OTUsREL[which(design$habitat == "water"),])
+
 
 # Lookout Creek Watershed Only
-lc <- OTUsREL[which(design$watershed == "LC"),]
-lc.db <- vegdist(lc, method = "bray")
-lc.pcoa <- cmdscale(lc.db, eig=TRUE)
-lc.design <- design[which(design$watershed == "LC"),]
-lc.var1 <- round(lc.pcoa$eig[1] / sum(lc.pcoa$eig),3) * 100
-lc.var2 <- round(lc.pcoa$eig[2] / sum(lc.pcoa$eig),3) * 100
-lc.var3 <- round(lc.pcoa$eig[3] / sum(lc.pcoa$eig),3) * 100
+lookout.pcoa <- run.pcoa(comm = OTUsREL[which(design$watershed == "LC"),])
 
 # Watershed 01 Only
-w1 <- OTUsREL[which(design$watershed == "WS01"),]
-w1.db <- vegdist(w1, method = "bray")
-w1.pcoa <- cmdscale(w1.db, eig=TRUE)
-w1.design <- design[which(design$watershed == "WS01"),]
-w1.var1 <- round(w1.pcoa$eig[1] / sum(w1.pcoa$eig),3) * 100
-w1.var2 <- round(w1.pcoa$eig[2] / sum(w1.pcoa$eig),3) * 100
-w1.var3 <- round(w1.pcoa$eig[3] / sum(w1.pcoa$eig),3) * 100
+ws01.pcoa <- run.pcoa(comm = OTUsREL[which(design$watershed == "WS01"),])
 
 # Is habitat or order an important factor in community structure?
-hja.permanova <- adonis(hja.db ~ design$habitat * design$watershed + design$order, permutations = 999)
+hja.permanova <- adonis(hja.pcoa$dist.matrix ~ design$habitat * design$order, permutations = 999)
 capture.output(hja.permanova$aov.tab, file = "./tables/hja_permanova.txt")
+
+adonis(formula = lookout.pcoa$dist.matrix ~ design$habitat[which(design$watershed == "LC")], permutations = 999)
+adonis(formula = ws01.pcoa$dist.matrix ~ design$habitat[which(design$watershed == "WS01")], permutations = 999)
+
+ord <- ws01.pcoa
+ord.pc <- ord$pcoa
+scrs <- scores(ord.pc)
+xlim <- extendrange(x = .1, r = range(scrs[,1]))
+ylim <- extendrange(x = .1, r = range(scrs[,2]))
+
+with(design, levels(habitat))
+cols <- c("white", "grey")
+
+plot.new()
+plot.window(xlim = xlim, ylim = ylim, asp = 1)
+abline(h = 0, lty = "dotted")
+abline(v = 0, lty = "dotted")
+with(design, points(scrs, col = "black", pch = 21, cex = 2, bg = cols[habitat]))
+with(design, legend("topright", legend = levels(habitat), bty = "n",
+                      col = cols, pch = 21, pt.bg = cols))
+axis(side = 1, lwd.ticks = 2, cex.axis = 1.2)
+axis(side = 2, lwd.ticks = 2, cex.axis = 1.2)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2)
+title(xlab = paste("PCoA 1 (",ord$var1,"%)", sep = ""), 
+      ylab = paste("PCoA 2 (",ord$var2,"%)", sep = ""), cex.lab = 1.2)
+box(lwd = 2)
+
+
 
 
 #### Figure 4: Sediment vs. Water PCoA

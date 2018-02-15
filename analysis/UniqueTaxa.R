@@ -32,19 +32,16 @@ capture.output(summary(lm(unique_frac ~ habitat, data = unique.fracs)),
                file = "./tables/unique_compare.txt")
 
 ### Figure 2: Proportion unique taxa
-png(filename = "./figures/UniqueTaxa.png",
-    width = 1200, height = 1200, res = 96*2)
-par(mar = c(5, 5, 2, 2) + 0.1)
-boxplot(unique_frac ~ habitat, data = unique.fracs, names = c("Sediments", "Water"), col = c("grey", "white"),
+pdf(file = "./figures/UniqueTaxa.pdf",
+    width = 6, height = 6, bg = "white")
+par(mar = c(5, 5, 3, 2) + 0.3)
+boxplot(unique_frac ~ habitat, data = unique.fracs, names = c("Sediment", "Planktonic"), col = c("wheat", "skyblue"),
         at = c(1,3), xlim = c(0,4), yaxt = "n", cex.axis = 1.2)
 axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
 axis(side = 1, labels = F, at = c(1,3), lwd.ticks = 2, cex.axis = 1.2, las = 1)
 box(lwd=2)
 mtext("Proportion Unique Taxa", side = 2, line = 3.5, cex = 1.5)
 mtext("Habitat Type", side = 1, line = 3, cex = 1.5)
-text(x = 1, y = 0.25, "*", cex = 2)
+text(x = 1, y = 0.2, "*", cex = 2)
 dev.off()
 graphics.off()
-
-img <- readPNG("./figures/UniqueTaxa.png")
-grid.raster(img)

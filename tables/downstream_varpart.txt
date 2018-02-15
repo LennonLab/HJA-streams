@@ -1,41 +1,25 @@
 
 Partition of squared Bray distance in dbRDA 
 
-Call: varpart(Y = downstream.db, X = downstream.env, downstream.pcnm, downstream.coords)
+Call: varpart(Y = downstream.db, X = downstream.env, downstream.pcnm)
 
 Explanatory tables:
 X1:  downstream.env
-X2:  downstream.pcnm
-X3:  downstream.coords 
+X2:  downstream.pcnm 
 
-No. of explanatory tables: 3 
+No. of explanatory tables: 2 
 Total variation (SS): 8.0518 
 No. of observations: 44 
 
 Partition table:
-                      Df R.square Adj.R.square Testable
-[a+d+f+g] = X1         7  0.38971      0.27104     TRUE
-[b+d+e+g] = X2        13  0.36783      0.09389     TRUE
-[c+e+f+g] = X3         2  0.07878      0.03384     TRUE
-[a+b+d+e+f+g] = X1+X2 20  0.64661      0.33932     TRUE
-[a+c+d+e+f+g] = X1+X3  9  0.43581      0.28646     TRUE
-[b+c+d+e+f+g] = X2+X3 15  0.41380      0.09977     TRUE
-[a+b+c+d+e+f+g] = All 22  0.68873      0.36264     TRUE
-Individual fractions                                   
-[a] = X1 | X2+X3       7               0.26288     TRUE
-[b] = X2 | X1+X3      13               0.07618     TRUE
-[c] = X3 | X1+X2       2               0.02332     TRUE
-[d]                    0              -0.01026    FALSE
-[e]                    0              -0.00790    FALSE
-[f]                    0              -0.01745    FALSE
-[g]                    0               0.03587    FALSE
-[h] = Residuals                        0.63736    FALSE
-Controlling 1 table X                                  
-[a+d] = X1 | X3        7               0.25262     TRUE
-[a+f] = X1 | X2        7               0.24543     TRUE
-[b+d] = X2 | X3       13               0.06592     TRUE
-[b+e] = X2 | X1       13               0.06828     TRUE
-[c+e] = X3 | X1        2               0.01542     TRUE
-[c+f] = X3 | X2        2               0.00587     TRUE
+                     Df R.squared Adj.R.squared Testable
+[a+b] = X1            3   0.29793       0.24528     TRUE
+[b+c] = X2           19   0.43732      -0.00814     TRUE
+[a+b+c] = X1+X2      22   0.65968       0.30315     TRUE
+Individual fractions                                    
+[a] = X1|X2           3                 0.31129     TRUE
+[b]                   0                -0.06602    FALSE
+[c] = X2|X1          19                 0.05787     TRUE
+[d] = Residuals                         0.69685    FALSE
 ---
 Use function ‘capscale’ to test significance of fractions of interest

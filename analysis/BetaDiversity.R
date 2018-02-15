@@ -6,8 +6,61 @@ require(betapart)
 require(vegan)
 
 OTUs.PA <- decostand(OTUs, method = "pa")
-hja.beta.pair <- beta.pair(OTUs.PA)
-ordiplot(cmdscale(hja.beta.pair$beta.sne))
+hja.beta.pair <- beta.pair(OTUs.PA[which(design$habitat == "water"),], index.family = "jac")
+nest <- as.matrix(hja.beta.pair$beta.jne)[1,-1]
+turn <- as.matrix(hja.beta.pair$beta.jtu)[1,-1]
+usdis <- design$upstreamdist[which(design$habitat == "water")][-1]
+beta <- as.matrix(hja.beta.pair$beta.jac)[1,-1]
+plot(nest~usdis)
+plot(turn~usdis)
+plot(beta~usdis)
+water.env <- env.mat[which(design$habitat == "water"),]
+water.env <- as.matrix(dist(water.env))[1,-1]
+plot(nest~water.env)
+plot(turn~water.env)
+plot(beta~water.env)
+
+hja.beta.pair <- beta.pair(OTUs.PA[which(design$habitat != "water"),], index.family = "jac")
+nest <- as.matrix(hja.beta.pair$beta.jne)[1,-1]
+turn <- as.matrix(hja.beta.pair$beta.jtu)[1,-1]
+beta <- as.matrix(hja.beta.pair$beta.jac)[1,-1]
+usdis <- design$upstreamdist[which(design$habitat != "water")][-1]
+plot(nest~usdis)
+plot(turn~usdis)
+plot(beta~usdis)
+water.env <- env.mat[which(design$habitat != "water"),]
+water.env <- as.matrix(dist(water.env))[1,-1]
+plot(nest~water.env)
+plot(turn~water.env)
+plot(beta~water.env)
+
+hja.beta.pair <- beta.pair(OTUs.PA[which(design$order == 1),], index.family = "jac")
+nest <- as.matrix(hja.beta.pair$beta.jne)[1,-1]
+turn <- as.matrix(hja.beta.pair$beta.jtu)[1,-1]
+beta <- as.matrix(hja.beta.pair$beta.jac)[1,-1]
+usdis <- design$upstreamdist[which(design$order == 1)][-1]
+plot(nest~usdis)
+plot(turn~usdis)
+plot(beta~usdis)
+water.env <- env.mat[which(design$order == 1),]
+water.env <- as.matrix(dist(water.env))[1,-1]
+plot(nest~water.env)
+plot(turn~water.env)
+plot(beta~water.env)
+
+hja.beta.pair <- beta.pair(OTUs.PA[which(design$order != 1),], index.family = "jac")
+nest <- as.matrix(hja.beta.pair$beta.jne)[1,-1]
+turn <- as.matrix(hja.beta.pair$beta.jtu)[1,-1]
+beta <- as.matrix(hja.beta.pair$beta.jac)[1,-1]
+usdis <- design$upstreamdist[which(design$order != 1)][-1]
+plot(nest~usdis)
+plot(turn~usdis)
+plot(beta~usdis)
+water.env <- env.mat[which(design$order != 1),]
+water.env <- as.matrix(dist(water.env))[1,-1]
+plot(nest~water.env)
+plot(turn~water.env)
+plot(beta~water.env)
 
 hja.beta.pair$beta.sim
 hja.beta.pair$beta.sne

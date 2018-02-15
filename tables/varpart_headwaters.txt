@@ -1,0 +1,25 @@
+
+Partition of squared Euclidean distance in dbRDA 
+
+Call: varpart(Y = headwaters.db, X = headwaters.env, headwaters.pcnm)
+
+Explanatory tables:
+X1:  headwaters.env
+X2:  headwaters.pcnm 
+
+No. of explanatory tables: 2 
+Total variation (SS): 4.6578 
+No. of observations: 10 
+
+Partition table:
+                     Df R.squared Adj.R.squared Testable
+[a+b] = X1            3   0.41291       0.11936     TRUE
+[b+c] = X2            3   0.36966       0.05449     TRUE
+[a+b+c] = X1+X2       6   0.71385       0.14154     TRUE
+Individual fractions                                    
+[a] = X1|X2           3                 0.08705     TRUE
+[b]                   0                 0.03231    FALSE
+[c] = X2|X1           3                 0.02218     TRUE
+[d] = Residuals                         0.85846    FALSE
+---
+Use function ‘capscale’ to test significance of fractions of interest

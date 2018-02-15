@@ -3,14 +3,56 @@ title: "Analysis for Stream Microbial Metacommunity"
 output: pdf_document
 ---
 
+# Initial Setup & Load Data
 ```{r}
-setwd("~/GitHub/HJA-streams")
-source("./analysis/InitialSetup.R", echo = TRUE)
+# Initial setup
+rm(list=ls())
+opar <- par()
+setwd("./analysis")
+
+# Check for and install required packages
+package.list <- c('vegan', 'png', 'simba', 'grid', 
+                  'vegetarian', 'pander', 'SoDA', 'fossil',
+                  'tidyverse')
+for (package in package.list) {
+  if (!require(package, character.only=T, quietly=T)) {
+    install.packages(package)
+    library(package, character.only=T)
+  }
+}
+
+# Load Data
+OTUs <- readRDS(file = "./data/SiteBySpecies.rda")
+env <- readRDS(file = "./data/SiteByEnv.rda")
+OTU.tax <- readRDS(file = "./data/Taxonomy.rda")
+design <- readRDS(file = "./data/SiteDesign.rda")
+
+# Load functions
+source("HJA-Functions.R")
+```
+
+## Data transformations and Distance matrices
+```{r}
+transformation <- "hellinger"
+
+# Make Standardized Matrix
+OTUsREL <- decostand(OTUs, method = transformation)
+
+# Create Geographic Distance Matrix
+xy <- cbind(env$longitude, env$latitude)
+dist.mat <- fossil::earth.dist(xy) * 1000
+
 ```
 
 ## Diversity Analysis
 ```{r}
-source("./DiversityAnalysis.R", echo = TRUE)
+comms <- resample.comms(comm = OTUs, n = 10, transformation = transformation)
+
+alpha.div <- for(i in 1:dim(comms)[3]){
+  alpha.div[i] <- diversity(comms[,,i], method = "shannon")}
+alpha.div.exp <- lapply(alpha.div, FUN = exp)
+
+
 ```
 
 ### Figure 1: Rarefied diversity in sediment and surface-water communities
