@@ -1,0 +1,40 @@
+gcc version 6.3.0 loaded.
+TERM environment variable not set.
+Linux version
+
+Using ReadLine,Boost,HDF5
+mothur v.1.41.0
+Last updated: 11/13/18
+by
+Patrick D. Schloss
+
+Department of Microbiology & Immunology
+
+University of Michigan
+http://www.mothur.org
+
+When using, please cite:
+Schloss, P.D., et al., Introducing mothur: Open-source, platform-independent, community-supported software for describing and comparing microbial communities. Appl Environ Microbiol, 2009. 75(23):7537-41.
+
+Distributed under the GNU General Public License
+
+Type 'help()' for information on the commands that are available
+
+For questions and analysis support, please visit our forum at https://www.mothur.org/forum
+
+Type 'quit()' to exit program
+
+Batch Mode
+
+Unable to open hja_streams.batch. Trying mothur's executable location /N/u/wisnoski/Carbonate/mothur/hja_streams.batch.
+Unable to open /N/u/wisnoski/Carbonate/mothur/hja_streams.batch.
+[ERROR]: unable to open batch file, please correct.
+
+
+************************************************************
+************************************************************
+************************************************************
+Detected 1 [ERROR] messages, please review.
+************************************************************
+************************************************************
+************************************************************
