@@ -1,173 +1,290 @@
 # source("analysis/InitialSetup.R")
 # source("analysis/RaupCrickBC.R")
 # source("analysis/DDRs.R")
-# require("cowplot")
+require("cowplot")
+require("progress")
+
+# # Calculate abundance-weighted Raup-Crick dissimilarities 
+# regional.abunds <- t(as.matrix(colSums(OTUs)))
+# regional.relabunds <- decostand(regional.abunds, method = "total")
+# occupancy.probs <- t(as.matrix(colSums(decostand(OTUs, method = "pa")) / nrow(OTUs)))
+# site.abunds <- rowSums(OTUs)
+# site.rich <- specnumber(OTUs)
+# a <- regional.relabunds * occupancy.probs
+# 
+# # Create a null community based on Stegen et al. 2015
+r <- nrow(OTUs)
+c <- ncol(OTUs)
+# spec.vec <- 1:ncol(OTUs)
+# RCbc.nulls <- array(NA, c(r, c, 999))
+
+# stochastic community assembly nulls
+# for(i in 1:999){
+#   if(i == 1) pb <- progress_bar$new(total = 999, force = T)
+#   pb$update(ratio = i/999)
+#   
+#   null.comm <- OTUs * 0
+#   # for first simulation:
+#   for(row.i in 1:nrow(null.comm)){
+#     #print(paste("run :", i, " -> ", row.i, " : ", site.abunds[row.i], " inds"))
+#     
+#     while(rowSums(null.comm)[row.i] < site.abunds[row.i]){
+#       
+#       
+#       # choose a species based on its occupancy
+#       local.specs <- sample(x = spec.vec, size = site.rich[row.i],
+#                             prob = as.vector(occupancy.probs), replace = FALSE)
+#       
+#       local.probs <- decostand(t(as.matrix(regional.abunds[,local.specs])), method = "total")
+#       
+#       local.inds <- sample(x = local.specs, size = site.abunds[row.i],
+#                            prob = as.vector(local.probs), replace = TRUE)
+#       
+#       local.abunds <- rle(sort(local.inds))
+#       
+#       # add an individual to the local community
+#       null.comm[row.i, local.abunds$values] <- local.abunds$lengths
+#     }
+#   }
+#   null.bc <- as.matrix(vegdist(decostand(null.comm, method = "total"), method = "bray"))
+#   RCbc.nulls[,,i] <- null.bc
+# }
+# saveRDS(RCbc.nulls, file = "data/null_models/RCbc.null.rda")
+RCbc.nulls <- readRDS(file = "data/null_models/RCbc.null.rda")
+obs.bc <- as.matrix(vegdist(OTUsREL, method = "bray"))
+site.compares <- expand.grid(site1 = 1:r, site2 = 1:r)
+RC.bray <- matrix(NA, nrow = r, ncol = r)
+
+for(row.i in 1:nrow(site.compares)){
+  site1 <- site.compares[row.i,1]
+  site2 <- site.compares[row.i,2]
+  pairwise.null <- RCbc.nulls[site1,site2,]
+  pairwise.bray <- obs.bc[site1,site2]
+  num.greater <- sum(pairwise.null > pairwise.bray)
+  num.ties <- sum(pairwise.null == pairwise.bray)
+  val <- (((1 * num.greater) + (0.5 * num.ties))/1000 - 0.5) * 2
+  RC.bray[site1, site2] <- val
+}
+rownames(RC.bray) <- rownames(design)
+colnames(RC.bray) <- rownames(design)
+RC.bray.dist <- as.dist(RC.bray)
+
+
+# write.csv(RC.bray, "data/RCbray.csv")
+# saveRDS(RC.bray.dist, "data/RCbraydist.rda")
+rc.water <- as.dist(RC.bray[which(design$habitat == "water"), which(design$habitat == "water")])
+rc.sed <- as.dist(RC.bray[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
+hist(rc.water, breaks = 30)
+hist(rc.sed, breaks = 30)
+
+rc.dat <- rbind.data.frame(
+  cbind(RC.bray = liste(rc.water)[3], Habitat = rep("Planktonic")),
+  cbind(RC.bray = liste(rc.sed)[3], Habitat = rep("Sediment")))
+names(rc.dat)[1] <- "rc.bray"
+
 
 # bNTI analysis
+matched.phylo <- readRDS("data/matched.phylo.rda")
+hja.comm <- matched.phylo$comm
+hja.phy <- matched.phylo$phy
 
-# read sediment null dists 
-sed.nulldists <- readRDS("./data/mntds-sed-null-dist.rda")
+# mntd.hja <- comdistnt(hja.comm, cophenetic(hja.phy), abundance.weighted = T)
+# saveRDS(mntd.hja, file = "data/mntds.rda")
 
-# read sed bmntd vals
-sed.mntds <- readRDS("./data/mntds-sed.rda")
+# # Create null comms
+# mntd.null <- array(NA, c(50, 50, 999))
+# for(i in 1:999){
+#   if(i == 1) pb <- progress_bar$new(total = 999, force = T)
+#   pb$update(ratio = i/999)
+#   #print(paste("creating null community ", i, " of 999"))
+#   temp.mntd <- comdistnt(hja.comm,
+#                          cophenetic(tipShuffle(hja.phy)),
+#                          abundance.weighted=T)
+#   mntd.null[,,i] <- as.matrix(temp.mntd)
+#   if(i %% 50 == 0 | i == 999) saveRDS(mntd.null, file = "data/mntds-null-dist.rda")
+# }
 
+# read null dists 
+mntd.hja <- readRDS(file = "data/mntds.rda")
+mntds.null <- readRDS(file = "data/mntds-null-dist.rda")
 
-# calculate bNTIs
-obs.mntds <- as.matrix(sed.mntds)
+obs.mntds <- as.matrix(mntd.hja)
 site.compares <- expand.grid(site1 = 1:ncol(obs.mntds), site2 = 1:ncol(obs.mntds))
 bNTI <- matrix(NA, nrow = nrow(obs.mntds), ncol = ncol(obs.mntds))
 for(row.i in 1:nrow(site.compares)){
   site1 <- site.compares[row.i,1]
   site2 <- site.compares[row.i,2]
-  pairwise.null <- sed.nulldists[site1,site2,]
+  pairwise.null <- mntds.null[site1,site2,]
   pairwise.mntd <- obs.mntds[site1,site2]
   null.mean <- mean(pairwise.null, na.rm = TRUE)
   null.sd <- sd(pairwise.null, na.rm = TRUE)
   val <- (pairwise.mntd - null.mean) / null.sd
   bNTI[site1, site2] <- val
 }
-colnames(bNTI) <- rownames(design[which(design$habitat == "sediment"),])
-rownames(bNTI) <- rownames(design[which(design$habitat == "sediment"),])
+colnames(bNTI) <- rownames(hja.comm)
+rownames(bNTI) <- rownames(hja.comm)
 
-bNTI.sed.dist <- as.dist(bNTI)
-hist(bNTI.sed.dist, breaks = 20)
-sum(bNTI.sed.dist < 2 & bNTI.sed.dist > -2) / length(bNTI.sed.dist) # undom
-sum(bNTI.sed.dist > 2) / length(bNTI.sed.dist) # variable selection
-sum(bNTI.sed.dist < -2) / length(bNTI.sed.dist) # homogeneous selection
-
-
-# read sediment null dists 
-water.nulldists <- readRDS("./data/mntds-water757.rda")
-
-# read sed bmntd vals
-water.mntds <- readRDS("./data/mntds-water.rda")
+bNTI.dist <- as.dist(bNTI)
+hist(bNTI.dist, breaks = 30)
+sum(bNTI.dist < 2 & bNTI.dist > -2) / length(bNTI.dist) # undom
+sum(bNTI.dist > 2) / length(bNTI.dist) # variable selection
+sum(bNTI.dist < -2) / length(bNTI.dist) # homogeneous selection
 
 
-# calculate bNTIs
-obs.mntds <- as.matrix(water.mntds)
-site.compares <- expand.grid(site1 = 1:ncol(obs.mntds), site2 = 1:ncol(obs.mntds))
-bNTI <- matrix(NA, nrow = nrow(obs.mntds), ncol = ncol(obs.mntds))
-for(row.i in 1:nrow(site.compares)){
-  site1 <- site.compares[row.i,1]
-  site2 <- site.compares[row.i,2]
-  pairwise.null <- water.nulldists[site1,site2,]
-  pairwise.mntd <- obs.mntds[site1,site2]
-  null.mean <- mean(pairwise.null, na.rm = TRUE)
-  null.sd <- sd(pairwise.null, na.rm = TRUE)
-  val <- (pairwise.mntd - null.mean) / null.sd
-  bNTI[site1, site2] <- val
+hja.bnti.dist.ls <- liste(bNTI.dist, entry = "bNTI")
+hja.rcbray.dist.ls <- liste(RC.bray.dist, entry = "RC.bray")
+hja.assembly <- as.data.frame(cbind(hja.bnti.dist.ls, hja.rcbray.dist.ls))
+hja.assembly <- full_join(hja.bnti.dist.ls, hja.rcbray.dist.ls)
+
+
+# identify comparisons
+
+hja.assembly$Habitat <- NA
+hja.assembly[str_detect(hja.assembly$NBX, "_W") & str_detect(hja.assembly$NBY, "_W"),]$Habitat <- str_wrap("Water-Water")
+hja.assembly[str_detect(hja.assembly$NBX, "_W") & str_detect(hja.assembly$NBY, "_S"),]$Habitat <- str_wrap("Water-Sediment")
+hja.assembly[str_detect(hja.assembly$NBX, "_S") & str_detect(hja.assembly$NBY, "_W"),]$Habitat <- str_wrap("Water-Sediment") 
+hja.assembly[str_detect(hja.assembly$NBX, "_S") & str_detect(hja.assembly$NBY, "_S"),]$Habitat <- str_wrap("Sediment-Sediment")
+
+hja.assembly$Location <- NA
+hja.assembly[design[hja.assembly$NBX,]$order < 2 & design[hja.assembly$NBY,]$order < 2,]$Location <- str_wrap("Headwater-Headwater")
+hja.assembly[design[hja.assembly$NBX,]$order >= 2 & design[hja.assembly$NBY,]$order >= 2,]$Location <- str_wrap("Downstream-Downstream")
+hja.assembly[design[hja.assembly$NBX,]$order < 2 & design[hja.assembly$NBY,]$order >= 2,]$Location <- str_wrap("Headwater-Downstream")
+hja.assembly[design[hja.assembly$NBX,]$order >= 2 & design[hja.assembly$NBY,]$order < 2,]$Location <- str_wrap("Headwater-Downstream")
+
+head(hja.assembly)
+
+# non wrapped text for figure
+hja.mechanism <- vector(length = nrow(hja.assembly))
+for(row.i in 1:nrow(hja.assembly)){
+  if(hja.assembly[row.i,"bNTI"] < -2){
+    hja.mechanism[row.i] <- str_wrap("Selection (Convergent)", width = 80)
+  }
+  if(hja.assembly[row.i,"bNTI"] > 2){
+    hja.mechanism[row.i] <- str_wrap("Selection (Divergent)", width = 80)
+  }
+  if(hja.assembly[row.i,"bNTI"] <= 2 & hja.assembly[row.i,"bNTI"] >= -2){
+    
+    if (hja.assembly[row.i,"RC.bray"] <= 0.95 & hja.assembly[row.i,"RC.bray"] >= -0.95){
+      hja.mechanism[row.i] <- str_wrap("Undominated", width = 80)
+    }
+    if(hja.assembly[row.i,"RC.bray"] < -.95){
+      hja.mechanism[row.i] <- str_wrap("Mass Effects", width = 80)
+    }
+    if(hja.assembly[row.i,"RC.bray"] > .95){
+      hja.mechanism[row.i] <- str_wrap("Dispersal Limitation", width = 80)
+    }
+  }
 }
-colnames(bNTI) <- rownames(design[which(design$habitat == "water"),])
-rownames(bNTI) <- rownames(design[which(design$habitat == "water"),])
-
-bNTI.water.dist <- as.dist(bNTI)
-hist(bNTI.water.dist, breaks = 20)
-sum(bNTI.water.dist < 2 & bNTI.water.dist > -2) / length(bNTI.water.dist) # undom
-sum(bNTI.water.dist > 2) / length(bNTI.water.dist) # variable selection
-sum(bNTI.water.dist < -2) / length(bNTI.water.dist) # homogeneous selection
-
-saveRDS(bNTI.water.dist, file = "data/bNTIwater.rda")
-saveRDS(bNTI.sed.dist, file = "data/bNTIsed.rda")
-
-rc.water <- as.dist(RC.bray[which(design$habitat == "water"), which(design$habitat == "water")])
-water.rc.dist.ls <- liste(rc.water, entry = "rc.bray")[,3]
-rc.sed <- as.dist(RC.bray[which(design$habitat == "sediment"), which(design$habitat == "sediment")])
-sed.rc.dist.ls <- liste(rc.sed, entry = "rc.bray")[,3]
-
-water.bnti.dist.ls <- liste(bNTI.water.dist)
-sed.bnti.dist.ls <- liste(bNTI.sed.dist)
-water.rc.dist.ls
-sed.rc.dist.ls
-
-water.assembly <- as.data.frame(cbind(water.bnti.dist.ls, water.rc.dist.ls))
-names(water.assembly)[c(3,4)] <- c("bNTI", "RC.bray")
-sed.assembly <- as.data.frame(cbind(sed.bnti.dist.ls, sed.rc.dist.ls))
-names(sed.assembly)[c(3,4)] <- c("bNTI", "RC.bray")
+hja.assembly$Mechanism <- hja.mechanism
 
 
-sed.mechanism <- vector(length = nrow(sed.assembly))
-for(row.i in 1:nrow(sed.assembly)){
-  if(sed.assembly[row.i,3] >= -2 && sed.assembly[row.i,4] <= -0.95){
-    sed.mechanism[row.i] <- str_wrap("Mass Effects", width = 12)
-  }
-  if(sed.assembly[row.i,3] <= 2 & sed.assembly[row.i,4] >= 0.95){
-    sed.mechanism[row.i] <- str_wrap("Dispersal Limitation", width = 12)
-  }
-  if(sed.assembly[row.i,3] < 2 & sed.assembly[row.i,3] > -2 & 
-     sed.assembly[row.i,4] < 0.95 & sed.assembly[row.i,4] > -0.95){
-    sed.mechanism[row.i] <- str_wrap("Undominated", width = 12)
-  }
-  if(sed.assembly[row.i,4] <= .95 & sed.assembly[row.i,3] <= -2){
-    sed.mechanism[row.i] <- str_wrap("Selection (Convergent)", width = 12)
-  }
-  if(sed.assembly[row.i,4] >= -.95 & sed.assembly[row.i,3] >= 2){
-    sed.mechanism[row.i] <- str_wrap("Selection (Divergent)", width = 12)
-  }
-  
-}
-sed.assembly$Habitat <- "Sediment"
-sed.assembly$Mechanism <- sed.mechanism
-
-water.mechanism <- vector(length = nrow(water.assembly))
-for(row.i in 1:nrow(water.assembly)){
-  if(water.assembly[row.i,3] >= -2 && water.assembly[row.i,4] <= -0.95){
-    water.mechanism[row.i] <- str_wrap("Mass Effects", width = 12)
-  }
-  if(water.assembly[row.i,3] <= 2 & water.assembly[row.i,4] >= 0.95){
-    water.mechanism[row.i] <- str_wrap("Dispersal Limitation", width = 12)
-  }
-  if(water.assembly[row.i,3] < 2 & water.assembly[row.i,3] > -2 & 
-     water.assembly[row.i,4] < 0.95 & water.assembly[row.i,4] > -0.95){
-    water.mechanism[row.i] <- str_wrap("Undominated", width = 12)
-  }
-  if(water.assembly[row.i,4] <= .95 & water.assembly[row.i,3] <= -2){
-    water.mechanism[row.i] <- str_wrap("Selection (Convergent)", width = 12)
-  }
-  if(water.assembly[row.i,4] >= -.95 & water.assembly[row.i,3] >= 2){
-    water.mechanism[row.i] <- str_wrap("Selection (Divergent)", width = 12)
-  }
-  
-}
-water.assembly$Mechanism <- water.mechanism
-water.assembly$Habitat <- "Planktonic"
-
-community.assembly <- rbind(water.assembly, sed.assembly)
-
-community.assembly.plot <- ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = Mechanism)) +
-  facet_grid(~Habitat) +
+community.assembly <- hja.assembly
+ggplot(data = community.assembly, aes(x = bNTI, y = RC.bray, col = Mechanism)) +
   geom_point(show.legend = T) + 
-  geom_hline(yintercept = c(0.95, -0.95), lty = "dashed", col = "lightgrey")+
-  geom_vline(xintercept = c(-2, +2), lty = "dashed", col = "lightgrey")+
+  geom_hline(yintercept = c(0.95, -0.95), lty = "dashed", col = "darkgrey")+
+  geom_vline(xintercept = c(-2, +2), lty = "dashed", col = "darkgrey")+
   theme_cowplot()+
+  scale_color_manual(values = viridis::viridis(5, end = .9))+
   labs(x = expression(paste(beta,"NTI")), y = expression(paste("Raup-Crick"[BC])))+
-  labs(title = "Community Assembly Mechanisms")
-community.assembly.plot
-ggsave("figures/comm_assembly.png", width = 12, height = 6, units = "in")
+  ggsave("figures/comm_assembly.pdf", width = 8, height = 6, units = "in", bg = "white")
 
-assembly.table <- community.assembly %>% count(Mechanism, Habitat)
-assembly.counts <- ggplot(assembly.table, aes(x = factor(Mechanism), y = n, fill = Habitat)) + 
-  geom_bar(stat = "identity", position = "dodge") + 
-  scale_fill_manual(values = c("skyblue", "wheat")) +
+assembly.counts <- community.assembly %>% group_by(Habitat, Location, Mechanism) %>%
+  count(Mechanism) 
+assembly.counts <- expand.grid(Habitat = unique(assembly.counts$Habitat), 
+                               Location = unique(assembly.counts$Location), 
+                               Mechanism = unique(assembly.counts$Mechanism)) %>% 
+  full_join(assembly.counts) %>%
+  mutate(n = ifelse(is.na(n), 0, n))
+
+assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(n)) %>%
+  full_join(assembly.counts) %>% 
+  mutate(proportion = n/group.count) %>% filter(Habitat == "Water-Sediment", Location != "Headwater-Downstream") %>%
+  mutate(Position = ifelse(Location == "Downstream-Downstream", "Downstream", "Headwaters")) %>%
+  ggplot(aes(x = factor(Position, levels = c("Headwaters", "Downstream")), y = proportion, fill = Mechanism)) + 
+  # facet_grid(Habitat ~ .) +
+  geom_bar(stat = "identity", position = 'stack') +
+  theme_classic() +
+  labs(y = "Proportion", x = "") +
+  scale_fill_manual(values = viridis::viridis(5, end = .9)) +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14),
+        strip.text.y = element_text(size = 16), legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 16), legend.position = "right") + 
+  ggsave("figures/comm_assemb_sedwatercomp.pdf", width = 6, height = 6, bg = "white")
+
+# Wrapped text for figure
+hja.mechanism <- vector(length = nrow(hja.assembly))
+for(row.i in 1:nrow(hja.assembly)){
+  if(hja.assembly[row.i,"bNTI"] < -2){
+    hja.mechanism[row.i] <- str_wrap("Selection (Convergent)", width = 12)
+  }
+  if(hja.assembly[row.i,"bNTI"] > 2){
+    hja.mechanism[row.i] <- str_wrap("Selection (Divergent)", width = 12)
+  }
+  if(hja.assembly[row.i,"bNTI"] <= 2 & hja.assembly[row.i,"bNTI"] >= -2){
+    
+    if (hja.assembly[row.i,"RC.bray"] <= 0.95 & hja.assembly[row.i,"RC.bray"] >= -0.95){
+      hja.mechanism[row.i] <- str_wrap("Undominated", width = 12)
+    }
+    if(hja.assembly[row.i,"RC.bray"] < -.95){
+      hja.mechanism[row.i] <- str_wrap("Mass Effects", width = 12)
+    }
+    if(hja.assembly[row.i,"RC.bray"] > .95){
+      hja.mechanism[row.i] <- str_wrap("Dispersal Limitation", width = 12)
+    }
+  }
+}
+hja.assembly$Mechanism <- hja.mechanism
+
+community.assembly <- hja.assembly
+assembly.table <- community.assembly %>% count(Mechanism)
+ggplot(assembly.table, aes(x = factor(Mechanism), y = n, fill = Mechanism)) + 
+  geom_bar(stat = "identity") +
   theme_cowplot() + 
-  labs(y = "Count", x = "Community Assembly Mechanism") +
-  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14))
-assembly.counts
+  labs(y = "Count", x = "") +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14)) + 
+  scale_fill_manual(values = viridis::viridis(5, end = 0.9), guide = F) +
+  ggsave("figures/comm_assembly_summary.pdf", width = 10, height = 6, bg = "white")
 
-# # add distances:
-# community.assembly <- left_join(community.assembly, liste(den.dists, entry = "dendritic.dist"))
-# 
-# community.assembly[which(startsWith(community.assembly$NBX, "W1_") & 
-#                            startsWith(community.assembly$NBY, "W1_")),] %>%
-#   ggplot(aes(x = dendritic.dist, y = bNTI)) + 
-#   facet_grid(~habitat) + 
-#   geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
-#   geom_smooth(method = "lm") + 
-#   labs(title = "W1")
-# 
-# community.assembly[which(startsWith(community.assembly$NBX, "LC_") & 
-#                            startsWith(community.assembly$NBY, "LC_")),] %>%
-#   ggplot(aes(x = dendritic.dist, y = bNTI)) + 
-#   facet_grid(~habitat) + 
-#   geom_point(show.legend = T, aes(color = abs(bNTI) < 2)) +
-#   geom_smooth(method = "lm") + 
-#   labs(title = "LC")
+
+assembly.counts <- community.assembly %>% group_by(Habitat, Location, Mechanism) %>%
+  count(Mechanism) 
+assembly.counts <- expand.grid(Habitat = unique(assembly.counts$Habitat), 
+            Location = unique(assembly.counts$Location), 
+            Mechanism = unique(assembly.counts$Mechanism)) %>% 
+  full_join(assembly.counts) %>%
+  mutate(n = ifelse(is.na(n), 0, n))
+
+
+assembly.counts %>% group_by(Habitat) %>% summarize(group.count = sum(n)) %>%
+  full_join(assembly.counts) %>% 
+  mutate(proportion = n/group.count) %>%
+  ggplot(aes(x = factor(Mechanism), y = proportion, fill = Mechanism)) + 
+  facet_grid(Habitat ~ .) +
+  geom_bar(stat = "identity", position = 'dodge') +
+  theme_classic() +
+  scale_fill_manual(values = viridis::viridis(5, begin = 0, end = .8))+
+  labs(y = "Proportion", x = "") +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14),
+        strip.text.y = element_text(size = 16), legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 16), legend.position = "none") + 
+  ggsave("figures/AssemblyCounts.pdf", width = 8, height = 8)
+
+
+assembly.counts %>% group_by(Habitat, Location) %>% summarize(group.count = sum(n)) %>%
+  full_join(assembly.counts) %>% 
+  mutate(proportion = n/group.count) %>% filter(Habitat == "Water-Sediment") %>%
+  ggplot(aes(x = factor(Mechanism), y = proportion, fill = Location)) + 
+  facet_grid(Habitat ~ .) +
+  geom_bar(stat = "identity", position = 'dodge') +
+  theme_classic() +
+#  scale_fill_manual(values = viridis::inferno(3, begin = .5, end = .9))+
+  labs(y = "Proportion", x = "") +
+  theme(axis.title = element_text(size = 18), axis.text = element_text(size = 14),
+        strip.text.y = element_text(size = 16), legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 16), legend.position = "top") + 
+  ggsave("figures/AssemblyCounts-by-location.pdf", width = 10, height = 6)
+  
+
+
+#hja.phylo.struc <- comm.phylo.cor(hja.comm, hja.phy, metric = "cij", null.model = "sample.taxa.labels", runs = 999)
+#saveRDS(hja.phylo.struc, file = 'phylostruct.rdata')

@@ -73,32 +73,35 @@ DDR <- function(dists = NULL, comm = "otus", env = "env", space = "den"){
   spa.dist <- dists[[space]]
   
   # spatial detrend
-  spatial.lm <- lm(comm.dist ~ spa.dist)
-  spa.detrended.comm.dist <- residuals(spatial.lm) + coef(spatial.lm)[1]
+  spa.detrended.comm.dist <- residuals(lm(comm.dist ~ spa.dist))
+  spa.detrended.env.dist <- residuals(lm(env.dist ~ spa.dist))
   
   # now DDR for env.
-  ddr.env <- lm(spa.detrended.comm.dist ~ env.dist)
+  ddr.env <- lm(spa.detrended.comm.dist ~ spa.detrended.env.dist)
   
   # env detrend
-  env.lm <- lm(comm.dist ~ env.dist)
-  env.detrended.comm.dist <- residuals(env.lm) + coef(env.lm)[1]
+  env.detrended.comm.dist <- residuals(lm(comm.dist ~ env.dist))
+  env.detrended.spa.dist <- residuals(lm(spa.dist ~ env.dist))
   
   # now DDR for space
-  ddr.space <- lm(env.detrended.comm.dist ~ spa.dist)
+  ddr.space <- lm(env.detrended.comm.dist ~ env.detrended.spa.dist)
   
   out.models$spatial <- ddr.space
   out.models$env <- ddr.env
   
-  plot(spa.detrended.comm.dist ~ env.dist, ylab = comm, xlab = env)
-  abline(ddr.env)
+  plot(spa.detrended.comm.dist ~ spa.detrended.env.dist, ylab = comm, xlab = env)
+  abline(ddr.env, lwd = 2)
+  lines(smooth.spline(spa.detrended.env.dist, spa.detrended.comm.dist), col = "red", lwd = 2)
   print(summary(ddr.env))
-  plot(env.detrended.comm.dist ~ spa.dist, ylab = comm, xlab = space)
-  abline(ddr.space)
+  plot(env.detrended.comm.dist ~ env.detrended.spa.dist, ylab = comm, xlab = space)
+  abline(ddr.space, lwd = 2)
+  lines(smooth.spline(env.detrended.spa.dist, env.detrended.comm.dist), col = "red", lwd = 2)
   print(summary(ddr.space))
   
-  detrended.dists <- list(env.detrend = env.detrended.comm.dist, 
-                          spatial.detrend = spa.detrended.comm.dist,
-                          env.dist = env.dist, spatial.dist = spa.dist)
+  detrended.dists <- list(env.detrended.comm.dist = env.detrended.comm.dist, 
+                          spa.detrended.comm.dist = spa.detrended.comm.dist,
+                          env.detrended.spa.dist = env.detrended.spa.dist,
+                          spa.detrended.env.dist = spa.detrended.env.dist)
   
   out.models$detrended.dists <- detrended.dists
   return(out.models)
@@ -116,7 +119,8 @@ plot.DDRs <- function(models = NULL){
   with(models, {
     
        # plot env distance decay
-       plot(x = detrended.dists$env.dist, y = detrended.dists$spatial.detrend, 
+       plot(x = detrended.dists$spa.detrended.env.dist, 
+            y = detrended.dists$spa.detrended.comm.dist, 
             xaxt = "n", yaxt = "n", xlab = "", ylab = "")
        
        # add r2 and p val
@@ -136,13 +140,14 @@ plot.DDRs <- function(models = NULL){
        axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
        axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
        box(lwd = 2)
-       mtext("Community Dissimilarity", side = 2, line = 3, cex = 1.5)
+       mtext("Community Similarity", side = 2, line = 3.5, cex = 1.5)
        mtext("Environmental Distance", side = 1, line = 3, cex = 1.5)
        
        if(my.p != "N.S.") abline(models$env, lwd = 2)
        
        # plot spatial distance decay
-       plot(x = detrended.dists$spatial.dist, y = detrended.dists$env.detrend, 
+       plot(x = detrended.dists$env.detrended.spa.dist, 
+            y = detrended.dists$env.detrended.comm.dist, 
             xaxt = "n", yaxt = "n", xlab = "", ylab = "")
        
        # add r2 and p val
@@ -162,7 +167,7 @@ plot.DDRs <- function(models = NULL){
        axis(side=3, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
        axis(side=4, labels=F, lwd.ticks=2, cex.axis=1.2, las=1)
        box(lwd = 2)
-       mtext("Community Dissimilarity", side = 2, line = 3, cex = 1.5)
+       mtext("Community Similarity", side = 2, line = 3.5, cex = 1.5)
        mtext("Dendritic Distance", side = 1, line = 3, cex = 1.5)
        
        if(my.p != "N.S.") abline(models$spatial, lwd = 2)
