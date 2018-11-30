@@ -127,4 +127,3 @@ rownames(hja.unifrac.raw) <- colnames(hja.unifrac.raw)
 hja.unifrac <- hja.unifrac.raw[which(rownames(hja.unifrac.raw) %in% rownames(OTUs)),
                                which(rownames(hja.unifrac.raw) %in% rownames(OTUs))]
 hja.unifrac.dist <- as.dist(hja.unifrac)
-
