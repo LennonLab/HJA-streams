@@ -1,0 +1,38 @@
+gcc version 6.3.0 loaded.
+TERM environment variable not set.
+Linux version
+
+Using ReadLine,Boost,HDF5
+mothur v.1.41.1
+Last updated: 11/26/18
+by
+Patrick D. Schloss
+
+Department of Microbiology & Immunology
+
+University of Michigan
+http://www.mothur.org
+
+When using, please cite:
+Schloss, P.D., et al., Introducing mothur: Open-source, platform-independent, community-supported software for describing and comparing microbial communities. Appl Environ Microbiol, 2009. 75(23):7537-41.
+
+Distributed under the GNU General Public License
+
+Type 'help()' for information on the commands that are available
+
+For questions and analysis support, please visit our forum at https://www.mothur.org/forum
+
+Type 'quit()' to exit program
+
+Batch Mode
+
+
+mothur > get.oturep(column=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.dist, list=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.list, count=hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.pick.count_table)
+You did not provide a label, using 0.03.
+0.03	62404
+
+Output File Names: 
+hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.0.03.rep.count_table
+
+
+mothur > quit()
