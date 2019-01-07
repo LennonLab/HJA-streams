@@ -1,0 +1,241 @@
+---
+title: Bacterial community assembly differs between benthic and planktonic stream
+  habitats
+author: "Nathan I. Wisnoski and Jay T. Lennon"
+date: "2019-01-04"
+output: pdf_document
+---
+
+# Initial setup 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  fig.align = "center", 
+  fig.width = 7
+)
+
+# Check for and install required packages
+package.list <- c('vegan', 'png', 'grid', 'simba',
+                  'vegetarian', 'pander', 'SoDA', 'fossil',
+                  'tidyverse', 'cluster', 'adespatial', 'spdep', 
+                  'stringr', 'picante', 'phytools', 'GUniFrac')
+
+for (package in package.list) {
+  if (!require(package, character.only=T, quietly=T)) {
+    install.packages(package)
+    library(package, character.only=T)
+  }
+}
+
+# load external functions
+source("analysis/MothurTools.R")
+source("analysis/HJA-Functions.R")
+```
+
+First, we load the data. This includes the site-by-species matrix (generated in Mothur, v. 1.41.1), the RDP taxonomy, the environmental data, and the phylogenetic tree (generated with FastTreeMP).
+```{r load data}
+## Import Shared, Design, and Environment Files
+
+# Define Inputs
+# Design = general design file for experiment
+# shared = OTU table from mothur with sequence similarity clustering
+# Taxonomy = Taxonomic information for each OTU
+
+# Import Design
+design.total <- read.delim("./data/design.txt", header=T, row.names=1)
+
+# Import Shared Files
+OTUs <- read.otu(shared = "./data/hja_streams.shared", cutoff = "0.03") # 97% Similarity
+
+# Import Taxonomy
+OTU.tax <- read.tax(taxonomy = "./data/hja_streams.final.0.03.taxonomy", format = "rdp")
+
+# Import Env
+env.total <- read.csv("./data/hja_env.csv", header=T)
+
+# Import Tree
+hja.tree <- read.tree("data/hja_streams.tree")
+
+# Check to see that the OTU table rows are same order as design and then rename OTU table rows 
+sites <- as.data.frame(str_split(rownames(design.total), "_", simplify = T))
+colnames(sites) <- c("ws", "site", "habitat")
+oturows <- rownames(OTUs) %>% str_sub(7)
+if(all.equal.character(paste0(sites$ws, sites$site, sites$habitat), oturows)){
+  rownames(OTUs) <- rownames(design.total)
+}
+rownames(OTUs)
+
+### Data Transformations
+
+# Sequencing an Good's Coverage
+# Sequencing Coverage
+coverage <- rowSums(OTUs)
+
+# Remove Low Coverage Samples
+cutoff <- 10000
+lows <- which(coverage < cutoff)
+OTUs <- OTUs[-which(coverage < cutoff), ]
+design <- design.total[-which(coverage < cutoff), ]
+env <- env.total[-which(coverage < cutoff), ]
+
+# Remove OTUs with less than 5 occurances across all sites
+OTUs <- OTUs[, which(colSums(OTUs) >= 10)]
+
+# Write and read data files
+saveRDS(OTUs, file = "./data/SiteBySpecies.rda")
+saveRDS(env, file = "./data/SiteByEnv.rda")
+saveRDS(OTU.tax, file = "./data/Taxonomy.rda")
+saveRDS(design, file = "./data/SiteDesign.rda")
+
+OTUs <- readRDS(file = "./data/SiteBySpecies.rda")
+env <- readRDS(file = "./data/SiteByEnv.rda")
+OTU.tax <- readRDS(file = "./data/Taxonomy.rda")
+design <- readRDS(file = "./data/SiteDesign.rda")
+#hja.unifrac.dist <- readRDS(file = "data/UnifracDists.rda")
+den.dists <- as.dist(readRDS(file = "data/DendriticDists.rda"))
+design$upstreamdist <- as.matrix(den.dists)[1,]
+
+# Remove orthogonal vectors
+env.mat <- as.matrix(env[10:20])
+env.mat["83",9] <- 150 # These were the highest samples, overflow
+#env.mat[52,5] <- 150
+for(i in 1:nrow(env.mat)){
+  if(env.mat[i, 9] < 0){
+    env.mat[i, 9] <- 0.0001 # these were below detection of the machine
+  }
+  if(env.mat[i, 10] < 0){
+    env.mat[i, 10] <- 0.0001
+  }
+}
+habitat.dummy <- simba::mad(as.factor(env$habitat))
+env.mat <- cbind(habitat.dummy, env.mat)
+env.mat <- env.mat[,c("sediment", "elevation", "temperature", "conductivity",
+                      "ph", "TN", "TP", "DOC")]
+env.dat <- env.mat
+env.mat <- scale(env.mat)
+
+# Rarefy communities
+# OTUs <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
+# OTUs <- OTUs[,-which(colSums(OTUs) == 0)]
+# saveRDS(OTUs, file = "data/SiteBySpeciesRarefied.rda")
+OTUs <- readRDS("data/SiteBySpeciesRarefied.rda")
+
+# Transformations and Standardizations
+OTUsREL <- decostand(OTUs, method = "total")
+OTUs.PA <- decostand(OTUs, method = "pa")
+OTUsREL.log <- decostand(OTUs, method = "log")
+OTUsREL.hel <- decostand(OTUs, method = "hellinger")
+
+# Read in Distances
+# Geo distance Matrix
+xy <- cbind(jitter(env$longitude, amount = .0001),
+            jitter(env$latitude, amount = .0001))
+#geo.dists <- geoXY(env$latitude, env$longitude)
+#xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
+#dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+dist.mat <- earth.dist(xy) * 1000
+
+# Phylocom 
+matched.phylo <- match.phylo.comm(hja.tree, OTUs)
+hja.tree <- matched.phylo$phy
+is.rooted(hja.tree)
+hja.tree.rooted <- midpoint.root(hja.tree)
+is.rooted(hja.tree.rooted)
+
+hja.unifrac <- GUniFrac(otu.tab = OTUs, tree = hja.tree.rooted)$unifracs
+hja.unifrac.dw <- hja.unifrac[ , ,"d_1"]		  # Weighted UniFrac
+hja.unifrac.du <- hja.unifrac[ , ,"d_UW"]		  # Unweighted UniFrac	
+hja.unifrac.dv <- hja.unifrac[ , ,"d_VAW"]		# Variance adjusted weighted UniFrac
+hja.unifrac.d0 <- hja.unifrac[ , ,"d_0"]    	# GUniFrac with alpha 0  
+hja.unifrac.d5 <- hja.unifrac[ , ,"d_0.5"]   	# GUniFrac with alpha 0.5 
+```
+
+I removed the sites with low coverage, and I removed the OTUs with low abundance across the whole dataset. This left a total of `r nrow(OTUs)` sites and `r ncol(OTUs)` bacterial taxa. 
+I then pruned the phylogenetic tree to match only the taxa remaining in the dataset. Then, I rooted the tree using the midpoint method and computed generalized UniFrac distances with a scaling factor of 0.5, along with unweighted and weighted calculations. 
+
+# Diversity analysis
+
+```{r}
+### Richness
+
+# Observed Richness
+S.obs <- rowSums((OTUs > 0) * 1)
+
+# Simpson's Evenness
+SimpE <- function(x = ""){
+  x <- as.data.frame(x)
+  D <- vegan::diversity(x, "inv")
+  S <- sum((x > 0) * 1) 
+  E <- (D)/S 
+  return(E)
+}
+simpsE <- round(apply(OTUsREL, 1, SimpE), 3)
+shan <- vegan::diversity(OTUsREL, index = "shannon")
+N1 <- exp(shan)
+simpsD <- vegan::diversity(OTUsREL, index = "invsimpson")
+E1 <- N1/S.obs
+
+
+```
+
+
+# 
+```{r}
+#### PCoA 
+
+# All HJA Catchment
+hja.pcoa <- run.pcoa(comm = OTUsREL.hel)
+
+# Sediments Only
+sed.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$habitat == "sediment"),])
+
+# Water Only
+water.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$habitat == "water"),])
+
+
+# Lookout Creek Watershed Only
+lookout.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$watershed == "LC"),])
+
+# Watershed 01 Only
+ws01.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$watershed == "WS01"),])
+
+# Is habitat or order an important factor in community structure?
+hja.permanova <- adonis(hja.pcoa$dist.matrix ~ design$habitat + design$order, permutations = 999)
+capture.output(hja.permanova$aov.tab, file = "./tables/hja_permanova.txt")
+
+ord <- ws01.pcoa
+ord.pc <- ord$pcoa
+scrs <- scores(ord.pc)
+xlim <- extendrange(x = .1, r = range(scrs[,1]))
+ylim <- extendrange(x = .1, r = range(scrs[,2]))
+
+with(design, levels(habitat))
+cols <- c("white", "grey")
+
+plot.new()
+plot.window(xlim = xlim, ylim = ylim, asp = 1)
+abline(h = 0, lty = "dotted")
+abline(v = 0, lty = "dotted")
+with(design, points(scrs, col = "black", pch = 21, cex = 2, bg = cols[habitat]))
+with(design, legend("topright", legend = levels(habitat), bty = "n",
+                      col = "black", pch = 21, pt.bg = cols))
+axis(side = 1, lwd.ticks = 2, cex.axis = 1.2)
+axis(side = 2, lwd.ticks = 2, cex.axis = 1.2)
+axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2)
+axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2)
+title(xlab = paste("PCoA 1 (",ord$var1,"%)", sep = ""), 
+      ylab = paste("PCoA 2 (",ord$var2,"%)", sep = ""), cex.lab = 1.2)
+box(lwd = 2)
+
+
+
+
+
+
+```
+
+# Appendix: Session Info
+```{r}
+sessionInfo()
+```
+
