@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 
 ################################################################################
 #
@@ -19,11 +19,11 @@ import os
 import re
 from Bio import SeqIO
 
-# in_file = "./eDNA.bac.final.0.03.rep.fasta"
-# out_file ="./eDNA.bac.final.0.03.rep.rename.fasta"
+in_file = "./hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.0.03.rep.fasta"
+out_file ="./hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.0.03.rep.rename.fasta"
 
-in_file = sys.argv[1]
-out_file = sys.argv[2]
+# in_file = sys.argv[1]
+# out_file = sys.argv[2]
 
 output_handle = open(out_file, "w")
 
