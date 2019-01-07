@@ -35,7 +35,7 @@ for seq_record in SeqIO.parse(in_file, "fasta"):
     OldseqID.append(seq_record.id)
     seqInfo.append(seq_record.description)
     seqID_New = seq_record.description
-    seqID_New = re.findall('Otu.{6}',seq_record.description)
+    seqID_New = re.findall('Otu.{5}',seq_record.description)
     NewseqID.append(seqID_New)
     seq_record.id = seqID_New[0]
 
