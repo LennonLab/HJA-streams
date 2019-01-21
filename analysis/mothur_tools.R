@@ -23,11 +23,12 @@
 #         2. Add warnings                                                      #
 #                                                                              #
 ################################################################################
-require(stringr)
+library("stringr")
+library("data.table")
 
 # Import OTU Site-by-Species Matrix
 read.otu <- function(shared = " ", cutoff = "0.03"){
-  matrix <- read.table(shared, header=T, fill=TRUE, comment.char="", sep="\t")
+  matrix <- fread(shared, header=T, fill=TRUE, sep="\t")
   matrix.cutoff <- subset(matrix, matrix$label == cutoff)
   matrix.out    <- as.matrix(matrix.cutoff[1:dim(matrix.cutoff)[1],
                                            4:(3+mean(matrix.cutoff$numOtus))])

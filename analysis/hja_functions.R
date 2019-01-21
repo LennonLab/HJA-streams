@@ -9,33 +9,6 @@ error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
 }
 
 
-# resample.comms <- function(comm = "", n = 100, ...){
-#   # commsize <- dim(comm)
-#   # comms <- array(data = NA, dim = c(commsize[1:2], n))
-#   # for (i in 1:n) {
-#   #   comms[,,i] <- decostand(
-#   #     rrarefy(OTUs, sample = min(rowSums(OTUs))),
-#   #     method = transformation)
-#   #   
-#   # }
-#   coefs <- matrix(NA, nrow = n, ncol = 2)
-#   
-#   for(i in 1:n){
-#     comm.i <- decostand(
-#       rrarefy(OTUs, sample = min(rowSums(OTUs))),
-#       method = "hellinger")
-#     comm.dist <- vegdist(comm.i, method = "euclidean")
-#     ddr <- lm(comm.dist ~ den.dists)
-#     coefs[i, ] <- coefficients(ddr)
-#   }
-#   
-#   
-#   
-#   return(coefs)
-# }
-
-####
-
 run.pcoa <- function(comm = NULL, dist.metric = "bray", plot = T, ...){
   dist.matrix <- vegdist(comm, method = dist.metric)
   pcoa <- cmdscale(dist.matrix, eig = TRUE)
@@ -206,4 +179,12 @@ fill.table <- function(lms.in = NULL, response.metric = response.matrix, ddr.sum
 
 normalize.matrix <- function(m){
   return((m - min(m)) / (max(m) - min(m)))
+}
+
+SimpE <- function(x = ""){
+  x <- as.data.frame(x)
+  D <- vegan::diversity(x, "inv")
+  S <- sum((x > 0) * 1) 
+  E <- (D)/S 
+  return(E)
 }
