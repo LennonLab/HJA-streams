@@ -15,11 +15,11 @@ knitr::opts_chunk$set(
 )
 
 # Check for and install required packages
-package.list <- c('vegan', 'png', 'grid', 'simba',
-                  'vegetarian', 'pander', 'fossil',
+package.list <- c('vegan', 'png', 'grid',
+                  'vegetarian', 'pander', 
                   'cluster', 'adespatial', 'spdep', 
                   'stringr', 'picante', 'phytools', 'GUniFrac', 
-                  'data.table', 'tidyverse')
+                  'tidyverse')
 
 for (package in package.list) {
   if (!require(package, character.only=T, quietly=T)) {
@@ -34,7 +34,7 @@ source("analysis/hja_functions.R")
 ```
 
 First, we load the data. This includes the site-by-species matrix (generated in Mothur, v. 1.41.1), the RDP taxonomy, the environmental data, and the phylogenetic tree (generated with FastTreeMP).
-```{r load}
+```{r load, echo=FALSE, message=FALSE}
 ## Import Shared, Design, and Environment Files
 
 # Define Inputs
@@ -52,7 +52,10 @@ OTUs <- read.otu(shared = "data/hja_streams.shared", cutoff = "0.03") # 97% Simi
 OTU.tax <- read.tax(taxonomy = "data/hja_streams.0.03.taxonomy", format = "rdp")
 
 # Import Env
-env.total <- read.csv("data/hja_env.csv", header=T)
+env.total <- read_csv("data/hja_env.csv", 
+                      col_types = cols(
+                        date = col_date(format = "%d-%b-%y"),
+                        habitat = col_factor(levels = c("sediment", "water"), ordered = F)))
 
 # Check to see that the OTU table rows are same order as design and then rename OTU table rows 
 sites <- as.data.frame(str_split(rownames(design.total), "_", simplify = T))
@@ -61,10 +64,9 @@ oturows <- rownames(OTUs) %>% str_sub(7)
 if(all.equal.character(paste0(sites$ws, sites$site, sites$habitat), oturows)){
   rownames(OTUs) <- rownames(design.total)
 }
-rownames(OTUs)
 ```
 
-Next, we will clean up the data and perform some transformations. 
+Next, we will clean up the data. I'll remove any sample that didn't get 10000 reads. Then also cut those samples from the environment and design tables.
 ```{r cleanup, cache=TRUE}
 # Sequencing Coverage
 coverage <- rowSums(OTUs)
@@ -78,11 +80,25 @@ env <- env.total[-which(coverage < cutoff), ]
 
 # Remove OTUs with less than 5 occurances across all sites
 OTUs <- OTUs[, which(colSums(OTUs) >= 10)]
+```
 
-
-den.dists <- as.dist(readRDS(file = "data/dendritic_dists.rda"))
+Here, I'll read in the dendritic distances and add a tiny bit of jitter to the spatial distances so nearby sites aren't identical. Then, I'll calculate the earth distance in meters.
+```{r dendritic}
+den.dists <- make.dendritic.dists("data/hja_dendritic-dists.csv")
 design$upstreamdist <- as.matrix(den.dists)[1,]
 
+# Read in Distances
+# Geo distance Matrix
+xy <- cbind(jitter(env$longitude, amount = .0001),
+            jitter(env$latitude, amount = .0001))
+#geo.dists <- geoXY(env$latitude, env$longitude)
+#xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
+#dist.mat <- as.matrix(dist(xy, method = "euclidean"))
+dist.mat <- fossil::earth.dist(xy) * 1000
+```
+
+Next, we will see if any of the environmental variables need to be transformed. I'll then rescale the environmental variables.
+```{r}
 # Remove orthogonal vectors
 env.mat <- as.matrix(env[10:20])
 env.mat["83",9] <- 150 # These were the highest samples, overflow
@@ -107,7 +123,10 @@ env.mat$TN <- log(env.mat$TN)
 
 env.dat <- env.mat
 env.mat <- scale(env.mat)
+```
 
+Now, I'll perform some transformations on the abundance data. I'll work with the Hellinger-transformed data for the rest of the analysis.
+```{r}
 # Rarefy communities
 # OTUs <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
 # OTUs <- OTUs[,-which(colSums(OTUs) == 0)]
@@ -119,15 +138,6 @@ OTUsREL <- decostand(OTUs, method = "total")
 OTUs.PA <- decostand(OTUs, method = "pa")
 OTUsREL.log <- decostand(OTUs, method = "log")
 OTUsREL.hel <- decostand(OTUs, method = "hellinger")
-
-# Read in Distances
-# Geo distance Matrix
-xy <- cbind(jitter(env$longitude, amount = .0001),
-            jitter(env$latitude, amount = .0001))
-#geo.dists <- geoXY(env$latitude, env$longitude)
-#xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
-#dist.mat <- as.matrix(dist(xy, method = "euclidean"))
-dist.mat <- earth.dist(xy) * 1000
 ```
 I removed the sites with low coverage, and I removed the OTUs with low abundance across the whole dataset. This left a total of `r nrow(OTUs)` sites and `r ncol(OTUs)` bacterial taxa. 
 

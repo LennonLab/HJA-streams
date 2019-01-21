@@ -188,3 +188,60 @@ SimpE <- function(x = ""){
   E <- (D)/S 
   return(E)
 }
+
+
+# Create dendritic distance matrix
+make.dendritic.dists <- function(infile = "") {
+  dend.dist.mat <-
+    read.delim(
+      file = infile,
+      sep = ',',
+      header = F,
+      skip = 1,
+      row.names = 1
+    )
+  colnames(dend.dist.mat) <-
+    as.vector(lapply(strsplit(rownames(dend.dist.mat), " "), function(x)
+      x[1]))
+  rownames(dend.dist.mat) <- colnames(dend.dist.mat)
+  empty.den.dist.mat <-
+    matrix(NA, nrow = nrow(OTUs), ncol = nrow(OTUs))
+  rownames(empty.den.dist.mat) <- env$sample
+  colnames(empty.den.dist.mat) <- env$sample
+  
+  
+  dend.dist.mat <- as.matrix(as.dist(dend.dist.mat))
+  dend.dist.list <- simba::liste(dend.dist.mat)
+  dend.dists <- simba::liste(vegdist(OTUs)) # to know which samples are remaining in dataset
+  dend.dists[, 3] <- NA
+  
+  i <- 1
+  
+  for (this.row in rownames(empty.den.dist.mat)) {
+    for (this.col in colnames(empty.den.dist.mat)) {
+      row.unpack <- unlist(strsplit(this.row, "_"))
+      col.unpack <- unlist(strsplit(this.col, "_"))
+      
+      row.site <- paste(row.unpack[1], "_", row.unpack[2], sep = "")
+      col.site <- paste(col.unpack[1], "_", col.unpack[2], sep = "")
+      
+      empty.den.dist.mat[this.row, this.col] <-
+        dend.dist.mat[row.site, col.site]
+    }
+    
+  }
+  
+  den.dists <- empty.den.dist.mat
+  den.dists <-
+    den.dists[which(rownames(den.dists) %in% rownames(OTUs)),
+              which(rownames(den.dists) %in% rownames(OTUs))]
+  
+  return(as.dist(den.dists))
+}
+
+
+
+write.table(den.dists, file = "./data/hja-den-dist-mat.txt")
+
+den.dists <- read.table(file = "./data/hja-den-dist-mat.txt")
+saveRDS(den.dists, file = "data/DendriticDists.rda")
