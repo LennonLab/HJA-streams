@@ -14,19 +14,16 @@ knitr::opts_chunk$set(
   fig.width = 7
 )
 
-# Check for and install required packages
-package.list <- c('vegan', 'png', 'grid',
-                  'vegetarian', 'pander', 
-                  'cluster', 'adespatial', 'spdep', 
-                  'stringr', 'picante', 'phytools', 'GUniFrac', 
-                  'tidyverse')
+library("vegan")
+library("vegetarian")
+library("adespatial")
+library("pander")
+library("stringr")
+library("picante")
+library("phytools")
+library("GUniFrac")
+library("tidyverse")
 
-for (package in package.list) {
-  if (!require(package, character.only=T, quietly=T)) {
-    install.packages(package)
-    library(package, character.only=T)
-  }
-}
 
 # load external functions
 source("analysis/mothur_tools.R")
@@ -80,6 +77,10 @@ env <- env.total[-which(coverage < cutoff), ]
 
 # Remove OTUs with less than 5 occurances across all sites
 OTUs <- OTUs[, which(colSums(OTUs) >= 10)]
+
+OTUs <- OTUs[-which(env$sample == "W1_20_W"),]
+design <- design[-which(env$sample == "W1_20_W"),]
+env <- env[-which(env$sample == "W1_20_W"),]
 ```
 
 Here, I'll read in the dendritic distances and add a tiny bit of jitter to the spatial distances so nearby sites aren't identical. Then, I'll calculate the earth distance in meters.
@@ -99,30 +100,21 @@ dist.mat <- fossil::earth.dist(xy) * 1000
 
 Next, we will see if any of the environmental variables need to be transformed. I'll then rescale the environmental variables.
 ```{r}
-# Remove orthogonal vectors
-env.mat <- as.matrix(env[10:20])
-env.mat["83",9] <- 150 # These were the highest samples, overflow
-#env.mat[52,5] <- 150
-for(i in 1:nrow(env.mat)){
-  if(env.mat[i, 9] < 0){
-    env.mat[i, 9] <- 0.0001 # these were below detection of the machine
-  }
-  if(env.mat[i, 10] < 0){
-    env.mat[i, 10] <- 0.0001
-  }
-}
-habitat.dummy <- simba::mad(as.factor(env$habitat))
-env.mat <- cbind(habitat.dummy, env.mat)
-env.mat <- env.mat[,c("sediment", "elevation", "temperature", "conductivity",
-                      "ph", "TN", "TP", "DOC")]
+# Remove orthogonal vectors and make numbers below detection close to zero
 
-hist(log(env.mat$TP), breaks = 30)
-env.mat$TP <- log(env.mat$TP)
-hist(log(env.mat$TN), breaks = 30)
-env.mat$TN <- log(env.mat$TN)
+env.subs <- env %>% select(habitat, elevation, temperature, conductivity, ph, TN, TP, DOC) %>% 
+  mutate(TN = if_else(TN < 0, 0.001, TN),
+         TP = if_else(TP < 0, 0.001, TP))
 
-env.dat <- env.mat
-env.mat <- scale(env.mat)
+
+hist(log(env.subs$TP), breaks = 30)
+hist(log(env.subs$TN), breaks = 30)
+
+env.subs <- env.subs %>% mutate(TN = log(TN), TP = log(TP))
+
+# rescale variables
+env.subs <- env.subs %>% mutate_if(is_double, scale_vec)
+
 ```
 
 Now, I'll perform some transformations on the abundance data. I'll work with the Hellinger-transformed data for the rest of the analysis.

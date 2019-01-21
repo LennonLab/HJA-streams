@@ -238,10 +238,3 @@ make.dendritic.dists <- function(infile = "") {
   
   return(as.dist(den.dists))
 }
-
-
-
-write.table(den.dists, file = "./data/hja-den-dist-mat.txt")
-
-den.dists <- read.table(file = "./data/hja-den-dist-mat.txt")
-saveRDS(den.dists, file = "data/DendriticDists.rda")
