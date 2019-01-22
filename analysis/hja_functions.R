@@ -238,3 +238,30 @@ make.dendritic.dists <- function(infile = "") {
   
   return(as.dist(den.dists))
 }
+
+# Rescale variables
+scale_vec <- function(my_var){
+  (my_var - mean(my_var)) / sd(my_var)
+}
+
+# ellipse functions 
+# https://stackoverflow.com/questions/13794419/plotting-ordiellipse-function-from-vegan-package-onto-nmds-plot-created-in-ggplo
+
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100) 
+{
+  theta <- (0:npoints) * 2 * pi/npoints
+  Circle <- cbind(cos(theta), sin(theta))
+  t(center + scale * t(Circle %*% chol(cov)))
+}
+
+calc.ellipse <- function(ord, ellipse){
+  df_ell <- data.frame()
+  for(g in levels(ord$group)){
+    df_ell <- rbind(df_ell, 
+                    cbind(as.data.frame(
+                      with(ord[ord$group==g,], 
+                           veganCovEllipse(ellipse[[g]]$cov, ellipse[[g]]$center, ellipse[[g]]$scale))), group = g))
+  }
+  return(df_ell)
+  
+}

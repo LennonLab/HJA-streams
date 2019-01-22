@@ -11,11 +11,12 @@ output: pdf_document
 knitr::opts_chunk$set(
   echo = TRUE, 
   fig.align = "center", 
-  fig.width = 7
+  fig.width = 6,
+  message = FALSE,
+  warning = FALSE
 )
 
 library("vegan")
-library("vegetarian")
 library("adespatial")
 library("pander")
 library("stringr")
@@ -24,6 +25,16 @@ library("phytools")
 library("GUniFrac")
 library("tidyverse")
 
+theme_set(theme_minimal() +
+            theme(axis.title = element_text(size = 16),
+                  axis.text = element_text(size = 12),
+                  legend.position = "top", 
+                  strip.text = element_text(size = 12),
+                  legend.text = element_text(size = 12),
+                  legend.title = element_text(size = 14)))
+
+# used http://tools.medialab.sciences-po.fr/iwanthue/
+my.colors <- c("#fcd28f", "#79d0ff")
 
 # load external functions
 source("analysis/mothur_tools.R")
@@ -64,7 +75,7 @@ if(all.equal.character(paste0(sites$ws, sites$site, sites$habitat), oturows)){
 ```
 
 Next, we will clean up the data. I'll remove any sample that didn't get 10000 reads. Then also cut those samples from the environment and design tables.
-```{r cleanup, cache=TRUE}
+```{r cleanup}
 # Sequencing Coverage
 coverage <- rowSums(OTUs)
 
@@ -99,26 +110,25 @@ dist.mat <- fossil::earth.dist(xy) * 1000
 ```
 
 Next, we will see if any of the environmental variables need to be transformed. I'll then rescale the environmental variables.
-```{r}
+```{r env_transfom}
 # Remove orthogonal vectors and make numbers below detection close to zero
-
-env.subs <- env %>% select(habitat, elevation, temperature, conductivity, ph, TN, TP, DOC) %>% 
+env.subs <- env %>% select(habitat, elevation, 
+                           temperature, conductivity, 
+                           ph, TN, TP, DOC) %>% 
   mutate(TN = if_else(TN < 0, 0.001, TN),
          TP = if_else(TP < 0, 0.001, TP))
 
-
-hist(log(env.subs$TP), breaks = 30)
-hist(log(env.subs$TN), breaks = 30)
+#hist(log(env.subs$TP), breaks = 30)
+#hist(log(env.subs$TN), breaks = 30)
 
 env.subs <- env.subs %>% mutate(TN = log(TN), TP = log(TP))
 
 # rescale variables
 env.subs <- env.subs %>% mutate_if(is_double, scale_vec)
-
 ```
 
 Now, I'll perform some transformations on the abundance data. I'll work with the Hellinger-transformed data for the rest of the analysis.
-```{r}
+```{r abund_transform}
 # Rarefy communities
 # OTUs <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
 # OTUs <- OTUs[,-which(colSums(OTUs) == 0)]
@@ -134,7 +144,7 @@ OTUsREL.hel <- decostand(OTUs, method = "hellinger")
 I removed the sites with low coverage, and I removed the OTUs with low abundance across the whole dataset. This left a total of `r nrow(OTUs)` sites and `r ncol(OTUs)` bacterial taxa. 
 
 Here, we will read in the phylogenetic tree, root it, and create the unifract distance matrices. I pruned the phylogenetic tree to match only the taxa remaining in the dataset. Then, I rooted the tree using the midpoint method and computed generalized UniFrac distances with a scaling factor of 0.5, along with unweighted and weighted calculations. 
-```{r tree}
+```{r tree, message=FALSE}
 # hja.tree <- read.tree("data/hja_streams.tree")
 # matched.phylo <- match.phylo.comm(hja.tree, OTUs)
 # hja.tree <- matched.phylo$phy
@@ -147,121 +157,139 @@ hja.tree.rooted <- readRDS(file = "temp/hja_tree_rooted.nwk")
 # hja.unifrac <- GUniFrac(otu.tab = OTUs, tree = hja.tree.rooted)$unifracs
 # saveRDS(hja.unifrac, file = "temp/hja_unifrac.rda")
 hja.unifrac <- readRDS(file = "temp/hja_unifrac.rda")
-hja.unifrac.dw <- hja.unifrac[ , ,"d_1"]		  # Weighted UniFrac
-hja.unifrac.du <- hja.unifrac[ , ,"d_UW"]		  # Unweighted UniFrac	
-hja.unifrac.dv <- hja.unifrac[ , ,"d_VAW"]		# Variance adjusted weighted UniFrac
-hja.unifrac.d0 <- hja.unifrac[ , ,"d_0"]    	# GUniFrac with alpha 0  
-hja.unifrac.d5 <- hja.unifrac[ , ,"d_0.5"]   	# GUniFrac with alpha 0.5 
+hja.unifrac.dw <- as.dist(hja.unifrac[,,"d_1"])		  # Weighted UniFrac
+hja.unifrac.du <- as.dist(hja.unifrac[,,"d_UW"])		  # Unweighted UniFrac	
+hja.unifrac.dv <- as.dist(hja.unifrac[,,"d_VAW"])		# Variance adjusted weighted UniFrac
+hja.unifrac.d0 <- as.dist(hja.unifrac[,,"d_0"])    	# GUniFrac with alpha 0  
+hja.unifrac.d5 <- as.dist(hja.unifrac[,,"d_0.5"])   	# GUniFrac with alpha 0.5 
 ```
 
 
 # Environmental analysis
-```{r envplots}
-cbind.data.frame(env.dat, design) %>% 
-  select(elevation, temperature, conductivity, ph, TN, TP, DOC, upstreamdist) %>% 
-  gather(-upstreamdist, key = variable, value = measurement) %>% 
-  ggplot(aes(x = upstreamdist, y = measurement)) + 
-  facet_wrap(~ variable, scales = "free_y") + 
+Here, I'll just plot the environmental variables from downstream to upstream across the watershed.
+```{r envplots, fig.asp=(1/.618)}
+env.subs %>% mutate(upstreamdist = design$upstreamdist, watershed = design$watershed) %>% 
+  gather(-upstreamdist, -watershed, -habitat, key = variable, value = measurement) %>% 
+  ggplot(aes(x = upstreamdist, y = measurement, color = watershed)) + 
+  facet_wrap(~ variable,  ncol = 1) + 
   geom_point() +
-  geom_smooth()
-  
+  geom_smooth() + 
+  theme(legend.position = "top") +
+  scale_x_continuous(labels = scales::wrap_format(10)) + 
+  labs(x = "Upstream distance (m)", 
+       y = "Value (z-score)",
+       color = "Watershed")
 ```
 
 # Diversity analysis
+```{r fig_alpha}
+alpha.tbl <- tibble(
+  habitat = str_to_title(design$habitat),
+  upstream = design$upstreamdist,
+  N0 = rowSums(OTUsREL.hel > 0),
+  N1 = exp(diversity(OTUsREL.hel, index = "shannon")),
+  N2 = diversity(OTUsREL, index = "invsimpson")
+)
 
-```{r}
-### Richness
-
-# Observed Richness
-S.obs <- rowSums((OTUsREL.hel > 0) * 1)
-
-simpsE <- round(apply(OTUsREL, 1, SimpE), 3)
-shan <- vegan::diversity(OTUsREL, index = "shannon")
-N1 <- exp(shan)
-simpsD <- vegan::diversity(OTUsREL, index = "invsimpson")
-E1 <- N1/S.obs
-
-
+alpha.tbl %>% 
+  ggplot(aes(x = habitat, y = N1, fill = habitat)) +
+  geom_boxplot() +
+  labs(x = "", y = expression(paste(alpha, "-Diversity (Species Equivalents)"))) +
+  scale_fill_manual(values = (my.colors)) +
+  guides(fill = FALSE) +
+  scale_y_continuous(limits = c(0, 3500))
 ```
 
-```{r}
-hja.dh <- vegdist(OTUsREL.hel, method = "euclid")
-hja.dh.single <- hclust(hja.dh, method = "single")
-plot(hja.dh.single,
-     labels = rownames(OTUsREL.hel))
-
-hja.dh.ward <- hclust(hja.dh, method = "ward.D2")
-plot(hja.dh.ward,
-     labels = rownames(OTUsREL.hel))
-
-hja.dh.flex <- agnes(hja.dh, method = "flexible", par.method = 0.625)
-hja.dh.flex <- as.hclust(hja.dh.flex)
-plot(hja.dh.flex,
-     labels = paste(design$watershed, design$habitat, design$order))
-
-cophenetic(hja.dh.flex)
-cor(hja.dh, cophenetic(hja.dh.flex))
-cor(hja.dh, cophenetic(hja.dh.single))
-cor(hja.dh, cophenetic(hja.dh.ward))
-
-```
+# Beta diversity: 
+### Ordination
+```{r run_pcoa, fig.show='hide'}
+hja.pcoa <- run.pcoa(comm = OTUsREL.hel, dist.metric = "euclidean", plot = T)
+pcoa.ellipse <- ordiellipse(hja.pcoa$pcoa, str_to_title(design$habitat), display = "sites",
+            kind = "se", conf = 0.95, label = T)
+pcoa.plot <- cbind.data.frame(scores(hja.pcoa$pcoa), group = str_to_title(design$habitat))
+df_ell <- calc.ellipse(ord = pcoa.plot, ellipse = pcoa.ellipse)
 
 
-# 
-```{r}
-#### PCoA 
-
-# All HJA Catchment
-hja.pcoa <- run.pcoa(comm = OTUsREL.hel)
-
-# Sediments Only
-sed.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$habitat == "sediment"),])
-
-# Water Only
-water.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$habitat == "water"),])
-
-
-# Lookout Creek Watershed Only
-lookout.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$watershed == "LC"),])
-
-# Watershed 01 Only
-ws01.pcoa <- run.pcoa(comm = OTUsREL.hel[which(design$watershed == "WS01"),])
-
-# Is habitat or order an important factor in community structure?
-hja.permanova <- adonis(hja.pcoa$dist.matrix ~ design$habitat + design$order, permutations = 999)
+# Run a PERMANOVA
+hja.permanova <- adonis(hja.pcoa$dist.matrix ~ design$habitat * design$order, permutations = 999)
+hja.permanova$aov.tab %>% pander::pander()
 capture.output(hja.permanova$aov.tab, file = "./tables/hja_permanova.txt")
+```
 
-ord <- ws01.pcoa
-ord.pc <- ord$pcoa
-scrs <- scores(ord.pc)
-xlim <- extendrange(x = .1, r = range(scrs[,1]))
-ylim <- extendrange(x = .1, r = range(scrs[,2]))
+```{r fig_pcoa}
+ggplot(data = pcoa.plot, aes(Dim1, Dim2)) +
+  geom_point(aes(color = group, shape = group), size = 3, alpha = .8) +
+  geom_point(data = subset(pcoa.plot, group == "Sediment"), shape = 1, color = "black", size = 3) +
+  geom_point(data = subset(pcoa.plot, group == "Water"), shape = 2, color = "black", size = 3) +
+  geom_path(data = df_ell, 
+            aes(x = Dim1, y = Dim2, color = group),
+            size = 1, alpha = 1, linetype = 2) +
+  labs(x = paste0("PCoA1 (", hja.pcoa$var1, "%)"),
+    y = paste0("PCoA2 (", hja.pcoa$var2, "%)"),
+    color = "Habitat", shape = "Habitat") +
+  scale_color_manual(values = my.colors) + 
+  coord_fixed()
+```
 
-with(design, levels(habitat))
-cols <- c("white", "grey")
+Now, we'll run an RDA 
+```{r dbrda, cache=TRUE}
+hja.rda <- rda(OTUsREL.hel ~ ., env.subs)
+RsquareAdj(hja.rda)
+anova(hja.rda, permutations = how(nperm = 999))
+anova(hja.rda, by = "axis", permutations = how(nperm = 999))
+```
+We see that the RDA is globally significant and the first two canonical axes are also significant. Because the full model was significant, I'll run a model selection procedure.
 
-plot.new()
-plot.window(xlim = xlim, ylim = ylim, asp = 1)
-abline(h = 0, lty = "dotted")
-abline(v = 0, lty = "dotted")
-with(design, points(scrs, col = "black", pch = 21, cex = 2, bg = cols[habitat]))
-with(design, legend("topright", legend = levels(habitat), bty = "n",
-                      col = "black", pch = 21, pt.bg = cols))
-axis(side = 1, lwd.ticks = 2, cex.axis = 1.2)
-axis(side = 2, lwd.ticks = 2, cex.axis = 1.2)
-axis(side = 3, labels = F, lwd.ticks = 2, cex.axis = 1.2)
-axis(side = 4, labels = F, lwd.ticks = 2, cex.axis = 1.2)
-title(xlab = paste("PCoA 1 (",ord$var1,"%)", sep = ""), 
-      ylab = paste("PCoA 2 (",ord$var2,"%)", sep = ""), cex.lab = 1.2)
-box(lwd = 2)
+```{r}
+hja.rda.0 <- rda(OTUsREL.hel ~ 1, data = env.subs)
+hja.forward <- ordiR2step(hja.rda.0, 
+                          scope = formula(hja.rda),
+                          direction = "forward",
+                          R2scope = TRUE,
+                          permutations = how(nperm = 199))
+RsquareAdj(hja.forward)
+anova(hja.forward, permutations = how(nperm = 999))
+anova(hja.forward, by = "axis", permutations = how(nperm = 999))
+```
+The model selection procedure left us with the model using only habitat, elevation, and TP as predictor variables. 
 
+### LCBD and SCBD
+Now, I'm going calculate the total beta diversity in the samples, and calcluate the local contributions to beta diversity (LCBD) and species contributions to beta diversity (SCBD). LCBD may be highest in more isolated reaches of the stream network
+```{r calc_LCBD, cache=TRUE}
+otu.beta <- beta.div(OTUs, method = "hellinger", nperm = 9999)
+```
 
+```{r fig_LCBD}
+otu.beta$beta # max is 1
 
+# which taxa contribute most to beta diversity?
+OTU.tax[order(otu.beta$SCBD[otu.beta$SCBD > mean(otu.beta$SCBD)], 
+              decreasing = T)[1:10],-c(1,2)] %>% 
+  remove_rownames() %>% pander()
 
+row.names(OTUs[which(otu.beta$p.adj <= 0.05),])
+design[which(otu.beta$p.adj <= 0.05),]
+beta.tbl <- cbind.data.frame(
+  design,
+  LCBD = otu.beta$LCBD,
+  pval = otu.beta$p.adj)
+beta.tbl %>% 
+  ggplot(aes(x = upstreamdist, y = LCBD, color = watershed, fill = watershed)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
+  scale_x_continuous(labels = scales::comma) +
+  labs(x = "Upstream distance (m)", color = "Watershed", fill = "Watershed")
+  
+
+```
+We observed \(BD_{total} = `r round(otu.beta$beta[2], 3)`\) out of 1. 
+
+```{r}
 
 
 ```
 
+\newpage
 # Appendix: Session Info
 ```{r}
 sessionInfo()
