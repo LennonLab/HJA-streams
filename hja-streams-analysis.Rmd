@@ -231,7 +231,7 @@ ggplot(data = pcoa.plot, aes(Dim1, Dim2)) +
   coord_fixed()
 ```
 
-Now, we'll run an RDA 
+Now, we'll run an RDA. 
 ```{r dbrda, cache=TRUE}
 hja.rda <- rda(OTUsREL.hel ~ ., env.subs)
 RsquareAdj(hja.rda)
@@ -251,7 +251,9 @@ RsquareAdj(hja.forward)
 anova(hja.forward, permutations = how(nperm = 999))
 anova(hja.forward, by = "axis", permutations = how(nperm = 999))
 ```
-The model selection procedure left us with the model using only habitat, elevation, and TP as predictor variables. 
+The model selection procedure left us with the model using only habitat, elevation, and TP as predictor variables. Now, we have 3 significant RDA axes with the more parsimonious model. 
+
+
 
 ### LCBD and SCBD
 Now, I'm going calculate the total beta diversity in the samples, and calcluate the local contributions to beta diversity (LCBD) and species contributions to beta diversity (SCBD). LCBD may be highest in more isolated reaches of the stream network

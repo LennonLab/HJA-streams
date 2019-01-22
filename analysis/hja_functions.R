@@ -20,6 +20,7 @@ run.pcoa <- function(comm = NULL, dist.metric = "bray", plot = T, ...){
   return(list(pcoa = pcoa, var1 = var1, var2 = var2, dist.matrix = dist.matrix))
 }
 
+
 # Function to extract explained variation from an ordination axis
 explain.var <- function(ord = "", axis = 1){
   return(round((eigenvals(ord)[axis]/sum(eigenvals(ord))*100), 3))
