@@ -33,8 +33,8 @@ theme_set(theme_minimal() +
                   legend.text = element_text(size = 12),
                   legend.title = element_text(size = 14)))
 
-# used http://tools.medialab.sciences-po.fr/iwanthue/
-my.colors <- c("#fcd28f", "#79d0ff")
+# used https://www.color-hex.com/color-palette/71977
+my.colors <- c("#d5ba94", "#3a4f6a")
 
 # load external functions
 source("analysis/mothur_tools.R")
