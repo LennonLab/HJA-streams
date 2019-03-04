@@ -24,14 +24,16 @@ library("picante")
 library("phytools")
 library("GUniFrac")
 library("tidyverse")
+library("cowplot")
+library("ggrepel")
 
-theme_set(theme_minimal() +
-            theme(axis.title = element_text(size = 16),
-                  axis.text = element_text(size = 12),
+theme_set(theme_cowplot() +
+            theme(axis.title = element_text(size = 12),
+                  axis.text = element_text(size = 10),
                   legend.position = "top", 
                   strip.text = element_text(size = 12),
-                  legend.text = element_text(size = 12),
-                  legend.title = element_text(size = 14)))
+                  legend.text = element_text(size = 10),
+                  legend.title = element_text(size = 12)))
 
 # used https://www.color-hex.com/color-palette/71977
 my.colors <- c("#d5ba94", "#3a4f6a")
@@ -130,8 +132,9 @@ env.subs <- env.subs %>% mutate_if(is_double, scale_vec)
 Now, I'll perform some transformations on the abundance data. I'll work with the Hellinger-transformed data for the rest of the analysis.
 ```{r abund_transform}
 # Rarefy communities
-# OTUs <- rrarefy(OTUs, sample = min(rowSums(OTUs)))
-# OTUs <- OTUs[,-which(colSums(OTUs) == 0)]
+set.seed(47405)
+OTUs <- rrarefy(OTUs, min(rowSums(OTUs)))
+OTUs <- OTUs[,-which(colSums(OTUs) == 0)]
 # saveRDS(OTUs, file = "temp/site_by_species_rarefied.rda")
 # OTUs <- readRDS("temp/site_by_species_rarefied.rda")
 
@@ -152,7 +155,7 @@ Here, we will read in the phylogenetic tree, root it, and create the unifract di
 # hja.tree.rooted <- midpoint.root(hja.tree)
 # is.rooted(hja.tree.rooted)
 # saveRDS(object = hja.tree.rooted, file = "temp/hja_tree_rooted.nwk")
-hja.tree.rooted <- readRDS(file = "temp/hja_tree_rooted.nwk")
+# hja.tree.rooted <- readRDS(file = "temp/hja_tree_rooted.nwk")
 
 # hja.unifrac <- GUniFrac(otu.tab = OTUs, tree = hja.tree.rooted)$unifracs
 # saveRDS(hja.unifrac, file = "temp/hja_unifrac.rda")
@@ -171,7 +174,7 @@ Here, I'll just plot the environmental variables from downstream to upstream acr
 env.subs %>% mutate(upstreamdist = design$upstreamdist, watershed = design$watershed) %>% 
   gather(-upstreamdist, -watershed, -habitat, key = variable, value = measurement) %>% 
   ggplot(aes(x = upstreamdist, y = measurement, color = watershed)) + 
-  facet_wrap(~ variable,  ncol = 1) + 
+  facet_grid(variable ~ watershed, scales = "free_x") + 
   geom_point() +
   geom_smooth() + 
   theme(legend.position = "top") +
@@ -181,7 +184,7 @@ env.subs %>% mutate(upstreamdist = design$upstreamdist, watershed = design$water
        color = "Watershed")
 ```
 
-# Diversity analysis
+# \alpha-Diversity analysis
 ```{r fig_alpha}
 alpha.tbl <- tibble(
   habitat = str_to_title(design$habitat),
@@ -191,14 +194,81 @@ alpha.tbl <- tibble(
   N2 = diversity(OTUsREL, index = "invsimpson")
 )
 
-alpha.tbl %>% 
+alpha.fig <- alpha.tbl %>% 
   ggplot(aes(x = habitat, y = N1, fill = habitat)) +
-  geom_boxplot() +
-  labs(x = "", y = expression(paste(alpha, "-Diversity (Species Equivalents)"))) +
+  geom_boxplot(color = "gray50") +
+  labs(x = "", y = expression(paste(alpha, "-diversity (species equivalents)"))) +
   scale_fill_manual(values = (my.colors)) +
   guides(fill = FALSE) +
-  scale_y_continuous(limits = c(0, 3500))
+  scale_y_continuous(limits = c(0, 3500)) +
+  ggsave("figures/alpha_diversity.png", width = 84, height = 84*1.618, units = "mm", dpi = 500) +
+  ggsave("figures/alpha_diversity.pdf", width = 84, height = 84*1.618, units = "mm")
 ```
+
+## Unique taxa per habitat
+```{r}
+sediment.only <- OTUs[, which(
+  colSums(OTUs[which(design$habitat == "water"),]) == 0)]
+water.only <- OTUs[, which(
+  colSums(OTUs[which(design$habitat == "sediment"),]) == 0)]
+water.sed <- OTUs[, which(
+  colSums(OTUs[which(design$habitat == "sediment"),]) > 1 & 
+  colSums(OTUs[which(design$habitat == "water"),]) > 1)]
+in.water <- OTUs[, which(
+  colSums(OTUs[which(design$habitat == "water"),]) > 1)]
+in.water.pa <- decostand(in.water, method = "pa")
+in.sediment <- OTUs[, which(
+  colSums(OTUs[which(design$habitat == "sediment"),]) > 1)]
+in.sediment.pa <- decostand(in.sediment, method = "pa")
+
+
+# what proportion of taxa are unique at each site
+water.richness <- rowSums(in.water.pa[which(design$habitat == "water"),])
+# in water samples, but not in any sediments
+water.unique <- rowSums(in.water.pa[ 
+  which(design$habitat == "water"), # count the number of taxa in each water samp 
+  which(colSums(in.water.pa[which(design$habitat == "sediment"),]) == 0)]) # whose abund in sediments is zero
+water.unique.frac <- water.unique / water.richness
+se(water.unique.frac)
+
+sed.richness <- rowSums(in.sediment.pa[which(design$habitat == "sediment"),])
+# in sediments, but not in any water samples
+sed.unique <- rowSums(in.sediment.pa[
+  which(design$habitat == "sediment"), # count number of taxa in sed samples
+  which(colSums(in.sediment.pa[which(design$habitat == "water"),]) == 0)]) #whose abund in water is zero
+sed.unique.frac <- sed.unique / sed.richness
+se(sed.frac)
+
+unique.fracs <- data.frame("unique_frac" = water.unique.frac, 
+                           "habitat" = "water") %>% 
+  rbind.data.frame(., data.frame(
+    "unique_frac" = sed.unique.frac, 
+    "habitat" = "sediment"))
+unique.fracs$habitat <- factor(unique.fracs$habitat, 
+                               levels = c("sediment", "water"), ordered = F)
+summary(lm(unique_frac ~ habitat, data = unique.fracs))
+summary(lm(unique_frac ~ habitat, data = unique.fracs)) %>% 
+  capture.output(file = "tables/unique_compare.txt")
+```
+
+```{r unique_taxa_figure}
+unique.fig <- unique.fracs %>% 
+  ggplot(aes(x = str_to_title(habitat), y = unique_frac, fill = habitat)) + 
+  geom_boxplot(color = "gray50") +
+  labs(x = "", y = "Unique taxa (richness)") +
+  scale_fill_manual(values = (my.colors)) +
+  guides(fill = FALSE) +
+  scale_y_continuous(limits = c(0, .3)) +
+  ggsave("figures/unique_taxa.png", width = 84, height = 84*1.618, units = "mm", dpi = 500) +
+  ggsave("figures/unique_taxa.pdf", width = 84, height = 84*1.618, units = "mm")
+```
+
+```{r fig1}
+cowplot::plot_grid(alpha.fig + theme(axis.text.x = element_blank()),
+                   unique.fig, align = "hv", labels = c("(a)", "(b)"), nrow = 2) +
+  ggsave("figures/Fig1.png", width = 84, height = 2*84*1.618, units = "mm", dpi = 500)
+```
+
 
 # Beta diversity: 
 ### Ordination
@@ -218,41 +288,87 @@ capture.output(hja.permanova$aov.tab, file = "./tables/hja_permanova.txt")
 
 ```{r fig_pcoa}
 ggplot(data = pcoa.plot, aes(Dim1, Dim2)) +
-  geom_point(aes(color = group, shape = group), size = 3, alpha = .8) +
-  geom_point(data = subset(pcoa.plot, group == "Sediment"), shape = 1, color = "black", size = 3) +
-  geom_point(data = subset(pcoa.plot, group == "Water"), shape = 2, color = "black", size = 3) +
-  geom_path(data = df_ell, 
-            aes(x = Dim1, y = Dim2, color = group),
-            size = 1, alpha = 1, linetype = 2) +
+  geom_hline(aes(yintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
+  geom_vline(aes(xintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
+  geom_point(aes(color = group, shape = group), size = 2, alpha = .8) +
+  geom_point(data = subset(pcoa.plot, group == "Sediment"), shape = 1, color = "black", size = 2) +
+  geom_point(data = subset(pcoa.plot, group == "Water"), shape = 2, color = "black", size = 2) +
+  # geom_path(data = df_ell, 
+  #           aes(x = Dim1, y = Dim2, color = group),
+  #           size = .8, alpha = 1, linetype = 2) +
   labs(x = paste0("PCoA1 (", hja.pcoa$var1, "%)"),
     y = paste0("PCoA2 (", hja.pcoa$var2, "%)"),
     color = "Habitat", shape = "Habitat") +
   scale_color_manual(values = my.colors) + 
-  coord_fixed()
+  coord_fixed() +
+  theme(legend.position = "none") + 
+  annotate("text", x = .3, y = -.25, label = "Sediment", size = 3) +
+  annotate("text", x = -.27, y = -.22, label = "Plankton", size = 3) +
+  ggsave("figures/PCoA.png", width = 84, height = 84, units = "mm", dpi = 500)
 ```
 
 Now, we'll run an RDA. 
 ```{r dbrda, cache=TRUE}
 hja.rda <- rda(OTUsREL.hel ~ ., env.subs)
-RsquareAdj(hja.rda)
-anova(hja.rda, permutations = how(nperm = 999))
-anova(hja.rda, by = "axis", permutations = how(nperm = 999))
+R2.all.vars <- RsquareAdj(hja.rda)$adj.r.squared
+#anova(hja.rda, permutations = how(nperm = 999))
+#anova(hja.rda, by = "axis", permutations = how(nperm = 999))
 ```
 We see that the RDA is globally significant and the first two canonical axes are also significant. Because the full model was significant, I'll run a model selection procedure.
 
 ```{r}
-hja.rda.0 <- rda(OTUsREL.hel ~ 1, data = env.subs)
-hja.forward <- ordiR2step(hja.rda.0, 
-                          scope = formula(hja.rda),
-                          direction = "forward",
-                          R2scope = TRUE,
-                          permutations = how(nperm = 199))
-RsquareAdj(hja.forward)
-anova(hja.forward, permutations = how(nperm = 999))
-anova(hja.forward, by = "axis", permutations = how(nperm = 999))
-```
-The model selection procedure left us with the model using only habitat, elevation, and TP as predictor variables. Now, we have 3 significant RDA axes with the more parsimonious model. 
+forward.sel(OTUsREL.hel, 
+            model.matrix(~., env.subs)[,-1],
+            adjR2thresh = R2.all.vars,
+            nperm = 999)
 
+# habitat, elevation, and conductivity were selected by Blanchet 2008 method
+
+hja.rda.reduced <- rda(OTUsREL.hel ~ habitat + elevation + conductivity, env.subs)
+```
+The model selection procedure left us with the model using only habitat, elevation, and conductivity as predictor variables. Now, we have 3 significant RDA axes with the more parsimonious model. 
+
+```{r}
+rda.plot <- cbind.data.frame(scores(hja.rda.reduced)$sites, group = str_to_title(design$habitat))
+rda.var1 <- round(eigenvals(hja.rda.reduced)[1] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
+rda.var2 <- round(eigenvals(hja.rda.reduced)[2] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
+rda.vecs <- as.data.frame(hja.rda.reduced$CCA$biplot)
+rda.vecs$predictor <- c("Planktonic\n habitat", "Elevation", "Conductivity")
+rda.vecs$origin <- 0
+scale.arrows = .5
+ggplot(data = rda.plot, aes(RDA1, RDA2)) +
+  geom_hline(aes(yintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
+  geom_vline(aes(xintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
+  geom_point(aes(color = group, shape = group), size = 2, alpha = .8) +
+  geom_point(data = subset(rda.plot, group == "Sediment"), shape = 1, color = "black", size = 2) +
+  geom_point(data = subset(rda.plot, group == "Water"), shape = 2, color = "black", size = 2) +
+  # geom_path(data = df_ell, 
+  #           aes(x = Dim1, y = Dim2, color = group),
+  #           size = .8, alpha = 1, linetype = 2) +
+  labs(x = paste0("RDA1 (", rda.var1, "%)"),
+    y = paste0("RDA2 (", rda.var2, "%)"),
+    color = "Habitat", shape = "Habitat") +
+  scale_color_manual(values = my.colors) + 
+  coord_fixed() +
+  theme(legend.position = "none") + 
+  geom_segment(data = rda.vecs, size = .5,
+               aes(x = origin, y = origin, 
+                   xend = scale.arrows*RDA1, 
+                   yend = scale.arrows*RDA2),
+               alpha = 1, color = "black",
+               arrow = arrow(angle = 20,
+                             length = unit(.1, "inches"),
+                             type = "open")) +
+  geom_text_repel(data = rda.vecs, size = 2,
+                   aes(x = (scale.arrows + .1)*RDA1, 
+                       y = (scale.arrows + .1)*RDA2, label = predictor),
+                   color = "black",
+                   segment.alpha = 0, 
+                  point.padding = 0, nudge_y = c(-.1, 0, 0)) +
+  #annotate("text", x = .3, y = -.25, label = "Sediment", size = 3) +
+  #annotate("text", x = -.27, y = -.22, label = "Plankton", size = 3) +
+  ggsave("figures/RDA.png", width = 84, height = 84, units = "mm", dpi = 500)
+```
 
 
 ### LCBD and SCBD
