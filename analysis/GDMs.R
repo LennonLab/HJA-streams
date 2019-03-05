@@ -1,10 +1,11 @@
 source("analysis/InitialSetup.R")
 library(gdm)
-geo.dists <- geoXY(env$latitude, env$longitude)
+geo.dists <- SoDA::geoXY(env$latitude, env$longitude)
+
 hja.biol.dat <- cbind.data.frame(sample = rownames(design), 
-                                 as.matrix(vegdist(OTUsREL, method = 'bray', binary = F)))
+                                 as.matrix(1/sqrt(2)*vegdist(OTUsREL.hel, method = 'euclidean', binary = F)))
 #hja.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat)
-hja.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat, order = design[,5])
+hja.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.subs[,-1], order = design[,5])
 hja.sitepair <- formatsitepair(bioData = hja.biol.dat, 
                                bioFormat = 3, abundance = T, 
                                predData = hja.env.dat, 
@@ -30,9 +31,9 @@ mtext(paste("Deviance Explained: ",round(hja.gdm$explained,3),"%",sep = ""),
 
 water.dists <- geoXY(env$latitude, env$longitude)[which(design$habitat == "water"),]
 water.biol.dat <- cbind.data.frame(sample = rownames(design[which(design$habitat == "water"),]), 
-                                   as.matrix(vegdist(OTUsREL[which(design$habitat == "water"),], method = 'bray', binary = F)))
-water.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat[,-1])[which(design$habitat == "water"),]
-water.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.mat[,-1], order = design[,5])[which(design$habitat == "water"),]
+                                   as.matrix(1/sqrt(2)*vegdist(OTUsREL.hel[which(design$habitat == "water"),], method = 'euclid', binary = F)))
+water.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.subs[,-1])[which(design$habitat == "water"),]
+water.env.dat <- cbind.data.frame(sample = rownames(design), geo.dists, env.subs[,-1], order = design[,5])[which(design$habitat == "water"),]
 water.sitepair <- formatsitepair(bioData = water.biol.dat, 
                                bioFormat = 3, abundance = T, 
                                predData = water.env.dat, 

@@ -23,6 +23,7 @@ library("stringr")
 library("picante")
 library("phytools")
 library("GUniFrac")
+library("gdm")
 library("tidyverse")
 library("cowplot")
 library("ggrepel")
@@ -105,7 +106,7 @@ design$upstreamdist <- as.matrix(den.dists)[1,]
 # Geo distance Matrix
 xy <- cbind(jitter(env$longitude, amount = .0001),
             jitter(env$latitude, amount = .0001))
-#geo.dists <- geoXY(env$latitude, env$longitude)
+geo.dists <- SoDA::geoXY(xy[,1], xy[,2])
 #xy <- project(xy, "+proj=utm +zone=10 +ellps=WGS84")
 #dist.mat <- as.matrix(dist(xy, method = "euclidean"))
 dist.mat <- fossil::earth.dist(xy) * 1000
@@ -392,15 +393,17 @@ beta.tbl <- cbind.data.frame(
   LCBD = otu.beta$LCBD,
   pval = otu.beta$p.adj)
 beta.tbl %>% 
-  ggplot(aes(x = upstreamdist, y = LCBD, color = watershed, fill = watershed)) +
-  geom_point(alpha = 0.3) +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) +
+  ggplot(aes(x = upstreamdist, y = LCBD, color = habitat, fill = habitat)) +
+  geom_point(alpha = 0.5, size = 3) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2), se = F) +
   scale_x_continuous(labels = scales::comma) +
-  labs(x = "Upstream distance (m)", color = "Watershed", fill = "Watershed")
+  labs(x = "Upstream distance (m)", color = "Watershed", fill = "Watershed") +
+  scale_color_manual(values = my.colors) + 
+  scale_fill_manual(values = my.colors) +
+  facet_wrap(~ watershed, ncol = 2, scales = "free_x")
   
-
 ```
-We observed \(BD_{total} = `r round(otu.beta$beta[2], 3)`\) out of 1. 
+We observed \(BD_{total} = `r round(otu.beta$beta[2], 3)`\) out of 1. We also find spatial structure in the site contributions to beta diversity. We find that, in the smaller watershed (WS01), greater distance upstream into the watershed uncovered more unique taxa. Downstream sites contributed less overall to beta diversity in the catchment. This pattern was observed in both sediment and planktonic communities. At the larger scale of the entire catchment, however, this pattern is not consistent. We found higher overal local contributions to beta diversity for sites across the large scale (indicating that they contained more unique taxa overall). We observed a similar increasing trend in the sediment community showing an increased contribution of headwaters to beta diversity, but a similar pattern was not found for planktonic communities on the catchment scale. This suggests that (1) within a small watershed, sites located a greater distance upstream contain more regionally unique taxa than sites located downstream, but (2) when considered at the regional scale, planktonic communities are  more unique across lower to intermediate distances upstream (e.g., due do localized immigration from nearby soils), but with in 
 
 ```{r}
 
