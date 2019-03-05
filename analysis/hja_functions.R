@@ -266,3 +266,47 @@ calc.ellipse <- function(ord, ellipse){
   return(df_ell)
   
 }
+
+
+# stochastic community assembly nulls
+nullcom.rcabund <- function(OTUs, stand = "hellinger", distance = "euclidean", nsims = 999){
+  
+  # create output object
+  r <- nrow(OTUs)
+  c <- ncol(OTUs)
+  spec.vec <- 1:ncol(OTUs)
+  RChel.nulls <- array(NA, c(r, r, nsims))
+  
+  for(i in 1:nsims){
+    if(i == 1) pb <- progress_bar$new(total = nsims, force = T)
+    pb$update(ratio = i/nsims)
+    
+    null.comm <- OTUs * 0
+    # for first simulation:
+    for(row.i in 1:nrow(null.comm)){
+      #print(paste("run :", i, " -> ", row.i, " : ", site.abunds[row.i], " inds"))
+      
+      while(rowSums(null.comm)[row.i] < site.abunds[row.i]){
+        
+        
+        # choose a species based on its occupancy
+        local.specs <- sample(x = spec.vec, size = site.rich[row.i],
+                              prob = as.vector(occupancy.probs), replace = FALSE)
+        
+        local.probs <- decostand(t(as.matrix(regional.abunds[,local.specs])), method = "total")
+        
+        local.inds <- sample(x = local.specs, size = site.abunds[row.i],
+                             prob = as.vector(local.probs), replace = TRUE)
+        
+        local.abunds <- rle(sort(local.inds))
+        
+        # add an individual to the local community
+        null.comm[row.i, local.abunds$values] <- local.abunds$lengths
+      }
+    }
+    null.hel <- as.matrix(vegdist(decostand(null.comm, method = stand), method = distance))
+    RChel.nulls[,,i] <- null.hel
+  }
+  return(RChel.nulls)
+}
+

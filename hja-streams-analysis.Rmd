@@ -27,6 +27,7 @@ library("gdm")
 library("tidyverse")
 library("cowplot")
 library("ggrepel")
+library("progress")
 
 theme_set(theme_cowplot() +
             theme(axis.title = element_text(size = 12),
@@ -157,7 +158,7 @@ Here, we will read in the phylogenetic tree, root it, and create the unifract di
 # hja.tree.rooted <- midpoint.root(hja.tree)
 # is.rooted(hja.tree.rooted)
 # saveRDS(object = hja.tree.rooted, file = "temp/hja_tree_rooted.nwk")
-# hja.tree.rooted <- readRDS(file = "temp/hja_tree_rooted.nwk")
+hja.tree.rooted <- readRDS(file = "temp/hja_tree_rooted.nwk")
 
 # hja.unifrac <- GUniFrac(otu.tab = OTUs, tree = hja.tree.rooted)$unifracs
 # saveRDS(hja.unifrac, file = "temp/hja_unifrac.rda")
@@ -266,9 +267,9 @@ unique.fig <- unique.fracs %>%
 ```
 
 ```{r fig1}
-cowplot::plot_grid(alpha.fig + theme(axis.text.x = element_blank()),
-                   unique.fig, align = "hv", labels = c("(a)", "(b)"), nrow = 2) +
-  ggsave("figures/Fig1.png", width = 84, height = 2*84*1.618, units = "mm", dpi = 500)
+cowplot::plot_grid(alpha.fig,
+                   unique.fig, align = "hv", labels = c("(a)", "(b)"), nrow =1) +
+  ggsave("figures/Fig1.png", width = 84*2, height = 84*1.618, units = "mm", dpi = 500)
 ```
 
 
@@ -319,10 +320,10 @@ R2.all.vars <- RsquareAdj(hja.rda)$adj.r.squared
 We see that the RDA is globally significant and the first two canonical axes are also significant. Because the full model was significant, I'll run a model selection procedure.
 
 ```{r}
-forward.sel(OTUsREL.hel, 
-            model.matrix(~., env.subs)[,-1],
-            adjR2thresh = R2.all.vars,
-            nperm = 999)
+# forward.sel(OTUsREL.hel, 
+#             model.matrix(~., env.subs)[,-1],
+#             adjR2thresh = R2.all.vars,
+#             nperm = 999)
 
 # habitat, elevation, and conductivity were selected by Blanchet 2008 method
 
@@ -376,8 +377,9 @@ ggplot(data = rda.plot, aes(RDA1, RDA2)) +
 ### LCBD and SCBD
 Now, I'm going calculate the total beta diversity in the samples, and calcluate the local contributions to beta diversity (LCBD) and species contributions to beta diversity (SCBD). LCBD may be highest in more isolated reaches of the stream network
 ```{r calc_LCBD, cache=TRUE}
-otu.beta <- beta.div(OTUs, method = "hellinger", nperm = 9999)
-saveRDS(otu.beta, file = "temp/lcbd.rda")
+#otu.beta <- beta.div(OTUs, method = "hellinger", nperm = 9999)
+#saveRDS(otu.beta, file = "temp/lcbd.rda")
+otu.beta <- readRDS("temp/lcbd.rda")
 ```
 
 ```{r fig_LCBD}
@@ -409,9 +411,109 @@ beta.tbl %>%
 ```
 We observed \(BD_{total} = `r round(otu.beta$beta[2], 3)`\) out of 1. We also find spatial structure in the site contributions to beta diversity. We find that, in the smaller watershed (WS01), greater distance upstream into the watershed uncovered more unique taxa. Downstream sites contributed less overall to beta diversity in the catchment. This pattern was observed in both sediment and planktonic communities. At the larger scale of the entire catchment, however, this pattern is not consistent. We found higher overal local contributions to beta diversity for sites across the large scale (indicating that they contained more unique taxa overall). We observed a similar increasing trend in the sediment community showing an increased contribution of headwaters to beta diversity, but a similar pattern was not found for planktonic communities on the catchment scale. This suggests that (1) within a small watershed, sites located a greater distance upstream contain more regionally unique taxa than sites located downstream, but (2) when considered at the regional scale, planktonic communities are  more unique across lower to intermediate distances upstream (e.g., due do localized immigration from nearby soils), but with in 
 
+# Null model analysis
 ```{r}
+# Calculate abundance-weighted Raup-Crick dissimilarities
+regional.abunds <- t(as.matrix(colSums(OTUs)))
+regional.relabunds <- decostand(regional.abunds, method = "total")
+occupancy.probs <- t(as.matrix(colSums(decostand(OTUs, method = "pa")) / nrow(OTUs)))
+site.abunds <- rowSums(OTUs)
+site.rich <- specnumber(OTUs)
+a <- regional.relabunds * occupancy.probs
+
+# Create a null community based on Stegen et al. 2015
+#rc.nulls <- nullcom.rcabund(OTUs = OTUs)
+#saveRDS(rc.nulls, "temp/rc_nullmodels.rda")
+rc.nulls <- readRDS("temp/rc_nullmodels.rda")
+
+obs.hel <- as.matrix(vegdist(OTUsREL.hel, method = "euclidean"))
+site.compares <- expand.grid(site1 = 1:nrow(obs.hel), site2 = 1:nrow(obs.hel))
+RC.hel <- matrix(NA, nrow = nrow(obs.hel), ncol = nrow(obs.hel))
+
+# test conversion to hellinger
+# if observed is greater than all nulls, should be maximum val
+# if observed is less than all nulls, should be minimum
+# range from 0 to 1
+
+for(row.i in 1:nrow(site.compares)){
+  site1 <- site.compares[row.i,1]
+  site2 <- site.compares[row.i,2]
+  pairwise.null <- rc.nulls[site1,site2,]
+  pairwise.hel <- obs.hel[site1,site2]
+  num.greater <- sum(pairwise.null > pairwise.hel)
+  num.ties <- sum(pairwise.null == pairwise.hel)
+  val <- (((1 * num.greater) + (0.5 * num.ties))/999 - 0.5) * 2
+  RC.hel[site1, site2] <- val
+}
+rownames(RC.hel) <- rownames(design)
+colnames(RC.hel) <- rownames(design)
+RC.hel.dist <- as.dist(RC.hel)
+range(RC.hel.dist)
+
+dists.df <- simba::liste(RC.hel.dist, entry = "RC_hel") %>% add_column(den.dists)
+dists.df$habitat1 <- env$habitat[match(dists.df$NBX, env$sample)]
+dists.df$habitat2 <- env$habitat[match(dists.df$NBY, env$sample)]
+
+dists.df %>% 
+  ggplot(aes(x = den.dists, y = RC.hel.dist)) +
+  geom_point(aes(color = abs(RC.hel.dist) > 0.95)) +
+  geom_smooth(method = "loess", se = F) +
+  theme(legend.position = "none") +
+  facet_grid(habitat1 ~ habitat2)
+```
+
+```{r}
+matched.phylo <- match.phylo.comm(phy = hja.tree.rooted, comm = OTUs)
+hja.comm <- matched.phylo$comm
+hja.phy <- matched.phylo$phy
+
+mntd.hja <- comdistnt(hja.comm, cophenetic(hja.phy), abundance.weighted = T)
+# saveRDS(mntd.hja, file = "data/mntds.rda")
+
+# # Create null comms
+# mntd.null <- array(NA, c(50, 50, 999))
+# for(i in 1:999){
+#   if(i == 1) pb <- progress_bar$new(total = 999, force = T)
+#   pb$update(ratio = i/999)
+#   #print(paste("creating null community ", i, " of 999"))
+#   temp.mntd <- comdistnt(hja.comm,
+#                          cophenetic(tipShuffle(hja.phy)),
+#                          abundance.weighted=T)
+#   mntd.null[,,i] <- as.matrix(temp.mntd)
+#   if(i %% 50 == 0 | i == 999) saveRDS(mntd.null, file = "data/mntds-null-dist.rda")
+# }
+
+# read null dists 
+mntd.hja <- readRDS(file = "data/mntds.rda")
+mntds.null <- readRDS(file = "data/mntds-null-dist.rda")
+
+obs.mntds <- as.matrix(mntd.hja)
+site.compares <- expand.grid(site1 = 1:ncol(obs.mntds), site2 = 1:ncol(obs.mntds))
+bNTI <- matrix(NA, nrow = nrow(obs.mntds), ncol = ncol(obs.mntds))
+for(row.i in 1:nrow(site.compares)){
+  site1 <- site.compares[row.i,1]
+  site2 <- site.compares[row.i,2]
+  pairwise.null <- mntds.null[site1,site2,]
+  pairwise.mntd <- obs.mntds[site1,site2]
+  null.mean <- mean(pairwise.null, na.rm = TRUE)
+  null.sd <- sd(pairwise.null, na.rm = TRUE)
+  val <- (pairwise.mntd - null.mean) / null.sd
+  bNTI[site1, site2] <- val
+}
+colnames(bNTI) <- rownames(hja.comm)
+rownames(bNTI) <- rownames(hja.comm)
+
+bNTI.dist <- as.dist(bNTI)
+hist(bNTI.dist, breaks = 30)
+sum(bNTI.dist < 2 & bNTI.dist > -2) / length(bNTI.dist) # undom
+sum(bNTI.dist > 2) / length(bNTI.dist) # variable selection
+sum(bNTI.dist < -2) / length(bNTI.dist) # homogeneous selection
 
 
+hja.bnti.dist.ls <- liste(bNTI.dist, entry = "bNTI")
+hja.rcbray.dist.ls <- liste(RC.bray.dist, entry = "RC.bray")
+hja.assembly <- as.data.frame(cbind(hja.bnti.dist.ls, hja.rcbray.dist.ls))
+hja.assembly <- full_join(hja.bnti.dist.ls, hja.rcbray.dist.ls)
 ```
 
 \newpage
