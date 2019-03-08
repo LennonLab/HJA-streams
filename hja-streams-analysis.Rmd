@@ -374,6 +374,7 @@ ggplot(data = rda.plot, aes(RDA1, RDA2)) +
 ```
 
 
+
 ### LCBD and SCBD
 Now, I'm going calculate the total beta diversity in the samples, and calcluate the local contributions to beta diversity (LCBD) and species contributions to beta diversity (SCBD). LCBD may be highest in more isolated reaches of the stream network
 ```{r calc_LCBD, cache=TRUE}
@@ -428,6 +429,7 @@ rc.nulls <- readRDS("temp/rc_nullmodels.rda")
 
 obs.hel <- as.matrix(vegdist(OTUsREL.hel, method = "euclidean"))
 site.compares <- expand.grid(site1 = 1:nrow(obs.hel), site2 = 1:nrow(obs.hel))
+site.compares <- site.compares[-which(site.compares[,1] == site.compares[,2]),]
 RC.hel <- matrix(NA, nrow = nrow(obs.hel), ncol = nrow(obs.hel))
 
 # test conversion to hellinger
@@ -442,7 +444,7 @@ for(row.i in 1:nrow(site.compares)){
   pairwise.hel <- obs.hel[site1,site2]
   num.greater <- sum(pairwise.null > pairwise.hel)
   num.ties <- sum(pairwise.null == pairwise.hel)
-  val <- (((1 * num.greater) + (0.5 * num.ties))/999 - 0.5) * 2
+  val <- -1*((((1 * num.greater) + (0.5 * num.ties))/999 - 0.5) * 2)
   RC.hel[site1, site2] <- val
 }
 rownames(RC.hel) <- rownames(design)
@@ -451,16 +453,30 @@ RC.hel.dist <- as.dist(RC.hel)
 range(RC.hel.dist)
 
 dists.df <- simba::liste(RC.hel.dist, entry = "RC_hel") %>% add_column(den.dists)
-dists.df$habitat1 <- env$habitat[match(dists.df$NBX, env$sample)]
-dists.df$habitat2 <- env$habitat[match(dists.df$NBY, env$sample)]
+# dists.df$habitat1 <- env$habitat[match(dists.df$NBX, env$sample)]
+# dists.df$habitat2 <- env$habitat[match(dists.df$NBY, env$sample)]
+dists.df$habitat <- NA
+dists.df[str_detect(dists.df$NBX, "_W") & str_detect(dists.df$NBY, "_W"),]$habitat <- str_wrap("Planktonic")
+dists.df[str_detect(dists.df$NBX, "_W") & str_detect(dists.df$NBY, "_S"),]$habitat <- str_wrap("Planktonic-Sediment")
+dists.df[str_detect(dists.df$NBX, "_S") & str_detect(dists.df$NBY, "_W"),]$habitat <- str_wrap("Planktonic-Sediment")
+dists.df[str_detect(dists.df$NBX, "_S") & str_detect(dists.df$NBY, "_S"),]$habitat <- str_wrap("Sediment")
 
 dists.df %>% 
-  ggplot(aes(x = den.dists, y = RC.hel.dist)) +
-  geom_point(aes(color = abs(RC.hel.dist) > 0.95)) +
-  geom_smooth(method = "loess", se = F) +
+  ggplot(aes(x = den.dists/1000, y = RC.hel.dist)) +
+  geom_point(alpha = 0.25, aes(color = abs(RC.hel.dist) > 0.95)) +
+  geom_smooth(color = "black", method = "loess", se = F) +
   theme(legend.position = "none") +
-  facet_grid(habitat1 ~ habitat2)
+  labs(x = "Dendritic distance (km)",
+       y = expression(beta["RC, Hellinger distance"])) +
+  # geom_hline(data = group_by(dists.df, habitat) %>% summarize(mean_rc = mean(RC_hel)),
+  #            aes(yintercept = mean_rc),
+  #            linetype = "dashed") +
+  facet_wrap(~habitat) +
+  scale_color_manual(values = c("gray50", "black")) +
+  ggsave("figures/RC.png", height = 4, width = 4*1.618, dpi = 500)
 ```
+
+
 
 ```{r}
 matched.phylo <- match.phylo.comm(phy = hja.tree.rooted, comm = OTUs)

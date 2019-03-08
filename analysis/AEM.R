@@ -1,39 +1,71 @@
 # AEM 
+library(spdep)
+
+geoXY
 
 design.sed <- subset(design, habitat == "sediment")
 design.water <- subset(design, habitat == "water")
+env %>% 
+  ggplot(aes(x = longitude, y = latitude)) +
+  geom_point(alpha = .2) + 
+  geom_text_repel(aes(label = sample), point.padding = .1) +
+  facet_wrap(~habitat) +
+  theme_minimal() +
+  ggsave("temp/sample_orientation.pdf")
 
-# Construct side-by-edge matrix for sediments
-sed.E <- matrix(0, nrow = 24, ncol = 31)
-rownames(sed.E) <- rownames(design.sed)
-sed.E["LC_01_S",c(1:17)] <- 1
-sed.E["LC_02_S",c(2:17)] <- 1
-sed.E["LC_05_S",c(5,6,7,8,9,10,12,13,14,15)] <- 1
-sed.E["LC_08_S",17] <- 1
-sed.E["LC_09_S",13] <- 1
-sed.E["LC_10_S",12] <- 1
-sed.E["LC_11_S",16] <- 1
-sed.E["LC_13_S",c(8,9,10,14,15)] <- 1
-sed.E["LC_16_S",11] <- 1
-sed.E["LC_17_S",c(9,10,14,15)] <- 1
-sed.E["LC_18_S",15] <- 1
-sed.E["LC_19_S",14] <- 1
-sed.E["W1_01_S",c(18:31)] <- 1
-sed.E["W1_02_S",c(19:31)] <- 1
-sed.E["W1_05_S",c(22:31)] <- 1
-sed.E["W1_06_S",c(23:31)] <- 1
-sed.E["W1_08_S",25] <- 1
-sed.E["W1_10_S",c(26:31)] <- 1
-sed.E["W1_12_S",c(27:31)] <- 1
-sed.E["W1_18_S",c(29,30)] <- 1
-sed.E["W1_19_S",30] <- 1
-sed.E["W1_20_S",31] <- 1
-sed.E["W1_21_S",c(20:31)] <- 1
-sed.E["W1_22_S",c(21:31)] <- 1
+ggplot(data = fortify(rgdal::readOGR("imagery/lidar_stream/lidar_stream.shp"))) + 
+  geom_polygon(aes(x = long, y = lat, group = group),
+               color = "gray", fill = "white", size = 0.2)
+  
 
-sed.aem <- aem(binary.mat = sed.E)
+# # Construct side-by-edge matrix for sediments
+# sed.E <- matrix(0, nrow = 24, ncol = 31)
+# rownames(sed.E) <- rownames(design.sed)
+# sed.E["LC_01_S",c(1:17)] <- 1
+# sed.E["LC_02_S",c(2:17)] <- 1
+# sed.E["LC_05_S",c(5,6,7,8,9,10,12,13,14,15)] <- 1
+# sed.E["LC_08_S",17] <- 1
+# sed.E["LC_09_S",13] <- 1
+# sed.E["LC_10_S",12] <- 1
+# sed.E["LC_11_S",16] <- 1
+# sed.E["LC_13_S",c(8,9,10,14,15)] <- 1
+# sed.E["LC_16_S",11] <- 1
+# sed.E["LC_17_S",c(9,10,14,15)] <- 1
+# sed.E["LC_18_S",15] <- 1
+# sed.E["LC_19_S",14] <- 1
+# sed.E["W1_01_S",c(18:31)] <- 1
+# sed.E["W1_02_S",c(19:31)] <- 1
+# sed.E["W1_05_S",c(22:31)] <- 1
+# sed.E["W1_06_S",c(23:31)] <- 1
+# sed.E["W1_08_S",25] <- 1
+# sed.E["W1_10_S",c(26:31)] <- 1
+# sed.E["W1_12_S",c(27:31)] <- 1
+# sed.E["W1_18_S",c(29,30)] <- 1
+# sed.E["W1_19_S",30] <- 1
+# sed.E["W1_20_S",31] <- 1
+# sed.E["W1_21_S",c(20:31)] <- 1
+# sed.E["W1_22_S",c(21:31)] <- 1
+
+sed.SBE <- read_csv("data/AEMsed_site-by-edge.csv")
+sed.OTUsREL.hel <- OTUsREL.hel[which(design$habitat == "sediment"),]
+sed.aem <- aem(binary.mat = as.matrix(sed.SBE[,-1]))
+matplot(sed.aem$vectors[,1:9], type = 'l')
 plot(sed.aem$values/sum(sed.aem$values))
-sed.db <- vegdist(OTUsREL[which(design$habitat == "sediment"),])
+sed.aem.vec <- as.data.frame(sed.aem$vectors)
+sed.db <- vegdist(sed.OTUsREL.hel, method = "euclidean")
+sed.aem.full <- rda(sed.OTUsREL.hel ~ ., sed.aem.vec[,1:11])
+(sed.r2.aem <- RsquareAdj(sed.aem.full)$adj.r.squared)
+sed.aem.fwd <- forward.sel(sed.OTUsREL.hel, sed.aem.vec)
+sed.aem.sig.vec <- sed.aem.vec[,c(sort(sed.aem.fwd[,2]))]
+sed.aem.sig <- rda(sed.OTUsREL.hel ~ ., sed.aem.sig.vec)
+anova(sed.aem.sig)
+
+sed.envs <- sed.SBE %>% rename(sample = "X1") %>% 
+  select(sample) %>% 
+  left_join(cbind.data.frame(env[,1], env.subs)) %>% 
+  select(-sample, -habitat)
+varpart(sed.OTUsREL.hel, sed.aem.sig.vec, sed.envs)
+
 mod0 <- dbrda(sed.db ~ 1, data = as.data.frame(sed.aem$vectors))
 mod1 <- dbrda(sed.db ~ ., data = as.data.frame(sed.aem$vectors))
 envfit(mod1, as.data.frame(sed.aem$vectors))
