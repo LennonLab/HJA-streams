@@ -488,7 +488,7 @@ matched.phylo <- match.phylo.comm(phy = hja.tree.rooted, comm = OTUs[,which(colS
 hja.comm <- matched.phylo$comm
 hja.phy <- matched.phylo$phy
 
-mntd.hja <- comdistnt.par(hja.comm, cophenetic(hja.phy), abundance.weighted = T, cores = 32)
+#mntd.hja <- comdistnt.par(hja.comm, cophenetic(hja.phy), abundance.weighted = T, cores = 32)
 
 #hja.mntd.ses <- ses.comdistnt2(
 #  samp = hja.comm, 
@@ -549,9 +549,8 @@ sum(bNTI.dist < -2) / length(bNTI.dist) # homogeneous selection
 
 hja.bnti.dist.ls <- simba::liste(bNTI.dist, entry = "bNTI")
 hja.rchel.dist.ls <- simba::liste(RC.hel.dist, entry = "RChel")
-hja.assembly <- as.data.frame(cbind(hja.bnti.dist.ls, hja.rcbray.dist.ls))
 hja.assembly <- full_join(dists.df, hja.bnti.dist.ls)
-
+hja.assembly <- cbind(hja.assembly, env = simba::liste(dist(env.subs[,-1]))[,3])
 hja.assembly %>% 
   ggplot(aes(x = den.dists, y = RC_hel)) +
   geom_point() + 
@@ -559,10 +558,87 @@ hja.assembly %>%
   facet_wrap(~habitat)
 
 hja.assembly %>% 
-  ggplot(aes(x = den.dists, y = bNTI, color = abs(bNTI) > 1.96)) +
-  geom_point(alpha = 0.4) + 
-  geom_smooth(se = FALSE) + 
+  ggplot(aes(x = den.dists, y = bNTI)) +
+  geom_point(alpha = 0.4, aes(color = abs(bNTI) > 1.96)) + 
+  geom_line(method = "loess", stat = "smooth", col = "black", size = 1) + 
   facet_wrap(~habitat)
+
+
+hja.assembly.plot <- hja.assembly %>% 
+  mutate(process = ifelse(bNTI < -1.96, "Homogeneous selection", 
+                          ifelse(bNTI > 1.96, "Variable selection",
+                                 ifelse(RC_hel > 0.95, "Dispersal limitation",
+                                        ifelse(RC_hel < -0.95, "Mass effects", "Stochastic"))))) %>% 
+  gather(RC_hel, bNTI, key = "metric", value = "value") 
+hja.assembly.plot$metric <- factor(hja.assembly.plot$metric)
+levels(hja.assembly.plot$metric) <- c(
+  expression(paste(beta,"NTI")),
+  expression(beta["RC, Hellinger distance"])
+)
+
+hja.assembly.plot %>% 
+  ggplot(aes(x = den.dists/1000, y = env)) +
+  geom_point(alpha = 0.4) + 
+  geom_line(method = "lm", stat = "smooth", col = "black", size = 1)
+
+hja.assembly.plot %>% 
+  ggplot(aes(x = den.dists/1000, y = value, 
+             shape = habitat, color = habitat, fill = habitat)) +
+  geom_point(alpha = .3, size = 2) + 
+  geom_smooth(method = "lm", se = T, size = 1, span = .75) + 
+  facet_grid(metric~., scales = "free_y", switch = "y", labeller = label_parsed) + 
+  theme(strip.placement = "outside", legend.title = element_blank()) +
+  labs(x = "Dendritic distance (km)", y = "") +
+  scale_color_manual(values=c("#d3b84b", "#8397b3", "#688c45")) +
+  scale_fill_manual(values=c("#d3b84b", "#8397b3",	"#688c45")) +
+  guides(color=guide_legend(override.aes=list(fill=NA, alpha = NA)))
+
+colpal <- c("#edc951",
+"#eb6841",
+"#cc2a36",
+"#4f372d",
+"#00a0b0")
+
+hja.assembly.plot %>% 
+  ggplot(aes(x = den.dists/1000, y = value, color = process)) +
+  geom_point(alpha = 0.3, size = 2) + 
+  geom_line(method = "loess", stat = "smooth", col = "black", size = 1, span = .75) + 
+  facet_grid(metric~habitat, scales = "free_y", switch = "y", labeller = label_parsed) + 
+  theme(strip.placement = "outside", 
+        legend.title = element_blank(), 
+        legend.position = "bottom") +
+  labs(x = "Dendritic distance (km)", y = "") +
+  scale_color_manual(values=colpal) +
+  guides(color=guide_legend(override.aes=list(alpha = NA), nrow = 2)) +
+  ggsave("figures/ddr_space.png", width = 6.5, height = 6, dpi = 600)
+
+
+hja.assembly.plot %>% 
+  ggplot(aes(x = env, y = value, color = process)) +
+  geom_point(alpha = 0.3, size = 2) + 
+  geom_line(method = "loess", stat = "smooth", col = "black", size = 1, span = .75) + 
+  facet_grid(metric~habitat, scales = "free_y", switch = "y", labeller = label_parsed) + 
+  theme(strip.placement = "outside", 
+        legend.title = element_blank(), 
+        legend.position = "bottom") +
+  labs(x = "Environmental dissimilarity", y = "") +
+  guides(color=guide_legend(override.aes=list(alpha = NA), nrow = 2)) +
+  scale_color_manual(values=colpal) + 
+  ggsave("figures/ddr_env.png", width = 6.5, height = 6, dpi = 600)
+
+
+
+library(ggridges)
+hja.assembly.plot %>% 
+  ggplot(aes(x = den.dists/1000, y = process, fill = process)) +
+  geom_density_ridges(panel_scaling = F, alpha = 0.5, color = "grey90", show.legend = F) +
+  facet_grid(~habitat, scales = "free_y", switch = "y", labeller = label_parsed) + 
+  theme(strip.placement = "outside", 
+        panel.grid.major.y = element_line(color = "grey90")) +
+  labs(x = "Dendritic distance (km)", y = "") +
+  scale_fill_manual(values=c("#E69F00", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"))
+
+
 ```
 
 \newpage
