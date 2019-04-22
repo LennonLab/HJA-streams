@@ -28,6 +28,7 @@ library("tidyverse")
 library("cowplot")
 library("ggrepel")
 library("progress")
+library("doSNOW")
 
 theme_set(theme_cowplot() +
             theme(axis.title = element_text(size = 12),
@@ -44,6 +45,9 @@ my.colors <- c("#d5ba94", "#3a4f6a")
 # load external functions
 source("analysis/mothur_tools.R")
 source("analysis/hja_functions.R")
+source("analysis/comdistnt.par.R")
+source("analysis/ses.comdistnt2.R")
+
 ```
 
 First, we load the data. This includes the site-by-species matrix (generated in Mothur, v. 1.41.1), the RDP taxonomy, the environmental data, and the phylogenetic tree (generated with FastTreeMP).
@@ -65,6 +69,7 @@ OTUs <- read.otu(shared = "data/hja_streams.shared", cutoff = "0.03") # 97% Simi
 OTU.tax <- read.tax(taxonomy = "data/hja_streams.0.03.taxonomy", format = "rdp")
 
 # Import Env
+options(readr.default_locale=readr::locale(tz="America/Indiana/Indianapolis"))
 env.total <- read_csv("data/hja_env.csv", 
                       col_types = cols(
                         date = col_date(format = "%d-%b-%y"),
@@ -479,11 +484,26 @@ dists.df %>%
 
 
 ```{r}
-matched.phylo <- match.phylo.comm(phy = hja.tree.rooted, comm = OTUs)
+matched.phylo <- match.phylo.comm(phy = hja.tree.rooted, comm = OTUs[,which(colSums(OTUs) > 10)])
 hja.comm <- matched.phylo$comm
 hja.phy <- matched.phylo$phy
 
-mntd.hja <- comdistnt(hja.comm, cophenetic(hja.phy), abundance.weighted = T)
+mntd.hja <- comdistnt.par(hja.comm, cophenetic(hja.phy), abundance.weighted = T, cores = 32)
+
+#hja.mntd.ses <- ses.comdistnt2(
+#  samp = hja.comm, 
+#  dis = cophenetic(hja.phy), 
+#  method = "quasiswap", 
+#  fixedmar = "both", 
+#  shuffle = "both", 
+#  strata = NULL, 
+#  mtype = "count", 
+#  burnin = 0, 
+#  thin = 1, 
+#  abundance.weighted = TRUE, 
+#  exclude.conspecifics = FALSE, 
+#  runs = 999, 
+#  cores = 32)
 # saveRDS(mntd.hja, file = "data/mntds.rda")
 
 # # Create null comms
@@ -500,36 +520,49 @@ mntd.hja <- comdistnt(hja.comm, cophenetic(hja.phy), abundance.weighted = T)
 # }
 
 # read null dists 
-mntd.hja <- readRDS(file = "data/mntds.rda")
-mntds.null <- readRDS(file = "data/mntds-null-dist.rda")
+#mntd.hja <- readRDS(file = "data/mntds.rda")
+#mntds.null <- readRDS(file = "data/mntds-null-dist.rda")
 
-obs.mntds <- as.matrix(mntd.hja)
-site.compares <- expand.grid(site1 = 1:ncol(obs.mntds), site2 = 1:ncol(obs.mntds))
-bNTI <- matrix(NA, nrow = nrow(obs.mntds), ncol = ncol(obs.mntds))
-for(row.i in 1:nrow(site.compares)){
-  site1 <- site.compares[row.i,1]
-  site2 <- site.compares[row.i,2]
-  pairwise.null <- mntds.null[site1,site2,]
-  pairwise.mntd <- obs.mntds[site1,site2]
-  null.mean <- mean(pairwise.null, na.rm = TRUE)
-  null.sd <- sd(pairwise.null, na.rm = TRUE)
-  val <- (pairwise.mntd - null.mean) / null.sd
-  bNTI[site1, site2] <- val
-}
-colnames(bNTI) <- rownames(hja.comm)
-rownames(bNTI) <- rownames(hja.comm)
+# obs.mntds <- as.matrix(mntd.hja)
+#site.compares <- expand.grid(site1 = 1:ncol(obs.mntds), site2 = 1:ncol(obs.mntds))
+#bNTI <- matrix(NA, nrow = nrow(obs.mntds), ncol = ncol(obs.mntds))
+#for(row.i in 1:nrow(site.compares)){
+#  site1 <- site.compares[row.i,1]
+#  site2 <- site.compares[row.i,2]
+#  pairwise.null <- mntds.null[site1,site2,]
+#  pairwise.mntd <- obs.mntds[site1,site2]
+#  null.mean <- mean(pairwise.null, na.rm = TRUE)
+#  null.sd <- sd(pairwise.null, na.rm = TRUE)
+#  val <- (pairwise.mntd - null.mean) / null.sd
+#  bNTI[site1, site2] <- val
+#}
+#colnames(bNTI) <- rownames(hja.comm)
+#rownames(bNTI) <- rownames(hja.comm)
 
-bNTI.dist <- as.dist(bNTI)
+hja.mntd.ses <- readRDS("temp/hja.mntd.ses.rda")
+bNTI.dist <- as.dist(hja.mntd.ses$comdistnt.obs.z)
 hist(bNTI.dist, breaks = 30)
 sum(bNTI.dist < 2 & bNTI.dist > -2) / length(bNTI.dist) # undom
 sum(bNTI.dist > 2) / length(bNTI.dist) # variable selection
 sum(bNTI.dist < -2) / length(bNTI.dist) # homogeneous selection
 
 
-hja.bnti.dist.ls <- liste(bNTI.dist, entry = "bNTI")
-hja.rcbray.dist.ls <- liste(RC.bray.dist, entry = "RC.bray")
+hja.bnti.dist.ls <- simba::liste(bNTI.dist, entry = "bNTI")
+hja.rchel.dist.ls <- simba::liste(RC.hel.dist, entry = "RChel")
 hja.assembly <- as.data.frame(cbind(hja.bnti.dist.ls, hja.rcbray.dist.ls))
-hja.assembly <- full_join(hja.bnti.dist.ls, hja.rcbray.dist.ls)
+hja.assembly <- full_join(dists.df, hja.bnti.dist.ls)
+
+hja.assembly %>% 
+  ggplot(aes(x = den.dists, y = RC_hel)) +
+  geom_point() + 
+  geom_smooth() + 
+  facet_wrap(~habitat)
+
+hja.assembly %>% 
+  ggplot(aes(x = den.dists, y = bNTI, color = abs(bNTI) > 1.96)) +
+  geom_point(alpha = 0.4) + 
+  geom_smooth(se = FALSE) + 
+  facet_wrap(~habitat)
 ```
 
 \newpage
