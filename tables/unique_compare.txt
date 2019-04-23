@@ -7,9 +7,9 @@ Residuals:
 -0.106204 -0.015488  0.000588  0.013703  0.074935 
 
 Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  0.062105   0.007447   8.339 7.97e-11 ***
-habitatwater 0.143352   0.009680  14.809  < 2e-16 ***
+                  Estimate Std. Error t value Pr(>|t|)    
+(Intercept)       0.062105   0.007447   8.339 7.97e-11 ***
+habitatPlanktonic 0.143352   0.009680  14.809  < 2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
