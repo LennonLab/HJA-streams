@@ -390,11 +390,11 @@ plot(sed.aem$values/sum(sed.aem$values))
 sed.aem.vec <- as.data.frame(sed.aem$vectors)
 sed.db <- vegdist(sed.OTUsREL.hel, method = "euclidean")
 sed.aem.full <- rda(sed.OTUsREL.hel ~ ., sed.aem.vec[,1:11])
-(sed.r2.aem <- RsquareAdj(sed.aem.full)$adj.r.squared)
-sed.aem.fwd <- forward.sel(sed.OTUsREL.hel, sed.aem.vec)
-sed.aem.sig.vec <- sed.aem.vec[,c(sort(sed.aem.fwd[,2]))]
-sed.aem.sig <- rda(sed.OTUsREL.hel ~ ., sed.aem.sig.vec)
-anova(sed.aem.sig)
+# (sed.r2.aem <- RsquareAdj(sed.aem.full)$adj.r.squared)
+# sed.aem.fwd <- forward.sel(sed.OTUsREL.hel, sed.aem.vec)
+# sed.aem.sig.vec <- sed.aem.vec[,c(sort(sed.aem.fwd[,2]))]
+# sed.aem.sig <- rda(sed.OTUsREL.hel ~ ., sed.aem.sig.vec)
+# anova(sed.aem.sig)
 
 sed.env <- as.data.frame(env.subs[which(design$habitat == "sediment"),-c(1,2)])
 sed.env.mod <- model.matrix(~ .,sed.env)[,-1]
@@ -410,11 +410,11 @@ plot(wateraem$values/sum(wateraem$values))
 wateraem.vec <- as.data.frame(wateraem$vectors)
 water.db <- vegdist(waterOTUsREL.hel, method = "euclidean")
 wateraem.full <- rda(waterOTUsREL.hel ~ ., wateraem.vec[,1:(floor(ncol(wateraem.vec)/2))])
-(waterr2.aem <- RsquareAdj(wateraem.full)$adj.r.squared)
-wateraem.fwd <- forward.sel(waterOTUsREL.hel, wateraem.vec)
-wateraem.sig.vec <- wateraem.vec[,c(sort(wateraem.fwd[,2]))]
-wateraem.sig <- rda(waterOTUsREL.hel ~ ., as.data.frame(wateraem.sig.vec))
-anova(wateraem.sig)
+# (waterr2.aem <- RsquareAdj(wateraem.full)$adj.r.squared)
+# wateraem.fwd <- forward.sel(waterOTUsREL.hel, wateraem.vec)
+# wateraem.sig.vec <- wateraem.vec[,c(sort(wateraem.fwd[,2]))]
+# wateraem.sig <- rda(waterOTUsREL.hel ~ ., as.data.frame(wateraem.sig.vec))
+# anova(wateraem.sig)
 
 water.space.mod <- model.matrix(~ ., wateraem.vec[,1:(floor(ncol(wateraem.vec)/2))])[,-1]
 water.env <- as.data.frame(env.subs[which(design$habitat == "water"),-c(1,2)])
@@ -614,6 +614,7 @@ hja.assembly.plot <- hja.assembly %>%
                           ifelse(bNTI > 1.96, "Variable selection",
                                  ifelse(RC_hel > 0.95, "Dispersal limitation",
                                         ifelse(RC_hel < -0.95, "Mass effects", "Stochastic"))))) %>% 
+  mutate(signif = ifelse(abs(RC_hel) < 0.95 & abs(bNTI) < 1.96, FALSE, TRUE)) %>% 
   gather(RC_hel, bNTI, key = "metric", value = "value") 
 hja.assembly.plot$metric <- factor(hja.assembly.plot$metric)
 levels(hja.assembly.plot$metric) <- c(
@@ -627,19 +628,20 @@ hja.assembly.plot %>%
   geom_line(method = "lm", stat = "smooth", col = "black", size = 1)
 
 hja.assembly.plot %>% 
-  ggplot(aes(x = den.dists/1000, y = value, 
+  ggplot(aes(x = den.dists/1000, y = value, linetype = habitat,
              shape = habitat, color = habitat, fill = habitat)) +
-  geom_point(alpha = .3, size = 2) + 
-  geom_smooth(method = "loess", se = T, size = 1, span = .75) + 
+  geom_point(alpha = .2, size = 1.5) + 
+  geom_smooth(method = "lm", se = T) + 
   facet_grid(metric~., scales = "free_y", switch = "y", labeller = label_parsed) + 
   theme(strip.placement = "outside", 
         legend.title = element_blank(),
-        legend.text = element_text(size = 10),
+        legend.text = element_text(size = 9),
         legend.position = "bottom") +
   labs(x = "Dendritic distance (km)", y = "") +
   scale_color_manual(values=c("#d3b84b", "#8397b3", "#688c45")) +
   scale_fill_manual(values=c("#d3b84b", "#8397b3",	"#688c45")) +
-  guides(color=guide_legend(override.aes=list(fill=NA, alpha = NA))) +
+  scale_linetype_manual(values = c("solid", "dashed", "dotdash")) +
+  guides(color = guide_legend(override.aes=list(fill=NA, alpha = NA))) +
   ggsave("figures/ddr-panel.png", width = 4, height = 4/3*4, dpi = 600)
 
 colpal <- c("#edc951",
@@ -648,36 +650,45 @@ colpal <- c("#edc951",
 "#4f372d",
 "#00a0b0")
 
-hja.assembly.plot %>% 
-  ggplot(aes(x = den.dists/1000, y = value, color = process)) +
-  geom_point(alpha = 0.3, size = 2) + 
-  geom_line(method = "loess", stat = "smooth", col = "black", size = 1, span = .75) + 
-  facet_grid(metric~habitat, scales = "free_y", switch = "y", labeller = label_parsed) + 
-  theme(strip.placement = "outside", 
-        legend.title = element_blank(), 
-        legend.position = "bottom") +
-  labs(x = "Dendritic distance (km)", y = "") +
-  scale_color_viridis_d(option = "B", end = .8) +
-  guides(color=guide_legend(override.aes=list(alpha = NA), nrow = 2)) +
-  ggsave("figures/ddr_space.png", width = 6.5, height = 6, dpi = 600)
-
-
-hja.assembly.plot %>% 
-  ggplot(aes(x = env, y = value, color = process)) +
-  geom_point(alpha = 0.3, size = 2) + 
-  geom_line(method = "loess", stat = "smooth", col = "black", size = 1, span = .75) + 
-  facet_grid(metric~habitat, scales = "free_y", switch = "y", labeller = label_parsed) + 
-  theme(strip.placement = "outside", 
-        legend.title = element_blank(), 
-        legend.position = "bottom") +
-  labs(x = "Environmental dissimilarity", y = "") +
-  guides(color=guide_legend(override.aes=list(alpha = NA), nrow = 2)) +
-  scale_color_viridis_d(option = "B", end = .8) + 
-  ggsave("figures/ddr_env.png", width = 6.5, height = 6, dpi = 600)
-
-
-
+# hja.assembly.plot %>% 
+#   ggplot(aes(x = den.dists/1000, y = value, color = process)) +
+#   geom_point(alpha = 0.3, size = 2) + 
+#   geom_line(method = "loess", stat = "smooth", col = "black", size = 1, span = .75) + 
+#   facet_grid(metric~habitat, scales = "free_y", switch = "y", labeller = label_parsed) + 
+#   theme(strip.placement = "outside", 
+#         legend.title = element_blank(), 
+#         legend.position = "bottom") +
+#   labs(x = "Dendritic distance (km)", y = "") +
+#   scale_color_viridis_d(option = "B", end = .8) +
+#   guides(color=guide_legend(override.aes=list(alpha = NA), nrow = 2)) +
+#   ggsave("figures/ddr_space.png", width = 6.5, height = 6, dpi = 600)
+# 
+# 
+# hja.assembly.plot %>% 
+#   ggplot(aes(x = env, y = value, color = process)) +
+#   geom_point(alpha = 0.3, size = 2) + 
+#   geom_line(method = "loess", stat = "smooth", col = "black", size = 1, span = .75) + 
+#   facet_grid(metric~habitat, scales = "free_y", switch = "y", labeller = label_parsed) + 
+#   theme(strip.placement = "outside", 
+#         legend.title = element_blank(), 
+#         legend.position = "bottom") +
+#   labs(x = "Environmental dissimilarity", y = "") +
+#   guides(color=guide_legend(override.aes=list(alpha = NA), nrow = 2)) +
+#   scale_color_viridis_d(option = "B", end = .8) + 
+#   ggsave("figures/ddr_env.png", width = 6.5, height = 6, dpi = 600)
 ```
+
+```{r}
+headwaters.dist <- as.dist(as.matrix(bNTI.dist)[which(design$order == 1), which(design$order == 1)])
+mainstem.dist <- as.dist(as.matrix(bNTI.dist)[which(design$order != 1), which(design$order != 1)])
+hist(headwaters.dist)
+hist(mainstem.dist)
+headwaters.dist <- as.dist(as.matrix(RC.hel.dist)[which(design$order == 1), which(design$order == 1)])
+mainstem.dist <- as.dist(as.matrix(RC.hel.dist)[which(design$order != 1), which(design$order != 1)])
+
+boxplot(as.vector(mainstem.dist), as.vector(headwaters.dist))
+```
+
 
 \newpage
 # Appendix: Session Info
