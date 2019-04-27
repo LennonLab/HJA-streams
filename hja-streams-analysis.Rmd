@@ -265,7 +265,7 @@ summary(lm(unique_frac ~ habitat, data = unique.fracs)) %>%
 unique.fig <- unique.fracs %>% 
   ggplot(aes(x = habitat, y = unique_frac, fill = habitat)) + 
   geom_boxplot(color = "gray50") +
-  labs(x = "", y = "Unique taxa (richness)") +
+  labs(x = "", y = "Habitat-specific taxa (richness)") +
   scale_fill_manual(values = (my.colors)) +
   guides(fill = FALSE) +
   scale_y_continuous(limits = c(0, .3)) +
@@ -683,10 +683,61 @@ headwaters.dist <- as.dist(as.matrix(bNTI.dist)[which(design$order == 1), which(
 mainstem.dist <- as.dist(as.matrix(bNTI.dist)[which(design$order != 1), which(design$order != 1)])
 hist(headwaters.dist)
 hist(mainstem.dist)
-headwaters.dist <- as.dist(as.matrix(RC.hel.dist)[which(design$order == 1), which(design$order == 1)])
-mainstem.dist <- as.dist(as.matrix(RC.hel.dist)[which(design$order != 1), which(design$order != 1)])
 
-boxplot(as.vector(mainstem.dist), as.vector(headwaters.dist))
+headwaters.dist.sed.tax <- as.dist(as.matrix(RC.hel.dist)[
+  which(design$order == 1 & design$habitat != "water"), 
+  which(design$order == 1 & design$habitat != "water")])
+mainstem.dist.sed.tax <- as.dist(as.matrix(RC.hel.dist)[
+  which(design$order != 1 & design$habitat != "water"), 
+  which(design$order != 1 & design$habitat != "water")])
+headwaters.dist.water.tax <- as.dist(as.matrix(RC.hel.dist)[
+  which(design$order == 1 & design$habitat == "water"), 
+  which(design$order == 1 & design$habitat == "water")])
+mainstem.dist.water.tax <- as.dist(as.matrix(RC.hel.dist)[
+  which(design$order != 1 & design$habitat == "water"), 
+  which(design$order != 1 & design$habitat == "water")])
+
+headwaters.dist.sed.phy <- as.dist(as.matrix(bNTI.dist)[
+  which(design$order == 1 & design$habitat != "water"), 
+  which(design$order == 1 & design$habitat != "water")])
+mainstem.dist.sed.phy <- as.dist(as.matrix(bNTI.dist)[
+  which(design$order != 1 & design$habitat != "water"), 
+  which(design$order != 1 & design$habitat != "water")])
+headwaters.dist.water.phy <- as.dist(as.matrix(bNTI.dist)[
+  which(design$order == 1 & design$habitat == "water"), 
+  which(design$order == 1 & design$habitat == "water")])
+mainstem.dist.water.phy <- as.dist(as.matrix(bNTI.dist)[
+  which(design$order != 1 & design$habitat == "water"), 
+  which(design$order != 1 & design$habitat == "water")])
+
+beta.to.plot <- rbind.data.frame(
+  tibble(position = "Headwater", habitat = "Sediment", beta = "RC_hel", dist = as.vector(headwaters.dist.sed.tax)),
+  tibble(position = "Mainstem", habitat = "Sediment", beta = "RC_hel", dist = as.vector(mainstem.dist.sed.tax)),
+  tibble(position = "Headwater", habitat = "Planktonic", beta = "RC_hel", dist = as.vector(headwaters.dist.water.tax)),
+  tibble(position = "Mainstem", habitat = "Planktonic", beta = "RC_hel", dist = as.vector(mainstem.dist.water.tax)),
+  tibble(position = "Headwater", habitat = "Sediment", beta = "bNTI", dist = as.vector(headwaters.dist.sed.phy)),
+  tibble(position = "Mainstem", habitat = "Sediment", beta = "bNTI", dist = as.vector(mainstem.dist.sed.phy)),
+  tibble(position = "Headwater", habitat = "Planktonic", beta = "bNTI", dist = as.vector(headwaters.dist.water.phy)),
+  tibble(position = "Mainstem", habitat = "Planktonic", beta = "bNTI", dist = as.vector(mainstem.dist.water.phy))
+)
+beta.to.plot$beta <-  factor(beta.to.plot$beta)
+levels(beta.to.plot$beta) <- c(
+  expression(paste(beta,"NTI")),
+  expression(beta["RC, Hellinger distance"])
+)
+beta.to.plot$habitat <-  factor(beta.to.plot$habitat, levels = c("Sediment", "Planktonic"))
+beta.to.plot %>% 
+  ggplot(aes(x = position, y = dist, fill = habitat)) +
+  geom_boxplot() +
+  scale_fill_manual("", values = my.colors) +
+  facet_wrap(~beta, scales = "free_y", strip.position = "left", labeller = label_parsed) +
+  theme(strip.placement = "outside") +
+  labs(y = "", x = "") +
+  ggsave("figures/headwater_mainstem.pdf", width = 6, height = 4) +
+  ggsave("figures/headwater_mainstem.png", width = 6, height = 4, dpi = 600)
+
+summary(lm(dist ~ position * habitat, data = subset(beta.to.plot, beta == "bNTI")))
+summary(lm(dist ~ position * habitat, data = subset(beta.to.plot, beta == "RC_hel")))
 ```
 
 
