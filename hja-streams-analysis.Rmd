@@ -23,7 +23,7 @@ library("stringr")
 library("picante")
 library("phytools")
 library("GUniFrac")
-library("gdm")
+#library("gdm")
 library("tidyverse")
 library("cowplot")
 library("ggrepel")
@@ -198,6 +198,7 @@ alpha.tbl <- tibble(
   habitat = factor(design$habitat, levels = c("sediment", "water"),
                    labels = c("Sediment", "Planktonic")),
   upstream = design$upstreamdist,
+  order = factor(design$order),
   N0 = rowSums(OTUsREL.hel > 0),
   N1 = exp(diversity(OTUsREL.hel, index = "shannon")),
   N2 = diversity(OTUsREL, index = "invsimpson")
@@ -213,6 +214,11 @@ alpha.fig <- alpha.tbl %>%
   scale_y_continuous(limits = c(0, 3500)) +
   ggsave("figures/alpha_diversity.png", width = 84, height = 84*1.618, units = "mm", dpi = 500) +
   ggsave("figures/alpha_diversity.pdf", width = 84, height = 84*1.618, units = "mm")
+
+alpha.tbl %>% 
+  ggplot(aes(x = order, y = N1, color = habitat)) +
+  geom_boxplot(alpha = 0.2) +
+  geom_jitter(alpha = 0.5)
 ```
 
 ## Unique taxa per habitat
@@ -384,39 +390,52 @@ ggplot(data = rda.plot, aes(RDA1, RDA2)) +
 ```{r}
 # read site-by-edge matrix for sediments
 sed.SBE <- read_csv("data/AEMsed_site-by-edge.csv")
+sed.edgelengths <- read_csv("data/AEMsed_edge-weights.csv")
+sed.edgeweights <- ifelse(
+  sed.edgelengths$weight == 0, 0,
+  (1 - (sed.edgelengths$weight / max(sed.edgelengths$weight))^2)
+)
 sed.OTUsREL.hel <- OTUsREL.hel[which(design$habitat == "sediment"),]
 sed.aem <- aem(binary.mat = as.matrix(sed.SBE[,-1]))
 plot(sed.aem$values/sum(sed.aem$values))
-sed.aem.vec <- as.data.frame(sed.aem$vectors)
+nvecs <- 1:floor(ncol(sed.aem$vectors)/2)
+matplot(sed.aem$vectors[,nvecs], type = 'l')
+sed.aem.vec <- as.data.frame(sed.aem$vectors[,nvecs])
 sed.db <- vegdist(sed.OTUsREL.hel, method = "euclidean")
-sed.aem.full <- rda(sed.OTUsREL.hel ~ ., sed.aem.vec[,1:11])
-# (sed.r2.aem <- RsquareAdj(sed.aem.full)$adj.r.squared)
-# sed.aem.fwd <- forward.sel(sed.OTUsREL.hel, sed.aem.vec)
-# sed.aem.sig.vec <- sed.aem.vec[,c(sort(sed.aem.fwd[,2]))]
-# sed.aem.sig <- rda(sed.OTUsREL.hel ~ ., sed.aem.sig.vec)
+sed.aem.full <- rda(sed.OTUsREL.hel ~ ., sed.aem.vec)
+(sed.r2.aem <- RsquareAdj(sed.aem.full)$adj.r.squared)
+sed.aem.fwd <- forward.sel(sed.OTUsREL.hel, sed.aem.vec)
+sed.aem.sig.vec <- sed.aem.vec[,c(sort(sed.aem.fwd[,2]))]
+sed.aem.sig <- rda(sed.OTUsREL.hel ~ ., as.data.frame(sed.aem.sig.vec))
 # anova(sed.aem.sig)
 
 sed.env <- as.data.frame(env.subs[which(design$habitat == "sediment"),-c(1,2)])
 sed.env.mod <- model.matrix(~ .,sed.env)[,-1]
-sed.space.mod <- model.matrix(~ ., sed.aem.vec[,1:11])[,-1]
+sed.space.mod <- model.matrix(~ ., as.data.frame(sed.aem.sig.vec))[,-1]
 varpart(sed.OTUsREL.hel, sed.env.mod, sed.space.mod)
 
 
 # read site-by-edge matrix for water samples
 waterSBE <- read_csv("data/AEMwater_site-by-edge.csv")
+water.edgelengths <- read_csv("data/AEMwater_edge-weights.csv")
+water.edgeweights <- ifelse(
+  water.edgelengths$weight == 0, 0, 
+  (1 - (water.edgelengths$weight / max(water.edgelengths$weight))^2))
 waterOTUsREL.hel <- OTUsREL.hel[which(design$habitat == "water"),]
-wateraem <- aem(binary.mat = as.matrix(waterSBE[,-1]))
+wateraem <- aem(binary.mat = as.matrix(waterSBE[,-1]), weight = water.edgeweights)
 plot(wateraem$values/sum(wateraem$values))
-wateraem.vec <- as.data.frame(wateraem$vectors)
+nvecs <- 1:floor(ncol(wateraem$vectors)/2)
+matplot(wateraem$vectors[,nvecs], type = 'l')
+wateraem.vec <- as.data.frame(wateraem$vectors[,nvecs])
 water.db <- vegdist(waterOTUsREL.hel, method = "euclidean")
-wateraem.full <- rda(waterOTUsREL.hel ~ ., wateraem.vec[,1:(floor(ncol(wateraem.vec)/2))])
-# (waterr2.aem <- RsquareAdj(wateraem.full)$adj.r.squared)
-# wateraem.fwd <- forward.sel(waterOTUsREL.hel, wateraem.vec)
-# wateraem.sig.vec <- wateraem.vec[,c(sort(wateraem.fwd[,2]))]
-# wateraem.sig <- rda(waterOTUsREL.hel ~ ., as.data.frame(wateraem.sig.vec))
+wateraem.full <- rda(waterOTUsREL.hel ~ ., wateraem.vec[,nvecs])
+(waterr2.aem <- RsquareAdj(wateraem.full)$adj.r.squared)
+wateraem.fwd <- forward.sel(waterOTUsREL.hel, wateraem.vec)
+wateraem.sig.vec <- wateraem.vec[,c(sort(wateraem.fwd[,2]))]
+wateraem.sig <- rda(waterOTUsREL.hel ~ ., as.data.frame(wateraem.sig.vec))
 # anova(wateraem.sig)
 
-water.space.mod <- model.matrix(~ ., wateraem.vec[,1:(floor(ncol(wateraem.vec)/2))])[,-1]
+water.space.mod <- model.matrix(~ ., wateraem.sig.vec)[,-1] #wateraem.vec[,1:(floor(ncol(wateraem.vec)/2))])[,-1]
 water.env <- as.data.frame(env.subs[which(design$habitat == "water"),-c(1,2)])
 water.env.mod <- model.matrix(~ .,water.env)[,-1]
 varpart(Y = waterOTUsREL.hel, water.env.mod, water.space.mod)
