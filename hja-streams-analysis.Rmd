@@ -198,7 +198,8 @@ alpha.tbl <- tibble(
   habitat = factor(design$habitat, levels = c("sediment", "water"),
                    labels = c("Sediment", "Planktonic")),
   upstream = design$upstreamdist,
-  order = factor(design$order),
+  order = design$order,
+  sample = rownames(design),
   N0 = rowSums(OTUsREL.hel > 0),
   N1 = exp(diversity(OTUsREL.hel, index = "shannon")),
   N2 = diversity(OTUsREL, index = "invsimpson")
@@ -217,8 +218,8 @@ alpha.fig <- alpha.tbl %>%
 
 alpha.tbl %>% 
   ggplot(aes(x = order, y = N1, color = habitat)) +
-  geom_boxplot(alpha = 0.2) +
-  geom_jitter(alpha = 0.5)
+  geom_jitter(width = .1, alpha = 0.5) +
+  geom_smooth(se = F, span = 1)
 ```
 
 ## Unique taxa per habitat
@@ -260,8 +261,10 @@ unique.fracs <- data.frame("unique_frac" = water.unique.frac,
   rbind.data.frame(., data.frame(
     "unique_frac" = sed.unique.frac, 
     "habitat" = "Sediment"))
+unique.fracs <- unique.fracs %>% rownames_to_column(var = "sample")
 unique.fracs$habitat <- factor(unique.fracs$habitat, 
                                levels = c("Sediment", "Planktonic"), ordered = F)
+unique.fracs <- left_join(unique.fracs, rownames_to_column(design[,c("order","upstreamdist")], var = "sample"))
 summary(lm(unique_frac ~ habitat, data = unique.fracs))
 summary(lm(unique_frac ~ habitat, data = unique.fracs)) %>% 
   capture.output(file = "tables/unique_compare.txt")
@@ -277,12 +280,35 @@ unique.fig <- unique.fracs %>%
   scale_y_continuous(limits = c(0, .3)) +
   ggsave("figures/unique_taxa.png", width = 84, height = 84*1.618, units = "mm", dpi = 500) +
   ggsave("figures/unique_taxa.pdf", width = 84, height = 84*1.618, units = "mm")
+
+unique.fracs %>% 
+  ggplot(aes(x = order, y = unique_frac, color = habitat)) +
+  geom_point() + 
+  geom_smooth()
 ```
 
 ```{r fig1}
-cowplot::plot_grid(alpha.fig,
-                   unique.fig, align = "hv", labels = c("(a)", "(b)"), nrow =1) +
-  ggsave("figures/Fig1.png", width = 84*2, height = 84*1.618, units = "mm", dpi = 500)
+# cowplot::plot_grid(alpha.fig,
+#                    unique.fig, align = "hv", labels = c("(a)", "(b)"), nrow =1) +
+#   ggsave("figures/Fig1.png", width = 84*2, height = 84*1.618, units = "mm", dpi = 500)
+
+alpha.to.plot <- unique.fracs %>% left_join(alpha.tbl) %>% select(-N0, -N2) %>% 
+  gather(unique_frac, N1, key = "metric", value = "value")
+alpha.to.plot$metric <- factor(alpha.to.plot$metric)
+levels(alpha.to.plot$metric) <- c(
+  expression(paste(alpha, "-diversity (species equivalents)")),
+  expression(paste("Proportion habitat-specific taxa (richness)"))
+)
+alpha.to.plot %>% 
+  ggplot(aes(x = habitat, y = value, fill = habitat)) + 
+  facet_wrap(~ metric, scales = "free_y", strip.position = "left", labeller = label_parsed, ncol = 2) +
+  geom_boxplot(width = .5) +
+  scale_fill_manual(values = (my.colors)) +
+  theme(strip.placement = "outside") +
+  guides(fill = FALSE) +
+  labs(y = "", x = "") + 
+  ggsave("figures/Fig1.pdf", width = 6, height = 4) +
+  ggsave("figures/Fig1.png", width = 6, height = 4, dpi = 600)
 ```
 
 
@@ -731,15 +757,16 @@ mainstem.dist.water.phy <- as.dist(as.matrix(bNTI.dist)[
 
 beta.to.plot <- rbind.data.frame(
   tibble(position = "Headwater", habitat = "Sediment", beta = "RC_hel", dist = as.vector(headwaters.dist.sed.tax)),
-  tibble(position = "Mainstem", habitat = "Sediment", beta = "RC_hel", dist = as.vector(mainstem.dist.sed.tax)),
+  tibble(position = "Downstream", habitat = "Sediment", beta = "RC_hel", dist = as.vector(mainstem.dist.sed.tax)),
   tibble(position = "Headwater", habitat = "Planktonic", beta = "RC_hel", dist = as.vector(headwaters.dist.water.tax)),
-  tibble(position = "Mainstem", habitat = "Planktonic", beta = "RC_hel", dist = as.vector(mainstem.dist.water.tax)),
+  tibble(position = "Downstream", habitat = "Planktonic", beta = "RC_hel", dist = as.vector(mainstem.dist.water.tax)),
   tibble(position = "Headwater", habitat = "Sediment", beta = "bNTI", dist = as.vector(headwaters.dist.sed.phy)),
-  tibble(position = "Mainstem", habitat = "Sediment", beta = "bNTI", dist = as.vector(mainstem.dist.sed.phy)),
+  tibble(position = "Downstream", habitat = "Sediment", beta = "bNTI", dist = as.vector(mainstem.dist.sed.phy)),
   tibble(position = "Headwater", habitat = "Planktonic", beta = "bNTI", dist = as.vector(headwaters.dist.water.phy)),
-  tibble(position = "Mainstem", habitat = "Planktonic", beta = "bNTI", dist = as.vector(mainstem.dist.water.phy))
+  tibble(position = "Downstream", habitat = "Planktonic", beta = "bNTI", dist = as.vector(mainstem.dist.water.phy))
 )
 beta.to.plot$beta <-  factor(beta.to.plot$beta)
+beta.to.plot$position <- factor(beta.to.plot$position, levels = c("Headwater", "Downstream"))
 levels(beta.to.plot$beta) <- c(
   expression(paste(beta,"NTI")),
   expression(beta["RC, Hellinger distance"])
