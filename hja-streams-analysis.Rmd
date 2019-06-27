@@ -97,7 +97,7 @@ design <- design.total[-which(coverage < cutoff), ]
 env <- env.total[-which(coverage < cutoff), ]
 
 # Remove OTUs with less than 5 occurances across all sites
-OTUs <- OTUs[, which(colSums(OTUs) >= 10)]
+OTUs <- OTUs[, which(colSums(OTUs) > 2)]
 
 OTUs <- OTUs[-which(env$sample == "W1_20_W"),]
 design <- design[-which(env$sample == "W1_20_W"),]
@@ -207,10 +207,11 @@ alpha.tbl <- tibble(
 summary(lm(N1 ~ habitat, data = alpha.tbl))
 
 alpha.fig <- alpha.tbl %>% 
-  ggplot(aes(x = habitat, y = N1, fill = habitat)) +
-  geom_boxplot(color = "gray50") +
+  ggplot(aes(x = habitat, y = N1)) +
+  geom_boxplot() +
+  geom_jitter(alpha = 0.2) +
   labs(x = "", y = expression(paste(alpha, "-diversity (species equivalents)"))) +
-  scale_fill_manual(values = (my.colors)) +
+  #scale_fill_manual(values = (my.colors)) +
   guides(fill = FALSE) +
   scale_y_continuous(limits = c(0, 3500)) +
   ggsave("figures/alpha_diversity.png", width = 84, height = 84*1.618, units = "mm", dpi = 500) +
@@ -272,19 +273,20 @@ summary(lm(unique_frac ~ habitat, data = unique.fracs)) %>%
 
 ```{r unique_taxa_figure}
 unique.fig <- unique.fracs %>% 
-  ggplot(aes(x = habitat, y = unique_frac, fill = habitat)) + 
-  geom_boxplot(color = "gray50") +
+  ggplot(aes(x = habitat, y = unique_frac)) + 
+  geom_boxplot() +
+  geom_jitter(alpha = 0.2) +
   labs(x = "", y = "Habitat-specific taxa (richness)") +
-  scale_fill_manual(values = (my.colors)) +
+  #scale_fill_manual(values = (my.colors)) +
   guides(fill = FALSE) +
   scale_y_continuous(limits = c(0, .3)) +
   ggsave("figures/unique_taxa.png", width = 84, height = 84*1.618, units = "mm", dpi = 500) +
   ggsave("figures/unique_taxa.pdf", width = 84, height = 84*1.618, units = "mm")
 
-unique.fracs %>% 
-  ggplot(aes(x = order, y = unique_frac, color = habitat)) +
-  geom_point() + 
-  geom_smooth()
+# unique.fracs %>% 
+#   ggplot(aes(x = order, y = unique_frac, color = habitat)) +
+#   geom_point() + 
+#   geom_smooth()
 ```
 
 ```{r fig1}
@@ -302,7 +304,8 @@ levels(alpha.to.plot$metric) <- c(
 alpha.to.plot %>% 
   ggplot(aes(x = habitat, y = value, fill = habitat)) + 
   facet_wrap(~ metric, scales = "free_y", strip.position = "left", labeller = label_parsed, ncol = 2) +
-  geom_boxplot(width = .5) +
+  geom_boxplot(width = .5, alpha = 0.8) +
+  geom_jitter(alpha = 0.1) +
   scale_fill_manual(values = (my.colors)) +
   theme(strip.placement = "outside") +
   guides(fill = FALSE) +
@@ -506,6 +509,14 @@ beta.tbl %>%
 ```
 We observed \(BD_{total} = `r round(otu.beta$beta[2], 3)`\) out of 1. We also find spatial structure in the site contributions to beta diversity. We find that, in the smaller watershed (WS01), greater distance upstream into the watershed uncovered more unique taxa. Downstream sites contributed less overall to beta diversity in the catchment. This pattern was observed in both sediment and planktonic communities. At the larger scale of the entire catchment, however, this pattern is not consistent. We found higher overal local contributions to beta diversity for sites across the large scale (indicating that they contained more unique taxa overall). We observed a similar increasing trend in the sediment community showing an increased contribution of headwaters to beta diversity, but a similar pattern was not found for planktonic communities on the catchment scale. This suggests that (1) within a small watershed, sites located a greater distance upstream contain more regionally unique taxa than sites located downstream, but (2) when considered at the regional scale, planktonic communities are  more unique across lower to intermediate distances upstream (e.g., due do localized immigration from nearby soils), but with in 
 
+# Subset only flow-connected sites
+```{r}
+flow.connected <- read.csv("data/flow-connected-matrix.csv", row.names = 1)
+den.dists.mat <- as.matrix(den.dists)
+flow.connected.dists <- as.dist(
+  flow.connected[rownames(den.dists.mat), colnames(den.dists.mat)] * den.dists.mat)
+```
+
 # Null model analysis
 ```{r}
 # Calculate abundance-weighted Raup-Crick dissimilarities
@@ -546,7 +557,7 @@ colnames(RC.hel) <- rownames(design)
 RC.hel.dist <- as.dist(RC.hel)
 range(RC.hel.dist)
 
-dists.df <- simba::liste(RC.hel.dist, entry = "RC_hel") %>% add_column(den.dists)
+dists.df <- simba::liste(RC.hel.dist, entry = "RC_hel") %>% add_column(den_dists = flow.connected.dists)
 # dists.df$habitat1 <- env$habitat[match(dists.df$NBX, env$sample)]
 # dists.df$habitat2 <- env$habitat[match(dists.df$NBY, env$sample)]
 dists.df$habitat <- NA
@@ -556,9 +567,9 @@ dists.df[str_detect(dists.df$NBX, "_S") & str_detect(dists.df$NBY, "_W"),]$habit
 dists.df[str_detect(dists.df$NBX, "_S") & str_detect(dists.df$NBY, "_S"),]$habitat <- str_wrap("Sediment")
 
 dists.df$habitat <- factor(dists.df$habitat, levels = c("Sediment", "Planktonic", "Planktonic-Sediment"))
-dists.df %>% 
-  ggplot(aes(x = den.dists/1000, y = RC.hel.dist)) +
-  geom_point(alpha = 0.25, aes(color = abs(RC.hel.dist) > 0.95)) +
+dists.df %>% filter(den_dists > 0) %>% 
+  ggplot(aes(x = den_dists/1000, y = RC_hel)) +
+  geom_point(alpha = 0.25, aes(color = abs(RC_hel) > 0.95)) +
   geom_smooth(color = "black", method = "loess", se = F) +
   theme(legend.position = "none") +
   labs(x = "Dendritic distance (km)",
@@ -629,6 +640,8 @@ hja.phy <- matched.phylo$phy
 #colnames(bNTI) <- rownames(hja.comm)
 #rownames(bNTI) <- rownames(hja.comm)
 
+
+
 hja.mntd.ses <- readRDS("temp/hja.mntd.ses.rda")
 bNTI.dist <- as.dist(hja.mntd.ses$comdistnt.obs.z)
 hist(bNTI.dist, breaks = 30)
@@ -641,20 +654,20 @@ hja.bnti.dist.ls <- simba::liste(bNTI.dist, entry = "bNTI")
 hja.rchel.dist.ls <- simba::liste(RC.hel.dist, entry = "RChel")
 hja.assembly <- full_join(dists.df, hja.bnti.dist.ls)
 hja.assembly <- cbind(hja.assembly, env = simba::liste(dist(env.subs[,-1]))[,3])
-hja.assembly %>% 
-  ggplot(aes(x = den.dists, y = RC_hel)) +
+hja.assembly %>% filter(den_dists > 0) %>% 
+  ggplot(aes(x = den_dists, y = RC_hel)) +
   geom_point() + 
   geom_smooth() + 
   facet_wrap(~habitat)
 
-hja.assembly %>% 
-  ggplot(aes(x = den.dists, y = bNTI)) +
+hja.assembly %>% filter(den_dists > 0) %>% 
+  ggplot(aes(x = den_dists, y = bNTI)) +
   geom_point(alpha = 0.4, aes(color = abs(bNTI) > 1.96)) + 
   geom_line(method = "loess", stat = "smooth", col = "black", size = 1) + 
   facet_wrap(~habitat)
 
 
-hja.assembly.plot <- hja.assembly %>% 
+hja.assembly.plot <- hja.assembly %>% filter(den_dists > 0) %>% 
   mutate(process = ifelse(bNTI < -1.96, "Homogeneous selection", 
                           ifelse(bNTI > 1.96, "Variable selection",
                                  ifelse(RC_hel > 0.95, "Dispersal limitation",
@@ -668,26 +681,74 @@ levels(hja.assembly.plot$metric) <- c(
 )
 
 hja.assembly.plot %>% 
-  ggplot(aes(x = den.dists/1000, y = env)) +
+  ggplot(aes(x = den_dists, y = env)) +
   geom_point(alpha = 0.4) + 
   geom_line(method = "lm", stat = "smooth", col = "black", size = 1)
 
-hja.assembly.plot %>% 
-  ggplot(aes(x = den.dists/1000, y = value, linetype = habitat,
-             shape = habitat, color = habitat, fill = habitat)) +
-  geom_point(alpha = .2, size = 1.5) + 
+
+horizlines <- data.frame(metric = factor(levels(hja.assembly.plot$metric)[c(1,1,2,2)]), y = c(-1.96, 1.96, -0.95, 0.95))
+hja.assembly.plot %>% mutate(scale = ifelse(den_dists < 1500, "Local", "Regional")) %>% 
+  ggplot(aes(x = den_dists, y = value, linetype = habitat,
+             shape = habitat, 
+             color = interaction(habitat, scale), fill = interaction(habitat, scale))) +
+  geom_hline(data = horizlines, aes(yintercept = y), alpha = 0.25, size = .5, linetype = "dashed") +
+  geom_point(alpha = .3, size = 1) + 
   geom_smooth(method = "lm", se = T) + 
-  facet_grid(metric~., scales = "free_y", switch = "y", labeller = label_parsed) + 
+  facet_grid(metric~., scales = "free", switch = "y", labeller = label_parsed) + 
   theme(strip.placement = "outside", 
         legend.title = element_blank(),
         legend.text = element_text(size = 9),
-        legend.position = "bottom") +
-  labs(x = "Dendritic distance (km)", y = "") +
-  scale_color_manual(values=c("#d3b84b", "#8397b3", "#688c45")) +
-  scale_fill_manual(values=c("#d3b84b", "#8397b3",	"#688c45")) +
+        legend.position = "none") +
+  labs(x = "Dendritic distance (m)", y = "") +
+  scale_color_manual(values=colorspace::darken(c(my.colors, "#688c45", my.colors, "#688c45"),0.4)) +
+  scale_fill_manual(values=c(my.colors, "#688c45", my.colors,	"#688c45")) +
   scale_linetype_manual(values = c("solid", "dashed", "dotdash")) +
-  guides(color = guide_legend(override.aes=list(fill=NA, alpha = NA))) +
   ggsave("figures/ddr-panel.png", width = 4, height = 4/3*4, dpi = 600)
+
+# hja.assembly.plot %>% mutate(scale = ifelse(den_dists < 1000, "Local", "Regional")) %>% 
+#   filter(metric == 'beta["RC, Hellinger distance"]') %>% 
+#   ggplot(aes(x = value, color = habitat, fill = habitat)) +
+#   geom_density(alpha = .2) + 
+#   facet_grid(.~scale, scales = "free", switch = "y", labeller = label_parsed) + 
+#   theme(strip.placement = "outside", 
+#         legend.title = element_blank(),
+#         legend.text = element_text(size = 9),
+#         legend.position = "bottom") +
+#   scale_color_manual(values=c("#d3b84b", "#8397b3", "#688c45")) +
+#   scale_fill_manual(values=c("#d3b84b", "#8397b3",	"#688c45")) +
+#   guides(color = guide_legend(override.aes=list(fill=NA, alpha = NA)))
+# 
+# 
+# hja.assembly.plot %>% mutate(den_dists = factor(floor(log10(den_dists)), ordered = T, levels = c(0,1,2,3,4))) %>% 
+#   group_by(den_dists, habitat, process) %>% 
+#   ggplot(aes(x = process, color = habitat, fill = habitat)) +
+#   geom_bar(position = "dodge") +
+#   facet_grid(den_dists ~ metric, scales = "free", switch = "y", labeller = label_parsed) +
+#   theme(strip.placement = "outside", 
+#         legend.title = element_blank(),
+#         legend.text = element_text(size = 9),
+#         legend.position = "bottom") +
+#   labs(x = "Dendritic distance (km)", y = "") +
+#   coord_flip() +
+#   scale_color_manual(values=c("#d3b84b", "#8397b3", "#688c45")) +
+#   scale_fill_manual(values=c("#d3b84b", "#8397b3",	"#688c45")) +
+#   scale_linetype_manual(values = c("solid", "dashed", "dotdash")) 
+# 
+# library(nnet)
+# hja.assembly.mod <- hja.assembly.plot 
+# hja.assembly.mod$process <- factor(hja.assembly.mod$process)
+# hja.assembly.mod$process <- relevel(hja.assembly.mod$process, ref = "Stochastic")
+# hja.assembly.mod$habitat <- droplevels(hja.assembly.mod$habitat)
+# mmod <- multinom(process ~ habitat + den_dists + env, data = hja.assembly.mod)
+# summary(mmod)
+# mmodi <- step(mmod)
+# summary(mmodi)
+# 
+# library(MASS)
+# mlda <- lda(process ~ habitat + den_dists + env, data = hja.assembly.mod)
+# mlda
+# 
+# predict(mlda)
 
 colpal <- c("#edc951",
 "#eb6841",
@@ -774,16 +835,20 @@ levels(beta.to.plot$beta) <- c(
 beta.to.plot$habitat <-  factor(beta.to.plot$habitat, levels = c("Sediment", "Planktonic"))
 beta.to.plot %>% 
   ggplot(aes(x = position, y = dist, fill = habitat)) +
-  geom_boxplot() +
-  scale_fill_manual("", values = my.colors) +
+  geom_boxplot(alpha = 0.8) +
+  geom_point(position = position_jitterdodge(), alpha = 0.1) +
   facet_wrap(~beta, scales = "free_y", strip.position = "left", labeller = label_parsed) +
   theme(strip.placement = "outside") +
   labs(y = "", x = "") +
+  scale_fill_manual(values = my.colors) + 
+  theme(legend.position = "none") +
   ggsave("figures/headwater_mainstem.pdf", width = 6, height = 4) +
   ggsave("figures/headwater_mainstem.png", width = 6, height = 4, dpi = 600)
 
-summary(lm(dist ~ position * habitat, data = subset(beta.to.plot, beta == "bNTI")))
-summary(lm(dist ~ position * habitat, data = subset(beta.to.plot, beta == "RC_hel")))
+
+
+summary(lm(dist ~ position * habitat, data = subset(beta.to.plot, beta == "beta[\"RC, Hellinger distance\"]")))
+summary(lm(dist ~ position * habitat, data = subset(beta.to.plot, beta == 'paste(beta, "NTI")')))
 ```
 
 
