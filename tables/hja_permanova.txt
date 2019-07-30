@@ -4,10 +4,10 @@ Number of permutations: 999
 Terms added sequentially (first to last)
 
                  Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)    
-design$habitat    1    2.7672 2.76725  6.3891 0.11563  0.001 ***
-design$order      1    0.7783 0.77833  1.7971 0.03252  0.005 ** 
-design$watershed  1    0.8952 0.89517  2.0668 0.03741  0.001 ***
-Residuals        45   19.4903 0.43312         0.81444           
-Total            48   23.9310                 1.00000           
+design$habitat    1    2.7632 2.76322  6.3715 0.11536  0.001 ***
+design$order      1    0.7778 0.77780  1.7935 0.03247  0.006 ** 
+design$watershed  1    0.8969 0.89691  2.0681 0.03744  0.003 ** 
+Residuals        45   19.5157 0.43368         0.81473           
+Total            48   23.9537                 1.00000           
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
