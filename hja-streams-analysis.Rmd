@@ -207,20 +207,23 @@ alpha.tbl <- tibble(
 summary(lm(N1 ~ habitat, data = alpha.tbl))
 
 alpha.fig <- alpha.tbl %>% 
-  ggplot(aes(x = habitat, y = N1)) +
-  geom_boxplot() +
+  ggplot(aes(x = habitat, y = N1, fill = habitat, color = habitat)) +
+  geom_boxplot(alpha = 0.8) +
   geom_jitter(alpha = 0.2) +
   labs(x = "", y = expression(paste(alpha, "-diversity (species equivalents)"))) +
-  #scale_fill_manual(values = (my.colors)) +
-  guides(fill = FALSE) +
+  scale_fill_manual(values = (my.colors)) +
+  scale_color_manual(values = colorspace::darken(my.colors,.4)) +
+  guides(fill = FALSE, color = FALSE) +
   scale_y_continuous(limits = c(0, 3500)) +
   ggsave("figures/alpha_diversity.png", width = 8, height = 8*4/3, units = "cm", dpi = 500) +
   ggsave("figures/alpha_diversity.pdf", width = 8, height = 8*4/3, units = "cm")
 
 alpha.tbl %>% 
-  ggplot(aes(x = order, y = N1, color = habitat)) +
+  ggplot(aes(x = order, y = N0, color = habitat)) +
   geom_jitter(width = .1, alpha = 0.5) +
-  geom_smooth(se = F, span = 1, method = "lm", formula = y ~ x + I(x^2))
+  geom_smooth(se = F, span = 1, method = "lm", formula = y ~ x)
+
+summary(lm(N1 ~ habitat * order, data = alpha.tbl))
 ```
 
 ## Unique taxa per habitat
@@ -269,24 +272,35 @@ unique.fracs <- left_join(unique.fracs, rownames_to_column(design[,c("order","up
 summary(lm(unique_frac ~ habitat, data = unique.fracs))
 summary(lm(unique_frac ~ habitat, data = unique.fracs)) %>% 
   capture.output(file = "tables/unique_compare.txt")
+
 ```
 
 ```{r unique_taxa_figure}
 unique.fig <- unique.fracs %>% 
-  ggplot(aes(x = habitat, y = unique_frac)) + 
-  geom_boxplot() +
+  ggplot(aes(x = habitat, y = unique_frac, color = habitat, fill = habitat)) + 
+  geom_boxplot(alpha = 0.8) +
   geom_jitter(alpha = 0.2) +
-  labs(x = "", y = "Habitat-specific taxa (richness)") +
-  #scale_fill_manual(values = (my.colors)) +
-  guides(fill = FALSE) +
+  labs(x = "", y = "Proportion habitat-specific taxa") +
+  scale_fill_manual(values = (my.colors)) +
+  scale_color_manual(values = colorspace::darken(my.colors,.4)) +
+  guides(fill = FALSE, color = FALSE) +
   scale_y_continuous(limits = c(0, .3)) +
   ggsave("figures/unique_taxa.png", width = 8, height = 8*4/3, units = "cm", dpi = 500) +
   ggsave("figures/unique_taxa.pdf", width = 8, height = 8*4/3, units = "cm")
 
-# unique.fracs %>% 
-#   ggplot(aes(x = order, y = unique_frac, color = habitat)) +
-#   geom_point() + 
-#   geom_smooth()
+unique.order.fig <- unique.fracs %>% 
+  ggplot(aes(x = order, y = unique_frac, color = habitat, fill = habitat)) + 
+  geom_jitter(width = .1, alpha = 0.5) +
+  geom_smooth(method = "lm") +
+  labs(x = "Stream order", y = "Proportion habitat-specific taxa") +
+  scale_fill_manual(values = (my.colors)) +
+  scale_color_manual(values = colorspace::darken(my.colors,.4)) +
+  scale_y_log10() +
+  guides(fill = FALSE, color = FALSE) + 
+  ggsave("figures/unique_taxa_order.png", width = 8, height = 8*4/3, units = "cm", dpi = 500) +
+  ggsave("figures/unique_taxa_order.pdf", width = 8, height = 8*4/3, units = "cm")
+
+summary(lm(log10(unique_frac) ~ order*habitat, unique.fracs))
 ```
 
 ```{r fig1}
@@ -301,7 +315,7 @@ levels(alpha.to.plot$metric) <- c(
   expression(paste(alpha, "-diversity")),
   expression(paste("Proportion habitat-specific taxa"))
 )
-alpha.to.plot %>% 
+alpha.plot <- alpha.to.plot %>% 
   ggplot(aes(x = habitat, y = value, fill = habitat, color = habitat)) + 
   facet_wrap(~ metric, scales = "free_y", strip.position = "left", labeller = label_parsed, ncol = 2) +
   geom_boxplot(width = .5, alpha = 0.8) +
@@ -310,7 +324,13 @@ alpha.to.plot %>%
   scale_color_manual(values = colorspace::darken(my.colors,0.4)) +
   theme(strip.placement = "outside", legend.position = "none") +
   guides(fill = FALSE) +
-  labs(y = "", x = "") + 
+  labs(y = "", x = "") 
+  # ggsave("figures/Fig1.pdf", width = 12.5, height = 12.5*3/4, units = "cm") +
+  # ggsave("figures/Fig1.png", width = 12.5, height = 12.5*3/4, units = "cm", dpi = 600)
+
+
+plot_grid(alpha.fig, unique.fig, ncol = 2, align = "hv", labels = c("A", "B")) +
+#  unique.order.fig, ncol = 1, align = "h", labels = c("", "C")) + 
   ggsave("figures/Fig1.pdf", width = 12.5, height = 12.5*3/4, units = "cm") +
   ggsave("figures/Fig1.png", width = 12.5, height = 12.5*3/4, units = "cm", dpi = 600)
 ```
@@ -370,7 +390,8 @@ We see that the RDA is globally significant and the first two canonical axes are
 
 # habitat, elevation, and conductivity were selected by Blanchet 2008 method
 
-hja.rda.reduced <- rda(OTUsREL.hel ~ habitat + elevation + conductivity, env.subs)
+# reduced model selects habitat, elevation and conductivity. but I'll add back other key env vars that are typically considered as well. 
+hja.rda.reduced <- rda(OTUsREL.hel ~ habitat + elevation + conductivity + TP + TN + ph + DOC, env.subs)
 ```
 The model selection procedure left us with the model using only habitat, elevation, and conductivity as predictor variables. Now, we have 3 significant RDA axes with the more parsimonious model. 
 
@@ -379,10 +400,11 @@ rda.plot <- cbind.data.frame(scores(hja.rda.reduced)$sites, group = str_to_title
 rda.var1 <- round(eigenvals(hja.rda.reduced)[1] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
 rda.var2 <- round(eigenvals(hja.rda.reduced)[2] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
 rda.vecs <- as.data.frame(hja.rda.reduced$CCA$biplot)
-rda.vecs$predictor <- c("Planktonic\n habitat", "Elevation", "Conductivity")
+rda.vecs$predictor <- c("Planktonic\n habitat", "Elevation", "Cond.",
+                        "TP", "TN", "pH", "DOC")
 rda.vecs$origin <- 0
 scale.arrows = .5
-ggplot(data = rda.plot, aes(RDA1, RDA2)) +
+hja.rda.fig <-  ggplot(data = rda.plot, aes(RDA1, RDA2)) +
   geom_hline(aes(yintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
   geom_vline(aes(xintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
   geom_point(aes(color = group, shape = group), size = 2, alpha = .8) +
@@ -401,7 +423,7 @@ ggplot(data = rda.plot, aes(RDA1, RDA2)) +
                aes(x = origin, y = origin, 
                    xend = scale.arrows*RDA1, 
                    yend = scale.arrows*RDA2),
-               alpha = 1, color = "black",
+               alpha = .8, color = "black",
                arrow = arrow(angle = 20,
                              length = unit(.1, "inches"),
                              type = "open")) +
@@ -409,8 +431,8 @@ ggplot(data = rda.plot, aes(RDA1, RDA2)) +
                    aes(x = (scale.arrows + .1)*RDA1, 
                        y = (scale.arrows + .1)*RDA2, label = predictor),
                    color = "black",
-                   segment.alpha = 0, 
-                  point.padding = 0, nudge_y = c(-.1, 0, 0)) +
+                   segment.alpha = 0,
+                  point.padding = 0, nudge_y = c(0, 0, .035, 0, 0, .05, -.05)) +
   #annotate("text", x = .3, y = -.25, label = "Sediment", size = 3) +
   #annotate("text", x = -.27, y = -.22, label = "Plankton", size = 3) +
   ggsave("figures/RDA.png", width = 8, height = 8, units = "cm", dpi = 500) +
@@ -419,57 +441,57 @@ ggplot(data = rda.plot, aes(RDA1, RDA2)) +
 
 ### Asymmetric Eigenvector Maps
 ```{r}
-# read site-by-edge matrix for sediments
-sed.SBE <- read_csv("data/AEMsed_site-by-edge.csv")
-sed.edgelengths <- read_csv("data/AEMsed_edge-weights.csv")
-sed.edgeweights <- ifelse(
-  sed.edgelengths$weight == 0, 0,
-  (1 - (sed.edgelengths$weight / max(sed.edgelengths$weight))^2)
-)
-sed.OTUsREL.hel <- OTUsREL.hel[which(design$habitat == "sediment"),]
-sed.aem <- aem(binary.mat = as.matrix(sed.SBE[,-1]))
-plot(sed.aem$values/sum(sed.aem$values))
-nvecs <- 1:floor(ncol(sed.aem$vectors)/2)
-matplot(sed.aem$vectors[,nvecs], type = 'l')
-sed.aem.vec <- as.data.frame(sed.aem$vectors[,nvecs])
-sed.db <- vegdist(sed.OTUsREL.hel, method = "euclidean")
-sed.aem.full <- rda(sed.OTUsREL.hel ~ ., sed.aem.vec)
-(sed.r2.aem <- RsquareAdj(sed.aem.full)$adj.r.squared)
-sed.aem.fwd <- forward.sel(sed.OTUsREL.hel, sed.aem.vec)
-sed.aem.sig.vec <- sed.aem.vec[,c(sort(sed.aem.fwd[,2]))]
-sed.aem.sig <- rda(sed.OTUsREL.hel ~ ., as.data.frame(sed.aem.sig.vec))
-# anova(sed.aem.sig)
-
-sed.env <- as.data.frame(env.subs[which(design$habitat == "sediment"),-c(1,2)])
-sed.env.mod <- model.matrix(~ .,sed.env)[,-1]
-sed.space.mod <- model.matrix(~ ., as.data.frame(sed.aem.sig.vec))[,-1]
-varpart(sed.OTUsREL.hel, sed.env.mod, sed.space.mod)
-
-
-# read site-by-edge matrix for water samples
-waterSBE <- read_csv("data/AEMwater_site-by-edge.csv")
-water.edgelengths <- read_csv("data/AEMwater_edge-weights.csv")
-water.edgeweights <- ifelse(
-  water.edgelengths$weight == 0, 0, 
-  (1 - (water.edgelengths$weight / max(water.edgelengths$weight))^2))
-waterOTUsREL.hel <- OTUsREL.hel[which(design$habitat == "water"),]
-wateraem <- aem(binary.mat = as.matrix(waterSBE[,-1]), weight = water.edgeweights)
-plot(wateraem$values/sum(wateraem$values))
-nvecs <- 1:floor(ncol(wateraem$vectors)/2)
-matplot(wateraem$vectors[,nvecs], type = 'l')
-wateraem.vec <- as.data.frame(wateraem$vectors[,nvecs])
-water.db <- vegdist(waterOTUsREL.hel, method = "euclidean")
-wateraem.full <- rda(waterOTUsREL.hel ~ ., wateraem.vec[,nvecs])
-(waterr2.aem <- RsquareAdj(wateraem.full)$adj.r.squared)
-wateraem.fwd <- forward.sel(waterOTUsREL.hel, wateraem.vec)
-wateraem.sig.vec <- wateraem.vec[,c(sort(wateraem.fwd[,2]))]
-wateraem.sig <- rda(waterOTUsREL.hel ~ ., as.data.frame(wateraem.sig.vec))
-# anova(wateraem.sig)
-
-water.space.mod <- model.matrix(~ ., wateraem.sig.vec)[,-1] #wateraem.vec[,1:(floor(ncol(wateraem.vec)/2))])[,-1]
-water.env <- as.data.frame(env.subs[which(design$habitat == "water"),-c(1,2)])
-water.env.mod <- model.matrix(~ .,water.env)[,-1]
-varpart(Y = waterOTUsREL.hel, water.env.mod, water.space.mod)
+# # read site-by-edge matrix for sediments
+# sed.SBE <- read_csv("data/AEMsed_site-by-edge.csv")
+# sed.edgelengths <- read_csv("data/AEMsed_edge-weights.csv")
+# sed.edgeweights <- ifelse(
+#   sed.edgelengths$weight == 0, 0,
+#   (1 - (sed.edgelengths$weight / max(sed.edgelengths$weight))^2)
+# )
+# sed.OTUsREL.hel <- OTUsREL.hel[which(design$habitat == "sediment"),]
+# sed.aem <- aem(binary.mat = as.matrix(sed.SBE[,-1]))
+# plot(sed.aem$values/sum(sed.aem$values))
+# nvecs <- 1:floor(ncol(sed.aem$vectors)/2)
+# matplot(sed.aem$vectors[,nvecs], type = 'l')
+# sed.aem.vec <- as.data.frame(sed.aem$vectors[,nvecs])
+# sed.db <- vegdist(sed.OTUsREL.hel, method = "euclidean")
+# sed.aem.full <- rda(sed.OTUsREL.hel ~ ., sed.aem.vec)
+# (sed.r2.aem <- RsquareAdj(sed.aem.full)$adj.r.squared)
+# sed.aem.fwd <- forward.sel(sed.OTUsREL.hel, sed.aem.vec)
+# sed.aem.sig.vec <- sed.aem.vec[,c(sort(sed.aem.fwd[,2]))]
+# sed.aem.sig <- rda(sed.OTUsREL.hel ~ ., as.data.frame(sed.aem.sig.vec))
+# # anova(sed.aem.sig)
+# 
+# sed.env <- as.data.frame(env.subs[which(design$habitat == "sediment"),-c(1,2)])
+# sed.env.mod <- model.matrix(~ .,sed.env)[,-1]
+# sed.space.mod <- model.matrix(~ ., as.data.frame(sed.aem.sig.vec))[,-1]
+# varpart(sed.OTUsREL.hel, sed.env.mod, sed.space.mod)
+# 
+# 
+# # read site-by-edge matrix for water samples
+# waterSBE <- read_csv("data/AEMwater_site-by-edge.csv")
+# water.edgelengths <- read_csv("data/AEMwater_edge-weights.csv")
+# water.edgeweights <- ifelse(
+#   water.edgelengths$weight == 0, 0, 
+#   (1 - (water.edgelengths$weight / max(water.edgelengths$weight))^2))
+# waterOTUsREL.hel <- OTUsREL.hel[which(design$habitat == "water"),]
+# wateraem <- aem(binary.mat = as.matrix(waterSBE[,-1]), weight = water.edgeweights)
+# plot(wateraem$values/sum(wateraem$values))
+# nvecs <- 1:floor(ncol(wateraem$vectors)/2)
+# matplot(wateraem$vectors[,nvecs], type = 'l')
+# wateraem.vec <- as.data.frame(wateraem$vectors[,nvecs])
+# water.db <- vegdist(waterOTUsREL.hel, method = "euclidean")
+# wateraem.full <- rda(waterOTUsREL.hel ~ ., wateraem.vec[,nvecs])
+# (waterr2.aem <- RsquareAdj(wateraem.full)$adj.r.squared)
+# wateraem.fwd <- forward.sel(waterOTUsREL.hel, wateraem.vec)
+# wateraem.sig.vec <- wateraem.vec[,c(sort(wateraem.fwd[,2]))]
+# wateraem.sig <- rda(waterOTUsREL.hel ~ ., as.data.frame(wateraem.sig.vec))
+# # anova(wateraem.sig)
+# 
+# water.space.mod <- model.matrix(~ ., wateraem.sig.vec)[,-1] #wateraem.vec[,1:(floor(ncol(wateraem.vec)/2))])[,-1]
+# water.env <- as.data.frame(env.subs[which(design$habitat == "water"),-c(1,2)])
+# water.env.mod <- model.matrix(~ .,water.env)[,-1]
+# varpart(Y = waterOTUsREL.hel, water.env.mod, water.space.mod)
 ```
 
 
@@ -654,10 +676,11 @@ sum(bNTI.dist < -2) / length(bNTI.dist) # homogeneous selection
 
 hja.bnti.dist.ls <- simba::liste(bNTI.dist, entry = "bNTI")
 hja.rchel.dist.ls <- simba::liste(RC.hel.dist, entry = "RChel")
+hja.euclid.dist.ls <- simba::liste(dist(SoDA::geoXY(latitude = xy[,2], longitude = xy[,1])), entry = "euclidean")
 hja.assembly <- full_join(dists.df, hja.bnti.dist.ls)
-hja.assembly <- cbind(hja.assembly, env = simba::liste(dist(env.subs[,-1]))[,3])
+hja.assembly <- cbind(hja.assembly, env = simba::liste(dist(env.subs[,-1]))[,3], euclid = hja.euclid.dist.ls$euclidean)
 hja.assembly %>% filter(den_dists > 0) %>% 
-  ggplot(aes(x = den_dists, y = RC_hel)) +
+  ggplot(aes(x = den_dists, y = euclid)) +
   geom_point() + 
   geom_smooth() + 
   facet_wrap(~habitat)
@@ -670,17 +693,41 @@ hja.assembly %>% filter(den_dists > 0) %>%
 
 
 hja.assembly.plot <- hja.assembly %>% filter(den_dists > 0) %>% 
-  mutate(process = ifelse(bNTI < -1.96, "Homogeneous selection", 
-                          ifelse(bNTI > 1.96, "Variable selection",
+  mutate(process = ifelse(bNTI < -2, "Homogeneous selection", 
+                          ifelse(bNTI > 2, "Variable selection",
                                  ifelse(RC_hel > 0.95, "Dispersal limitation",
                                         ifelse(RC_hel < -0.95, "Mass effects", "Stochastic"))))) %>% 
-  mutate(signif = ifelse(abs(RC_hel) < 0.95 & abs(bNTI) < 1.96, FALSE, TRUE)) %>% 
+  mutate(signif = ifelse(abs(RC_hel) < 0.95 & abs(bNTI) < 2, FALSE, TRUE)) %>% 
   gather(RC_hel, bNTI, key = "metric", value = "value") 
 hja.assembly.plot$metric <- factor(hja.assembly.plot$metric)
 levels(hja.assembly.plot$metric) <- c(
   expression(paste(beta,"NTI")),
   expression(beta["RC, Hellinger distance"])
 )
+
+hja.assembly.grouped <- hja.assembly.plot %>% 
+  mutate(den_dists_rounded = 10^round(log10(den_dists),0)) %>% 
+  group_by(habitat, den_dists_rounded) %>% 
+  count(process) %>% 
+  mutate(proportion = n/sum(n)) %>% 
+  full_join(unique(expand.grid(hja.assembly.grouped[,1:3])), fill = 0) %>% 
+  mutate(proportion = ifelse(is.na(proportion),0, proportion))
+
+hja.assembly.grouped %>% 
+  arrange(process, den_dists_rounded) %>% 
+  ggplot(aes(x = den_dists_rounded, y = proportion, fill = process)) +
+  geom_area(alpha = 0.8, position = "stack") +
+  scale_x_log10() +
+  facet_wrap(~ habitat, ncol = 1) +
+  scale_fill_manual(values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00", "#CC79A7")) + 
+  labs(x = "Dendritic distance (m)", y = "Proportion") +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10)) +
+  guides(fill = guide_legend(nrow = 3)) +
+  ggsave("figures/assembly_mechansism_scale.png", height = 8, width = 4, dpi = 600) + 
+  ggsave("figures/assembly_mechansism_scale.pdf", height = 8, width = 4)
+  
 
 hja.assembly.plot %>% 
   ggplot(aes(x = den_dists, y = env)) +
@@ -709,12 +756,12 @@ hja.assembly.plot %>% mutate(scale = ifelse(den_dists < 1500, "Local", "Regional
   ggsave("figures/ddr-panel.png", width = 7, height = 3/4*7, dpi = 600)
 
 
-hja.assembly %>% filter(den_dists > 0) %>% 
+ddrpanelplot <- hja.assembly %>% filter(den_dists > 0) %>% 
   ggplot(aes(x = (den_dists), y = bNTI,
              shape = habitat, color = habitat, fill = habitat)) +
   geom_hline(aes(yintercept = 1.96), alpha = 0.25, size = .5, linetype = "dashed") +
   geom_hline(aes(yintercept = -1.96), alpha = 0.25, size = .5, linetype = "dashed") +
-  geom_point(alpha = .3, size = 1) + 
+  geom_point(alpha = .3, size = 2) + 
   geom_smooth(method = "lm", size = 1, se = T, formula = y ~ splines::bs(x, 3)) + 
   geom_rug(sides = "r", alpha = 0.2) +
   facet_wrap(~habitat, ncol = 1, scales = "free_y") + 
@@ -726,6 +773,8 @@ hja.assembly %>% filter(den_dists > 0) %>%
   scale_x_log10() +
   ggsave("figures/ddr-panel.png", width = 8, height = 3/4*8*3, units = "cm", dpi = 600) +
   ggsave("figures/ddr-panel.pdf", width = 8, height = 3/4*8*3, units = "cm")
+
+summary(aov(bNTI ~ habitat, hja.assembly))
 ```
 
 ```{r}
@@ -760,6 +809,14 @@ mainstem.dist.water.phy <- as.dist(as.matrix(bNTI.dist)[
   which(design$order != 1 & design$habitat == "water"), 
   which(design$order != 1 & design$habitat == "water")])
 
+# now cross-habitat comparisons, not square matrix
+headwaters.dist.sed.water.phy <- as.matrix(bNTI.dist)[
+  which(design$order == 1 & design$habitat != "water"), 
+  which(design$order == 1 & design$habitat == "water")]
+downstream.dist.sed.water.phy <- as.matrix(bNTI.dist)[
+  which(design$order != 1 & design$habitat != "water"), 
+  which(design$order != 1 & design$habitat == "water")]
+
 beta.to.plot <- rbind.data.frame(
   tibble(position = "Headwater", habitat = "Sediment", beta = "RC_hel", dist = as.vector(headwaters.dist.sed.tax)),
   tibble(position = "Downstream", habitat = "Sediment", beta = "RC_hel", dist = as.vector(mainstem.dist.sed.tax)),
@@ -768,7 +825,9 @@ beta.to.plot <- rbind.data.frame(
   tibble(position = "Headwater", habitat = "Sediment", beta = "bNTI", dist = as.vector(headwaters.dist.sed.phy)),
   tibble(position = "Downstream", habitat = "Sediment", beta = "bNTI", dist = as.vector(mainstem.dist.sed.phy)),
   tibble(position = "Headwater", habitat = "Planktonic", beta = "bNTI", dist = as.vector(headwaters.dist.water.phy)),
-  tibble(position = "Downstream", habitat = "Planktonic", beta = "bNTI", dist = as.vector(mainstem.dist.water.phy))
+  tibble(position = "Downstream", habitat = "Planktonic", beta = "bNTI", dist = as.vector(mainstem.dist.water.phy)),
+  tibble(position = "Headwater", habitat = "Planktonic-Sediment", beta = "bNTI", dist = as.vector(headwaters.dist.sed.water.phy)),
+  tibble(position = "Downstream", habitat = "Planktonic-Sediment", beta = "bNTI", dist = as.vector(downstream.dist.sed.water.phy))
 )
 beta.to.plot$beta <-  factor(beta.to.plot$beta)
 beta.to.plot$position <- factor(beta.to.plot$position, levels = c("Headwater", "Downstream"))
@@ -776,23 +835,79 @@ levels(beta.to.plot$beta) <- c(
   expression(paste(beta,"NTI")),
   expression(beta["RC, Hellinger distance"])
 )
-beta.to.plot$habitat <-  factor(beta.to.plot$habitat, levels = c("Sediment", "Planktonic"))
+
+
+beta.to.plot$habitat <-  factor(beta.to.plot$habitat, levels = c("Sediment", "Planktonic", "Planktonic-Sediment"))
+
+beta.summary <- subset(beta.to.plot, beta != "beta[\"RC, Hellinger distance\"]") %>% 
+  group_by(position, habitat) %>% 
+  summarise(mean = mean(dist), se = sd(dist)/n()) %>% 
+  mutate(lower = mean - se, upper = mean + se)
+beta.summary$habitat_labels <- c("S", "P", "S-P", "S", "P", "S-P")
+
 beta.to.plot %>% filter(beta != "beta[\"RC, Hellinger distance\"]") %>% 
   ggplot(aes(x = position, y = dist, fill = habitat, color = habitat)) +
   geom_hline(aes(yintercept = 1.96), alpha = 0.25, size = .5, linetype = "dashed") +
   geom_hline(aes(yintercept = -1.96), alpha = 0.25, size = .5, linetype = "dashed") +
-  geom_boxplot(alpha = 0.8) +
+  geom_boxplot(alpha = 0.7) +
   geom_point(position = position_jitterdodge(), alpha = 0.1) +
+  geom_point(data = beta.summary, mapping = aes(y = mean), 
+             position = position_dodge(width = .75)) +
+  geom_errorbar(data = beta.summary, mapping = aes(y = mean, ymin = lower, ymax = upper), 
+             position = position_dodge(width = .75), width = .2) +
   facet_wrap(~beta, scales = "free_y", strip.position = "left", labeller = label_parsed) +
   theme(strip.placement = "outside") +
   labs(y = "", x = "") +
-  scale_fill_manual(values = my.colors) + 
-  scale_color_manual(values = colorspace::darken(my.colors, .4)) + 
+  scale_color_manual(values=colorspace::darken(c(my.colors, "#688c45"),0.4)) +
+  scale_fill_manual(values=c(my.colors, "#688c45", my.colors,	"#688c45")) +
   theme(legend.position = "none") +
+  geom_text(data = beta.summary, mapping = aes(label = habitat_labels, y = -16),
+            position = position_dodge(width = .75), vjust = 1) +
+  coord_cartesian(ylim = c(-16, 48), clip = "off") +
   ggsave("figures/headwater_mainstem.pdf", width = 8, height = 8*4/3, units = "cm") +
   ggsave("figures/headwater_mainstem.png", width = 8, height = 8*4/3, units = "cm", dpi = 600)
 
 summary(aov(dist ~ position + habitat, subset(beta.to.plot, beta != "beta[\"RC, Hellinger distance\"]")))
+
+```
+
+```{r}
+hja.assembly$hel <- vegdist(OTUsREL.hel, method = "euc")
+hja.assembly %>% 
+  filter(den_dists > 0) %>% 
+  ggplot(aes(x = den_dists, y = hel, color = habitat, fill = habitat)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm") +
+  scale_x_log10() +
+  scale_color_manual(values=colorspace::darken(c(my.colors, "#688c45"),0.4)) +
+  scale_fill_manual(values=c(my.colors, "#688c45", my.colors,	"#688c45"))
+
+hja.ddr.fig <- hja.assembly %>% left_join(simba::liste(den.dists, entry = "unconnected_dists")) %>% 
+  ggplot(aes(x = unconnected_dists +1, y = hel, color = habitat, fill = habitat, shape = habitat)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(method = "lm") +
+  scale_x_log10() +
+  scale_color_manual(values=colorspace::darken(c(my.colors, "#688c45"),0.4)) +
+  scale_fill_manual(values=c(my.colors, "#688c45", my.colors,	"#688c45")) +
+  labs(x = "Dendritic distance (m)",
+       y = "Community dissimilarity") +
+  theme(legend.position = "none") +
+  ggsave("figures/ddr-taxa.pdf", width = 8, height = 8*3/4, units = "cm") +
+  ggsave("figures/ddr-taxa.png", width = 8, height = 8*3/4, units = "cm", dpi = 600)
+
+plot_grid(hja.rda.fig, hja.ddr.fig, labels = "AUTO") +
+  ggsave("figures/rda-ddr.png", width = 20, height = 20/2*3/4, units = "cm", dpi = 600) +
+  ggsave("figures/rda-ddr.pdf", width = 20, height = 20/2*3/4, units = "cm")
+```
+
+```{r}
+water.dist <- vegdist(OTUsREL.hel[which(design$habitat == "water"),], "euclidean")
+sed.dist <- vegdist(OTUsREL.hel[which(design$habitat == "sediment"),], "euclidean")
+water.den.dists <- den.dists.mat[which(design$habitat == "water"),which(design$habitat == "water")]
+sed.den.dists <- den.dists.mat[which(design$habitat == "sediment"),which(design$habitat == "sediment")]
+
+plot(mantel.correlog(water.dist, water.den.dists))
+plot(mantel.correlog(sed.dist, sed.den.dists))
 ```
 
 
