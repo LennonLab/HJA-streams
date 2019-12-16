@@ -685,16 +685,10 @@ hja.assembly %>% filter(den_dists > 0) %>%
   geom_smooth() + 
   facet_wrap(~habitat)
 
-hja.assembly %>% filter(den_dists > 0) %>% 
-  ggplot(aes(x = den_dists, y = bNTI)) +
-  geom_point(alpha = 0.4, aes(color = abs(bNTI) > 1.96)) + 
-  geom_line(method = "loess", stat = "smooth", col = "black", size = 1) + 
-  facet_wrap(~habitat)
-
 
 hja.assembly.plot <- hja.assembly %>% filter(den_dists > 0) %>% 
-  mutate(process = ifelse(bNTI < -2, "Homogeneous selection", 
-                          ifelse(bNTI > 2, "Variable selection",
+  mutate(process = ifelse(bNTI < -2, "Convergent species sorting", 
+                          ifelse(bNTI > 2, "Divergent species sorting",
                                  ifelse(RC_hel > 0.95, "Dispersal limitation",
                                         ifelse(RC_hel < -0.95, "Mass effects", "Stochastic"))))) %>% 
   mutate(signif = ifelse(abs(RC_hel) < 0.95 & abs(bNTI) < 2, FALSE, TRUE)) %>% 
@@ -709,17 +703,23 @@ hja.assembly.grouped <- hja.assembly.plot %>%
   mutate(den_dists_rounded = 10^round(log10(den_dists),0)) %>% 
   group_by(habitat, den_dists_rounded) %>% 
   count(process) %>% 
-  mutate(proportion = n/sum(n)) %>% 
+  mutate(proportion = n/sum(n)) 
+hja.assembly.grouped <- hja.assembly.grouped %>% 
   full_join(unique(expand.grid(hja.assembly.grouped[,1:3])), fill = 0) %>% 
   mutate(proportion = ifelse(is.na(proportion),0, proportion))
 
 hja.assembly.grouped %>% 
   arrange(process, den_dists_rounded) %>% 
+  mutate(process = factor(process, levels = c("Stochastic", 
+                                              "Divergent species sorting",
+                                              "Convergent species sorting",
+                                              "Mass effects",
+                                              "Dispersal limitation"))) %>% 
   ggplot(aes(x = den_dists_rounded, y = proportion, fill = process)) +
-  geom_area(alpha = 0.8, position = "stack") +
+  geom_area(alpha = .9, position = "stack", color = "gray90") +
   scale_x_log10() +
   facet_wrap(~ habitat, ncol = 1) +
-  scale_fill_manual(values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00", "#CC79A7")) + 
+  scale_fill_manual(values = c("#02440c","#789400","#e4d565","#f3f5e7","#40becd")) + 
   labs(x = "Dendritic distance (m)", y = "Proportion") +
   theme(legend.position = "bottom", 
         legend.title = element_blank(),
@@ -727,7 +727,27 @@ hja.assembly.grouped %>%
   guides(fill = guide_legend(nrow = 3)) +
   ggsave("figures/assembly_mechansism_scale.png", height = 8, width = 4, dpi = 600) + 
   ggsave("figures/assembly_mechansism_scale.pdf", height = 8, width = 4)
-  
+
+# hja.assembly.grouped.env <- hja.assembly.plot %>% 
+#   mutate(env_rounded = round(env,0)) %>% 
+#   group_by(habitat, env_rounded) %>% 
+#   count(process) %>% 
+#   mutate(proportion = n/sum(n)) %>% 
+#   full_join(unique(expand.grid(unique(hja.assembly.grouped.env[,1:3]))), fill = 0) %>% 
+#   mutate(proportion = ifelse(is.na(proportion),0, proportion))
+# 
+# hja.assembly.grouped.env %>% 
+#   arrange(process, env_rounded) %>% 
+#   ggplot(aes(x = env_rounded, y = proportion, fill = process)) +
+#   geom_area(alpha = 0.8, position = "stack") +
+#   facet_wrap(~ habitat, ncol = 1) +
+#   scale_fill_manual(values = c("#000000", "#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00", "#CC79A7")) + 
+#   labs(x = "Environmental dissimilarity", y = "Proportion") +
+#   theme(legend.position = "bottom", 
+#         legend.title = element_blank(),
+#         legend.text = element_text(size = 10)) +
+#   guides(fill = guide_legend(nrow = 3))
+#  
 
 hja.assembly.plot %>% 
   ggplot(aes(x = den_dists, y = env)) +
@@ -867,8 +887,8 @@ beta.to.plot %>% filter(beta != "beta[\"RC, Hellinger distance\"]") %>%
   ggsave("figures/headwater_mainstem.pdf", width = 8, height = 8*4/3, units = "cm") +
   ggsave("figures/headwater_mainstem.png", width = 8, height = 8*4/3, units = "cm", dpi = 600)
 
-summary(aov(dist ~ position + habitat, subset(beta.to.plot, beta != "beta[\"RC, Hellinger distance\"]")))
-
+summary(aov(dist ~ position * habitat, subset(beta.to.plot, beta != "beta[\"RC, Hellinger distance\"]")))
+TukeyHSD(aov(dist ~ position * habitat, subset(beta.to.plot, beta != "beta[\"RC, Hellinger distance\"]")))
 ```
 
 ```{r}
