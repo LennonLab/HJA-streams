@@ -1,0 +1,76 @@
+habitat,den_dists_rounded,process,n,proportion
+Sediment,1,Convergent species sorting,4,0.5
+Sediment,1,Divergent species sorting,2,0.25
+Sediment,1,Mass effects,2,0.25
+Sediment,10,Convergent species sorting,2,1
+Sediment,100,Convergent species sorting,36,0.8181818181818182
+Sediment,100,Divergent species sorting,4,0.09090909090909091
+Sediment,100,Stochastic,4,0.09090909090909091
+Sediment,1000,Convergent species sorting,28,0.5384615384615384
+Sediment,1000,Divergent species sorting,18,0.34615384615384615
+Sediment,1000,Stochastic,6,0.11538461538461539
+Sediment,10000,Convergent species sorting,18,0.6428571428571429
+Sediment,10000,Divergent species sorting,4,0.14285714285714285
+Sediment,10000,Stochastic,6,0.21428571428571427
+Planktonic,1,Convergent species sorting,6,1
+Planktonic,10,Convergent species sorting,8,0.6666666666666666
+Planktonic,10,Divergent species sorting,4,0.3333333333333333
+Planktonic,100,Convergent species sorting,52,0.9285714285714286
+Planktonic,100,Divergent species sorting,4,0.07142857142857142
+Planktonic,1000,Convergent species sorting,70,0.7446808510638298
+Planktonic,1000,Dispersal limitation,4,0.0425531914893617
+Planktonic,1000,Divergent species sorting,20,0.2127659574468085
+Planktonic,10000,Convergent species sorting,6,0.13043478260869565
+Planktonic,10000,Dispersal limitation,6,0.13043478260869565
+Planktonic,10000,Divergent species sorting,32,0.6956521739130435
+Planktonic,10000,Mass effects,2,0.043478260869565216
+Planktonic-Sediment,1,Divergent species sorting,4,0.4
+Planktonic-Sediment,1,Stochastic,6,0.6
+Planktonic-Sediment,10,Divergent species sorting,8,0.8
+Planktonic-Sediment,10,Stochastic,2,0.2
+Planktonic-Sediment,100,Convergent species sorting,8,0.06896551724137931
+Planktonic-Sediment,100,Dispersal limitation,4,0.034482758620689655
+Planktonic-Sediment,100,Divergent species sorting,90,0.7758620689655172
+Planktonic-Sediment,100,Stochastic,14,0.1206896551724138
+Planktonic-Sediment,1000,Convergent species sorting,8,0.057971014492753624
+Planktonic-Sediment,1000,Dispersal limitation,4,0.028985507246376812
+Planktonic-Sediment,1000,Divergent species sorting,114,0.8260869565217391
+Planktonic-Sediment,1000,Stochastic,12,0.08695652173913043
+Planktonic-Sediment,10000,Divergent species sorting,70,0.9459459459459459
+Planktonic-Sediment,10000,Stochastic,4,0.05405405405405406
+Planktonic-Sediment,1,Convergent species sorting,NA,0
+Planktonic-Sediment,10,Convergent species sorting,NA,0
+Planktonic-Sediment,10000,Convergent species sorting,NA,0
+Planktonic,1,Divergent species sorting,NA,0
+Sediment,10,Divergent species sorting,NA,0
+Planktonic,1,Mass effects,NA,0
+Planktonic-Sediment,1,Mass effects,NA,0
+Sediment,10,Mass effects,NA,0
+Planktonic,10,Mass effects,NA,0
+Planktonic-Sediment,10,Mass effects,NA,0
+Sediment,100,Mass effects,NA,0
+Planktonic,100,Mass effects,NA,0
+Planktonic-Sediment,100,Mass effects,NA,0
+Sediment,1000,Mass effects,NA,0
+Planktonic,1000,Mass effects,NA,0
+Planktonic-Sediment,1000,Mass effects,NA,0
+Sediment,10000,Mass effects,NA,0
+Planktonic-Sediment,10000,Mass effects,NA,0
+Sediment,1,Stochastic,NA,0
+Planktonic,1,Stochastic,NA,0
+Sediment,10,Stochastic,NA,0
+Planktonic,10,Stochastic,NA,0
+Planktonic,100,Stochastic,NA,0
+Planktonic,1000,Stochastic,NA,0
+Planktonic,10000,Stochastic,NA,0
+Sediment,1,Dispersal limitation,NA,0
+Planktonic,1,Dispersal limitation,NA,0
+Planktonic-Sediment,1,Dispersal limitation,NA,0
+Sediment,10,Dispersal limitation,NA,0
+Planktonic,10,Dispersal limitation,NA,0
+Planktonic-Sediment,10,Dispersal limitation,NA,0
+Sediment,100,Dispersal limitation,NA,0
+Planktonic,100,Dispersal limitation,NA,0
+Sediment,1000,Dispersal limitation,NA,0
+Sediment,10000,Dispersal limitation,NA,0
+Planktonic-Sediment,10000,Dispersal limitation,NA,0
