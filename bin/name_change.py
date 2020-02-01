@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 
 ################################################################################
 #
@@ -19,11 +19,11 @@ import os
 import re
 from Bio import SeqIO
 
-# in_file = "./eDNA.bac.final.0.03.rep.fasta"
-# out_file ="./eDNA.bac.final.0.03.rep.rename.fasta"
+in_file = "./hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.0.03.rep.fasta"
+out_file ="./hja_streams.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.opti_mcc.0.03.rep.rename.fasta"
 
-in_file = sys.argv[1]
-out_file = sys.argv[2]
+# in_file = sys.argv[1]
+# out_file = sys.argv[2]
 
 output_handle = open(out_file, "w")
 
@@ -35,7 +35,7 @@ for seq_record in SeqIO.parse(in_file, "fasta"):
     OldseqID.append(seq_record.id)
     seqInfo.append(seq_record.description)
     seqID_New = seq_record.description
-    seqID_New = re.findall('Otu.{6}',seq_record.description)
+    seqID_New = re.findall('Otu.{5}',seq_record.description)
     NewseqID.append(seqID_New)
     seq_record.id = seqID_New[0]
 
