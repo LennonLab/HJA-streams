@@ -396,7 +396,7 @@ hja.rda.reduced <- rda(OTUsREL.hel ~ habitat + elevation + conductivity + TP + T
 The model selection procedure left us with the model using only habitat, elevation, and conductivity as predictor variables. Now, we have 3 significant RDA axes with the more parsimonious model. 
 
 ```{r}
-rda.plot <- cbind.data.frame(scores(hja.rda.reduced)$sites, group = str_to_title(design$habitat))
+rda.plot <- cbind.data.frame(scores(hja.rda.reduced)$sites, group = str_to_title(design$habitat), watershed = design$watershed)
 rda.var1 <- round(eigenvals(hja.rda.reduced)[1] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
 rda.var2 <- round(eigenvals(hja.rda.reduced)[2] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
 rda.vecs <- as.data.frame(hja.rda.reduced$CCA$biplot)
@@ -404,26 +404,29 @@ rda.vecs$predictor <- c("Planktonic\n habitat", "Elevation", "Cond.",
                         "TP", "TN", "pH", "DOC")
 rda.vecs$origin <- 0
 scale.arrows = .5
-hja.rda.fig <-  ggplot(data = rda.plot, aes(RDA1, RDA2)) +
+hja.rda.fig <-  ggplot(data = rda.plot, aes(x = RDA1, y = RDA2)) +
   geom_hline(aes(yintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
   geom_vline(aes(xintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
-  geom_point(aes(color = group, shape = group), size = 2, alpha = .8) +
-  geom_point(data = subset(rda.plot, group == "Sediment"), shape = 1, color = "black", size = 2) +
-  geom_point(data = subset(rda.plot, group == "Water"), shape = 2, color = "black", size = 2) +
+  geom_point(aes(fill = group, shape = watershed), size = 2, alpha = .8) +
+  # geom_point(data = subset(rda.plot, group == "Sediment"), color = "black", size = 2) +
+  # geom_point(data = subset(rda.plot, group == "Water"), color = "black", size = 2) +
   # geom_path(data = df_ell, 
   #           aes(x = Dim1, y = Dim2, color = group),
   #           size = .8, alpha = 1, linetype = 2) +
+  stat_ellipse(data = rda.plot, alpha = 0.8, aes(color = group, shape = watershed)) +
   labs(x = paste0("RDA1 (", rda.var1, "%)"),
     y = paste0("RDA2 (", rda.var2, "%)"),
-    color = "Habitat", shape = "Habitat") +
+    color = "Habitat", shape = "Watershed") +
   scale_color_manual(values = my.colors) + 
+  scale_fill_manual(values = my.colors) +
+  scale_shape_manual(values = c(21, 24)) +
   coord_fixed() +
   theme(legend.position = "none") + 
   geom_segment(data = rda.vecs, size = .5,
-               aes(x = origin, y = origin, 
-                   xend = scale.arrows*RDA1, 
+               aes(x = origin, y = origin,
+                   xend = scale.arrows*RDA1,
                    yend = scale.arrows*RDA2),
-               alpha = .8, color = "black",
+               alpha = .7, color = "black",
                arrow = arrow(angle = 20,
                              length = unit(.1, "inches"),
                              type = "open")) +
@@ -708,6 +711,8 @@ hja.assembly.grouped <- hja.assembly.grouped %>%
   full_join(unique(expand.grid(hja.assembly.grouped[,1:3])), fill = 0) %>% 
   mutate(proportion = ifelse(is.na(proportion),0, proportion))
 
+write_csv(hja.assembly.grouped, "tables/assembly_counts_by_scale.csv")
+
 hja.assembly.grouped %>% 
   arrange(process, den_dists_rounded) %>% 
   mutate(process = factor(process, levels = c("Stochastic", 
@@ -723,7 +728,7 @@ hja.assembly.grouped %>%
   labs(x = "Dendritic distance (m)", y = "Proportion") +
   theme(legend.position = "bottom", 
         legend.title = element_blank(),
-        legend.text = element_text(size = 10)) +
+        legend.text = element_text(size = 9)) +
   guides(fill = guide_legend(nrow = 3)) +
   ggsave("figures/assembly_mechansism_scale.png", height = 8, width = 4, dpi = 600) + 
   ggsave("figures/assembly_mechansism_scale.pdf", height = 8, width = 4)
@@ -895,10 +900,10 @@ TukeyHSD(aov(dist ~ position * habitat, subset(beta.to.plot, beta != "beta[\"RC,
 hja.assembly$hel <- vegdist(OTUsREL.hel, method = "euc")
 hja.assembly %>% 
   filter(den_dists > 0) %>% 
-  ggplot(aes(x = den_dists, y = hel, color = habitat, fill = habitat)) +
+  ggplot(aes(x = env, y = hel, color = habitat, fill = habitat)) +
   geom_point(alpha = 0.3) +
   geom_smooth(method = "lm") +
-  scale_x_log10() +
+  #scale_x_log10() +
   scale_color_manual(values=colorspace::darken(c(my.colors, "#688c45"),0.4)) +
   scale_fill_manual(values=c(my.colors, "#688c45", my.colors,	"#688c45"))
 
@@ -918,6 +923,12 @@ hja.ddr.fig <- hja.assembly %>% left_join(simba::liste(den.dists, entry = "uncon
 plot_grid(hja.rda.fig, hja.ddr.fig, labels = "AUTO") +
   ggsave("figures/rda-ddr.png", width = 20, height = 20/2*3/4, units = "cm", dpi = 600) +
   ggsave("figures/rda-ddr.pdf", width = 20, height = 20/2*3/4, units = "cm")
+
+ddr_formod <- hja.assembly %>% left_join(simba::liste(den.dists, entry = "unconnected_dists")) %>% mutate(unconnected_dists = unconnected_dists + 1)
+
+ddr_envdist_mod <- lm(hel ~ unconnected_dists * habitat + env, data = ddr_formod)
+plot(ddr_envdist_mod)
+summary(ddr_envdist_mod)
 ```
 
 ```{r}
