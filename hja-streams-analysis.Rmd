@@ -728,6 +728,9 @@ hja.assembly.grouped %>%
                                               "Dispersal limitation"))) %>% 
   ggplot(aes(x = den_dists_rounded, y = proportion, fill = process)) +
   geom_area(alpha = .9, position = "stack", color = "gray90") +
+  annotate("segment", x = 10, xend = 10, y = 0, yend = 1, linetype = "dashed", alpha = 0.8, color = "gray60") +
+  annotate("segment", x = 100, xend = 100, y = 0, yend = 1, linetype = "dashed", alpha = 0.8, color = "gray60") +
+  annotate("segment", x = 1000, xend = 1000, y = 0, yend = 1, linetype = "dashed", alpha = 0.8, color = "gray60") +
   scale_x_log10() +
   facet_wrap(~ habitat, ncol = 1) +
   scale_fill_manual(values = c("#02440c","#789400","#e4d565","#f3f5e7","#40becd")) + 
@@ -735,10 +738,17 @@ hja.assembly.grouped %>%
   theme(legend.position = "bottom", 
         legend.title = element_blank(),
         legend.text = element_text(size = 9)) +
-  guides(fill = guide_legend(nrow = 3)) +
+  guides(fill = guide_legend(nrow = 2)) +
   ggsave("figures/assembly_mechansism_scale.png", height = 8, width = 4, dpi = 600) + 
   ggsave("figures/assembly_mechansism_scale.pdf", height = 8, width = 4)
 
+hja.assembly.grouped %>% 
+  ungroup() %>% 
+  group_by(den_dists_rounded) %>% 
+  count()
+
+hja.assembly.grouped %>% 
+    count()
 # hja.assembly.grouped.env <- hja.assembly.plot %>% 
 #   mutate(env_rounded = round(env,0)) %>% 
 #   group_by(habitat, env_rounded) %>% 
@@ -911,11 +921,13 @@ beta.to.plot %>% filter(beta != "beta[\"RC, Hellinger distance\"]") %>%
   theme(legend.position = "none") +
   geom_text(data = beta.summary, mapping = aes(label = habitat_labels, y = label_position),
             position = position_dodge(width = .75), vjust = 1) +
-  ggsave("figures/headwater_mainstem.pdf", width = 8, height = 8*4/3, units = "cm") +
-  ggsave("figures/headwater_mainstem.png", width = 8, height = 8*4/3, units = "cm", dpi = 600)
+  ggsave("figures/headwater_mainstem.pdf", width = 2*8, height = 8*4/3, units = "cm") +
+  ggsave("figures/headwater_mainstem.png", width = 2*8, height = 8*4/3, units = "cm", dpi = 600)
 
 summary(aov(dist ~ position * habitat, subset(beta.to.plot, beta != "beta[\"RC, Hellinger distance\"]")))
 TukeyHSD(aov(dist ~ position * habitat, subset(beta.to.plot, beta != "beta[\"RC, Hellinger distance\"]")))
+
+adonis
 
 # construct dfs for headwater downstream comparison
 hwsp <- simba::liste(headwaters.dist.sed.phy, entry = "bNTI")
@@ -988,11 +1000,11 @@ assembly.position.grouped <- assembly.position.grouped %>%
 
 assembly.position.grouped %>% 
   mutate(position = factor(position, levels = c("Headwater", "Downstream"))) %>% 
-  # mutate(process = factor(process, levels = c("Undominated", 
-  #                                             "Variable selection",
-  #                                             "Homogeneous selection",
-  #                                             "Mass effects",
-  #                                             "Dispersal limitation"))) %>% 
+  mutate(process = factor(process, levels = c("Undominated",
+                                              "Variable selection",
+                                              "Homogeneous selection",
+                                              "Mass effects",
+                                              "Dispersal limitation"))) %>%
   ggplot(aes(x = position, y = proportion, fill = process)) +
   geom_bar(alpha = .9, position = "stack", stat = "identity") +
   facet_wrap(~ habitat, ncol = 1) +
@@ -1005,11 +1017,12 @@ assembly.position.grouped %>%
   ggsave("figures/assembly_mechansism_position.png", height = 8, width = 4, dpi = 600) + 
   ggsave("figures/assembly_mechansism_position.pdf", height = 8, width = 4)
 
-  
+assembly.position.grouped  
 ```
 
 ```{r}
 hja.assembly$hel <- vegdist(OTUsREL.hel, method = "euc")
+hja.assembly$bray <- vegdist(OTUsREL, method = "bray")
 hja.assembly %>% 
   filter(den_dists > 0) %>% 
   ggplot(aes(x = env, y = hel, color = habitat, fill = habitat)) +
@@ -1031,6 +1044,7 @@ hja.ddr.fig <- hja.assembly %>% left_join(simba::liste(den.dists, entry = "uncon
   theme(legend.position = "none") +
   ggsave("figures/ddr-taxa.pdf", width = 8, height = 8*3/4, units = "cm") +
   ggsave("figures/ddr-taxa.png", width = 8, height = 8*3/4, units = "cm", dpi = 600)
+hja.ddr.fig
 
 plot_grid(hja.rda.fig, hja.ddr.fig, labels = "AUTO") +
   ggsave("figures/rda-ddr.png", width = 20, height = 20/2*3/4, units = "cm", dpi = 600) +
@@ -1039,8 +1053,12 @@ plot_grid(hja.rda.fig, hja.ddr.fig, labels = "AUTO") +
 ddr_formod <- hja.assembly %>% left_join(simba::liste(den.dists, entry = "unconnected_dists")) %>% mutate(unconnected_dists = unconnected_dists + 1)
 
 ddr_envdist_mod <- lm(hel ~ unconnected_dists * habitat + env, data = ddr_formod)
+ddr_dist_mod <- lm(hel ~ unconnected_dists * habitat, data = ddr_formod)
+AIC(ddr_envdist_mod)
+AIC(ddr_dist_mod)
 plot(ddr_envdist_mod)
 summary(ddr_envdist_mod)
+summary(ddr_dist_mod)
 ```
 
 ```{r}
