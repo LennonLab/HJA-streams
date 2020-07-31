@@ -927,7 +927,6 @@ beta.to.plot %>% filter(beta != "beta[\"RC, Hellinger distance\"]") %>%
 summary(aov(dist ~ position * habitat, subset(beta.to.plot, beta != "beta[\"RC, Hellinger distance\"]")))
 TukeyHSD(aov(dist ~ position * habitat, subset(beta.to.plot, beta != "beta[\"RC, Hellinger distance\"]")))
 
-adonis
 
 # construct dfs for headwater downstream comparison
 hwsp <- simba::liste(headwaters.dist.sed.phy, entry = "bNTI")
@@ -1017,7 +1016,7 @@ assembly.position.grouped %>%
   ggsave("figures/assembly_mechansism_position.png", height = 8, width = 4, dpi = 600) + 
   ggsave("figures/assembly_mechansism_position.pdf", height = 8, width = 4)
 
-assembly.position.grouped  
+assembly.position.grouped %>% count() 
 ```
 
 ```{r}
