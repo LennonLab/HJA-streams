@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
   warning = FALSE
 )
 
-library("vegan")
+
 library("adespatial")
 library("pander")
 library("stringr")
@@ -29,6 +29,7 @@ library("cowplot")
 library("ggrepel")
 library("progress")
 library("doSNOW")
+library("vegan")
 
 theme_set(theme_cowplot() +
             theme(axis.title = element_text(size = 12),
