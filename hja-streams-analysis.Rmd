@@ -397,7 +397,7 @@ hja.rda.reduced <- rda(OTUsREL.hel ~ habitat + elevation + conductivity + TP + T
 The model selection procedure left us with the model using only habitat, elevation, and conductivity as predictor variables. Now, we have 3 significant RDA axes with the more parsimonious model. 
 
 ```{r}
-rda.plot <- cbind.data.frame(scores(hja.rda.reduced)$sites, group = str_to_title(design$habitat), watershed = design$watershed)
+rda.plot <- cbind.data.frame(vegan::scores(hja.rda.reduced)$sites, group = str_to_title(design$habitat), watershed = design$watershed)
 rda.var1 <- round(eigenvals(hja.rda.reduced)[1] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
 rda.var2 <- round(eigenvals(hja.rda.reduced)[2] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
 rda.vecs <- as.data.frame(hja.rda.reduced$CCA$biplot)
@@ -556,14 +556,15 @@ site.rich <- specnumber(OTUs)
 a <- regional.relabunds * occupancy.probs
 
 # Create a null community based on Stegen et al. 2015
+set.seed(47405)
 #rc.nulls <- nullcom.rcabund(OTUs = OTUs, stand = "total", distance = "bray")
 #saveRDS(rc.nulls, "temp/rc_nullmodels_bray.rda")
 rc.nulls <- readRDS("temp/rc_nullmodels_bray.rda")
 
-obs.hel <- as.matrix(vegdist(OTUsREL, method = "bray"))
-site.compares <- expand.grid(site1 = 1:nrow(obs.hel), site2 = 1:nrow(obs.hel))
+obs.bray <- as.matrix(vegdist(OTUsREL, method = "bray"))
+site.compares <- expand.grid(site1 = 1:nrow(obs.bray), site2 = 1:nrow(obs.bray))
 site.compares <- site.compares[-which(site.compares[,1] == site.compares[,2]),]
-RC.hel <- matrix(NA, nrow = nrow(obs.hel), ncol = nrow(obs.hel))
+RC.bray <- matrix(NA, nrow = nrow(obs.bray), ncol = nrow(obs.bray))
 
 # test conversion to hellinger
 # if observed is greater than all nulls, should be maximum val
@@ -574,19 +575,19 @@ for(row.i in 1:nrow(site.compares)){
   site1 <- site.compares[row.i,1]
   site2 <- site.compares[row.i,2]
   pairwise.null <- rc.nulls[site1,site2,]
-  pairwise.hel <- obs.hel[site1,site2]
-  num.greater <- sum(pairwise.null > pairwise.hel)
-  num.ties <- sum(pairwise.null == pairwise.hel)
+  pairwise.bray <- obs.bray[site1,site2]
+  num.greater <- sum(pairwise.null > pairwise.bray)
+  num.ties <- sum(pairwise.null == pairwise.bray)
   val <- -1*((((1 * num.greater) + (0.5 * num.ties))/999 - 0.5) * 2)
-  RC.hel[site1, site2] <- val
+  RC.bray[site1, site2] <- val
 }
-rownames(RC.hel) <- rownames(design)
-colnames(RC.hel) <- rownames(design)
-RC.hel.dist <- as.dist(RC.hel)
-range(RC.hel.dist)
+rownames(RC.bray) <- rownames(design)
+colnames(RC.bray) <- rownames(design)
+RC.bray.dist <- as.dist(RC.bray)
+range(RC.bray.dist)
 
 flow_connected_dists_df <- simba::liste(flow.connected.dists, entry = "den_dists")
-dists.df <- simba::liste(RC.hel.dist, entry = "RC_hel") %>% add_column(den_dists = flow_connected_dists_df$den_dists)
+dists.df <- simba::liste(RC.bray.dist, entry = "RC_bray") %>% add_column(den_dists = flow_connected_dists_df$den_dists)
 # dists.df$habitat1 <- env$habitat[match(dists.df$NBX, env$sample)]
 # dists.df$habitat2 <- env$habitat[match(dists.df$NBY, env$sample)]
 dists.df$habitat <- NA
@@ -597,12 +598,12 @@ dists.df[str_detect(dists.df$NBX, "_S") & str_detect(dists.df$NBY, "_S"),]$habit
 
 dists.df$habitat <- factor(dists.df$habitat, levels = c("Sediment", "Planktonic", "Planktonic-Sediment"))
 dists.df %>% filter(den_dists > 0) %>% 
-  ggplot(aes(x = den_dists/1000, y = RC_hel)) +
-  geom_point(alpha = 0.25, aes(color = abs(RC_hel) > 0.95)) +
+  ggplot(aes(x = den_dists/1000, y = RC_bray)) +
+  geom_point(alpha = 0.25, aes(color = abs(RC_bray) > 0.95)) +
   geom_smooth(color = "black", method = "loess", se = F) +
   theme(legend.position = "none") +
   labs(x = "Dendritic distance (km)",
-       y = expression(beta["RC, Hellinger distance"])) +
+       y = expression(beta["RC, Bray-Curtis"])) +
   # geom_hline(data = group_by(dists.df, habitat) %>% summarize(mean_rc = mean(RC_hel)),
   #            aes(yintercept = mean_rc),
   #            linetype = "dashed") +
@@ -680,7 +681,7 @@ sum(bNTI.dist < -2) / length(bNTI.dist) # homogeneous selection
 
 
 hja.bnti.dist.ls <- simba::liste(bNTI.dist, entry = "bNTI")
-hja.rchel.dist.ls <- simba::liste(RC.hel.dist, entry = "RCbray")
+hja.rcbray.dist.ls <- simba::liste(RC.bray.dist, entry = "RCbray")
 hja.euclid.dist.ls <- simba::liste(dist(SoDA::geoXY(latitude = xy[,2], longitude = xy[,1])), entry = "euclidean")
 hja.assembly <- full_join(dists.df, hja.bnti.dist.ls)
 hja.assembly <- cbind(hja.assembly, env = simba::liste(dist(env.subs[,-1]))[,3], euclid = hja.euclid.dist.ls$euclidean)
@@ -694,10 +695,10 @@ hja.assembly %>% filter(den_dists > 0) %>%
 hja.assembly.plot <- hja.assembly %>% filter(den_dists > 0) %>% 
   mutate(process = ifelse(bNTI < -2, "Homogeneous selection", 
                           ifelse(bNTI > 2, "Variable selection",
-                                 ifelse(RC_hel > 0.95, "Dispersal limitation",
-                                        ifelse(RC_hel < -0.95, "Mass effects", "Undominated"))))) %>% 
-  mutate(signif = ifelse(abs(RC_hel) < 0.95 & abs(bNTI) < 2, FALSE, TRUE)) %>% 
-  gather(RC_hel, bNTI, key = "metric", value = "value") 
+                                 ifelse(RC_bray > 0.95, "Dispersal limitation",
+                                        ifelse(RC_bray < -0.95, "Mass effects", "Undominated"))))) %>% 
+  mutate(signif = ifelse(abs(RC_bray) < 0.95 & abs(bNTI) < 2, FALSE, TRUE)) %>% 
+  gather(RC_bray, bNTI, key = "metric", value = "value") 
 hja.assembly.plot$metric <- factor(hja.assembly.plot$metric)
 levels(hja.assembly.plot$metric) <- c(
   expression(paste(beta,"NTI")),
@@ -728,13 +729,13 @@ hja.assembly.grouped %>%
                                               "Mass effects",
                                               "Dispersal limitation"))) %>% 
   ggplot(aes(x = den_dists_rounded, y = proportion, fill = process)) +
-  geom_area(alpha = .9, position = "stack", color = "gray90") +
-  annotate("segment", x = 10, xend = 10, y = 0, yend = 1, linetype = "dashed", alpha = 0.8, color = "gray60") +
-  annotate("segment", x = 100, xend = 100, y = 0, yend = 1, linetype = "dashed", alpha = 0.8, color = "gray60") +
-  annotate("segment", x = 1000, xend = 1000, y = 0, yend = 1, linetype = "dashed", alpha = 0.8, color = "gray60") +
+  geom_area(alpha = 1, position = "stack", color = NA) +
+  #annotate("segment", x = 10, xend = 10, y = 0, yend = 1, linetype = "dashed", alpha = 0.8, color = "gray60") +
+  #annotate("segment", x = 100, xend = 100, y = 0, yend = 1, linetype = "dashed", alpha = 0.8, color = "gray60") +
+  #annotate("segment", x = 1000, xend = 1000, y = 0, yend = 1, linetype = "dashed", alpha = 0.8, color = "gray60") +
   scale_x_log10() +
-  facet_wrap(~ habitat, ncol = 1) +
-  scale_fill_manual(values = c("#02440c","#789400","#e4d565","#f3f5e7","#40becd")) + 
+  facet_wrap(~ habitat, ncol = 1) + 
+  scale_fill_manual(values = c("#02440c","#789400","#e0d052", "#edf0db", "#40becd")) + 
   labs(x = "Dendritic distance (m)", y = "Proportion") +
   theme(legend.position = "bottom", 
         legend.title = element_blank(),
@@ -750,6 +751,11 @@ hja.assembly.grouped %>%
 
 hja.assembly.grouped %>% 
     count()
+
+hja.assembly.plot %>% 
+  group_by(habitat) %>% 
+  count(process)
+
 # hja.assembly.grouped.env <- hja.assembly.plot %>% 
 #   mutate(env_rounded = round(env,0)) %>% 
 #   group_by(habitat, env_rounded) %>% 
@@ -960,17 +966,17 @@ dsswt$position <- "Downstream"
 
 hwsp$habitat <- "Sediment"
 hwwp$habitat <- "Planktonic"
-hwswp$habitat <- "Sediment-Planktonic"
+hwswp$habitat <- "Planktonic-Sediment"
 hwst$habitat <- "Sediment"
 hwwt$habitat <- "Planktonic"
-hwswt$habitat <- "Sediment-Planktonic"
+hwswt$habitat <- "Planktonic-Sediment"
 
 dssp$habitat <- "Sediment"
 dswp$habitat <- "Planktonic"
-dsswp$habitat <- "Sediment-Planktonic"
+dsswp$habitat <- "Planktonic-Sediment"
 dsst$habitat <- "Sediment"
 dswt$habitat <- "Planktonic"
-dsswt$habitat <- "Sediment-Planktonic"
+dsswt$habitat <- "Planktonic-Sediment"
 
 assembly.by.position <- bind_rows(
   full_join(hwsp, hwst),
@@ -998,6 +1004,8 @@ assembly.position.grouped <- assembly.position.grouped %>%
   full_join(unique(expand.grid(assembly.position.grouped[,1:3])), fill = 0) %>% 
   mutate(proportion = ifelse(is.na(proportion),0, proportion))
 
+assembly.position.grouped$habitat <- factor(assembly.position.grouped$habitat, levels = c("Sediment", "Planktonic", "Planktonic-Sediment"))
+
 assembly.position.grouped %>% 
   mutate(position = factor(position, levels = c("Headwater", "Downstream"))) %>% 
   mutate(process = factor(process, levels = c("Undominated",
@@ -1006,18 +1014,21 @@ assembly.position.grouped %>%
                                               "Mass effects",
                                               "Dispersal limitation"))) %>%
   ggplot(aes(x = position, y = proportion, fill = process)) +
-  geom_bar(alpha = .9, position = "stack", stat = "identity") +
+  geom_bar(alpha = 1, position = "stack", stat = "identity") +
   facet_wrap(~ habitat, ncol = 1) +
-  scale_fill_manual(values = c("#02440c","#789400","#e4d565","#f3f5e7","#40becd")) + 
+  scale_fill_manual(values = c("#02440c","#789400","#e0d052", "#edf0db", "#40becd")) + 
   labs(x = "", y = "Proportion") +
   theme(legend.position = "bottom", 
         legend.title = element_blank(),
-        legend.text = element_text(size = 8)) +
+        legend.text = element_text(size = 9)) +
   guides(fill = guide_legend(nrow = 2)) +
   ggsave("figures/assembly_mechansism_position.png", height = 8, width = 4, dpi = 600) + 
   ggsave("figures/assembly_mechansism_position.pdf", height = 8, width = 4)
 
 assembly.position.grouped %>% count() 
+assembly.by.position.process %>% 
+  group_by(position, habitat) %>% 
+  count(process)
 ```
 
 ```{r}
