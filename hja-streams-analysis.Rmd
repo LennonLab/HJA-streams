@@ -30,6 +30,7 @@ library("ggrepel")
 library("progress")
 library("doSNOW")
 library("vegan")
+library("colorspace")
 
 theme_set(theme_cowplot() +
             theme(axis.title = element_text(size = 12),
@@ -348,7 +349,7 @@ df_ell <- calc.ellipse(ord = pcoa.plot, ellipse = pcoa.ellipse)
 
 
 # Run a PERMANOVA
-hja.permanova <- adonis(hja.pcoa$dist.matrix ~ design$habitat + design$order + design$watershed, permutations = 999)
+hja.permanova <- adonis(vegdist(OTUsREL, method = "bray") ~ design$habitat + design$order + design$watershed, permutations = 999)
 hja.permanova$aov.tab %>% pander::pander()
 capture.output(hja.permanova$aov.tab, file = "./tables/hja_permanova.txt")
 ```
@@ -369,17 +370,24 @@ ggplot(data = pcoa.plot, aes(Dim1, Dim2)) +
   scale_color_manual(values = my.colors) + 
   coord_fixed() +
   theme(legend.position = "none") + 
-  annotate("text", x = .3, y = -.25, label = "Sediment", size = 3) +
+  annotate("text", x = .3, y = -.25, label = "Benthic", size = 3) +
   annotate("text", x = -.27, y = -.22, label = "Plankton", size = 3) +
   ggsave("figures/PCoA.png", width = 8, height = 8, units = "cm", dpi = 500)
 ```
 
 Now, we'll run an RDA. 
 ```{r dbrda, cache=TRUE}
-hja.rda <- rda(OTUsREL.hel ~ ., env.subs)
-R2.all.vars <- RsquareAdj(hja.rda)$adj.r.squared
+#hja.rda <- rda(OTUsREL.hel ~ ., env.subs)
+#R2.all.vars <- RsquareAdj(hja.rda)$adj.r.squared
 #anova(hja.rda, permutations = how(nperm = 999))
 #anova(hja.rda, by = "axis", permutations = how(nperm = 999))
+
+hja.dbrda <- dbrda(vegdist(OTUsREL) ~ ., env.subs)
+summary(hja.dbrda)
+
+# overall model and 1st two dbRDA axes significant
+#anova(hja.dbrda, permutations = how(nperm = 999))
+#anova(hja.dbrda, by = "axis", permutations = how(nperm = 999))
 ```
 We see that the RDA is globally significant and the first two canonical axes are also significant. Because the full model was significant, I'll run a model selection procedure.
 
@@ -392,20 +400,20 @@ We see that the RDA is globally significant and the first two canonical axes are
 # habitat, elevation, and conductivity were selected by Blanchet 2008 method
 
 # reduced model selects habitat, elevation and conductivity. but I'll add back other key env vars that are typically considered as well. 
-hja.rda.reduced <- rda(OTUsREL.hel ~ habitat + elevation + conductivity + TP + TN + ph + DOC, env.subs)
+hja.rda.reduced <- dbrda(vegdist(OTUsREL) ~ habitat + elevation + conductivity + TP + TN + ph + DOC, env.subs)
 ```
 The model selection procedure left us with the model using only habitat, elevation, and conductivity as predictor variables. Now, we have 3 significant RDA axes with the more parsimonious model. 
 
 ```{r}
 rda.plot <- cbind.data.frame(vegan::scores(hja.rda.reduced)$sites, group = str_to_title(design$habitat), watershed = design$watershed)
-rda.var1 <- round(eigenvals(hja.rda.reduced)[1] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
-rda.var2 <- round(eigenvals(hja.rda.reduced)[2] / sum(eigenvals(hja.rda.reduced)) * 100, 2)
+rda.var1 <- round(eigenvals(hja.rda.reduced)[1] / sum(eigenvals(hja.rda.reduced)) * 100, 1)
+rda.var2 <- round(eigenvals(hja.rda.reduced)[2] / sum(eigenvals(hja.rda.reduced)) * 100, 1)
 rda.vecs <- as.data.frame(hja.rda.reduced$CCA$biplot)
 rda.vecs$predictor <- c("Planktonic\n habitat", "Elevation", "Cond.",
                         "TP", "TN", "pH", "DOC")
 rda.vecs$origin <- 0
-scale.arrows = .5
-hja.rda.fig <-  ggplot(data = rda.plot, aes(x = RDA1, y = RDA2)) +
+scale.arrows = 1
+hja.rda.fig <-  ggplot(data = rda.plot, aes(x = dbRDA1, y = dbRDA2)) +
   geom_hline(aes(yintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
   geom_vline(aes(xintercept = 0), linetype = "dashed", alpha = 0.25, size = 0.25) +
   geom_point(aes(fill = group, shape = watershed), size = 2, alpha = .8) +
@@ -414,33 +422,40 @@ hja.rda.fig <-  ggplot(data = rda.plot, aes(x = RDA1, y = RDA2)) +
   # geom_path(data = df_ell, 
   #           aes(x = Dim1, y = Dim2, color = group),
   #           size = .8, alpha = 1, linetype = 2) +
-  stat_ellipse(data = rda.plot, alpha = 0.8, aes(color = group, shape = watershed)) +
-  labs(x = paste0("RDA1 (", rda.var1, "%)"),
-    y = paste0("RDA2 (", rda.var2, "%)"),
+  stat_ellipse(data = rda.plot, alpha = 0.7, aes(color = group, linetype = watershed)) +
+  labs(x = paste0("dbRDA1 (", rda.var1, "%)"),
+    y = paste0("dbRDA2 (", rda.var2, "%)"),
     color = "Habitat", shape = "Watershed") +
   scale_color_manual(values = my.colors) + 
   scale_fill_manual(values = my.colors) +
   scale_shape_manual(values = c(21, 24)) +
   coord_fixed() +
   theme(legend.position = "none") + 
-  geom_segment(data = rda.vecs, size = .5,
+  geom_segment(data = rda.vecs, size = .3,
                aes(x = origin, y = origin,
-                   xend = scale.arrows*RDA1,
-                   yend = scale.arrows*RDA2),
+                   xend = scale.arrows*dbRDA1,
+                   yend = scale.arrows*dbRDA2),
                alpha = .7, color = "black",
                arrow = arrow(angle = 20,
                              length = unit(.1, "inches"),
                              type = "open")) +
-  geom_text_repel(data = rda.vecs, size = 3,
-                   aes(x = (scale.arrows + .1)*RDA1, 
-                       y = (scale.arrows + .1)*RDA2, label = predictor),
+  geom_text_repel(data = rda.vecs, size = 1.8,
+                   aes(x = (scale.arrows + .1)*dbRDA1, 
+                       y = (scale.arrows + .1)*dbRDA2, label = predictor),
                    color = "black",
                    segment.alpha = 0,
-                  point.padding = 0, nudge_y = c(0, 0, .035, 0, 0, .05, -.05)) +
-  #annotate("text", x = .3, y = -.25, label = "Sediment", size = 3) +
-  #annotate("text", x = -.27, y = -.22, label = "Plankton", size = 3) +
-  ggsave("figures/RDA.png", width = 8, height = 8, units = "cm", dpi = 500) +
-  ggsave("figures/RDA.pdf", width = 8, height = 8, units = "cm")
+                  point.padding = 0, 
+                  nudge_y = c(-.15, #water
+                              0, # elev
+                              .035, # conduct
+                              0, # TP
+                              0, #TN
+                              -.05, #ph 
+                              .05)) + # DOC
+  annotate("text", x = .8, y = 2.2, label = "Benthic", size = 2.5, color = darken(my.colors[1])) +
+  annotate("text", x = -.5, y = 2.2, label = "Planktonic", size = 2.5, color = darken(my.colors[2])) +
+  ggsave("figures/RDA.png", width = 8.4, height = 8.4, units = "cm", dpi = 500) +
+  ggsave("figures/RDA.pdf", width = 8.4, height = 8.4, units = "cm")
 ```
 
 ### Asymmetric Eigenvector Maps
@@ -592,11 +607,11 @@ dists.df <- simba::liste(RC.bray.dist, entry = "RC_bray") %>% add_column(den_dis
 # dists.df$habitat2 <- env$habitat[match(dists.df$NBY, env$sample)]
 dists.df$habitat <- NA
 dists.df[str_detect(dists.df$NBX, "_W") & str_detect(dists.df$NBY, "_W"),]$habitat <- str_wrap("Planktonic")
-dists.df[str_detect(dists.df$NBX, "_W") & str_detect(dists.df$NBY, "_S"),]$habitat <- str_wrap("Planktonic-Sediment")
-dists.df[str_detect(dists.df$NBX, "_S") & str_detect(dists.df$NBY, "_W"),]$habitat <- str_wrap("Planktonic-Sediment")
-dists.df[str_detect(dists.df$NBX, "_S") & str_detect(dists.df$NBY, "_S"),]$habitat <- str_wrap("Sediment")
+dists.df[str_detect(dists.df$NBX, "_W") & str_detect(dists.df$NBY, "_S"),]$habitat <- str_wrap("Planktonic-Benthic")
+dists.df[str_detect(dists.df$NBX, "_S") & str_detect(dists.df$NBY, "_W"),]$habitat <- str_wrap("Planktonic-Benthic")
+dists.df[str_detect(dists.df$NBX, "_S") & str_detect(dists.df$NBY, "_S"),]$habitat <- str_wrap("Benthic")
 
-dists.df$habitat <- factor(dists.df$habitat, levels = c("Sediment", "Planktonic", "Planktonic-Sediment"))
+dists.df$habitat <- factor(dists.df$habitat, levels = c("Planktonic", "Benthic", "Planktonic-Benthic"))
 dists.df %>% filter(den_dists > 0) %>% 
   ggplot(aes(x = den_dists/1000, y = RC_bray)) +
   geom_point(alpha = 0.25, aes(color = abs(RC_bray) > 0.95)) +
@@ -831,16 +846,16 @@ mainstem.dist <- as.dist(as.matrix(bNTI.dist)[which(design$order != 1), which(de
 hist(headwaters.dist)
 hist(mainstem.dist)
 
-headwaters.dist.sed.tax <- as.dist(as.matrix(RC.hel.dist)[
+headwaters.dist.sed.tax <- as.dist(as.matrix(RC.bray.dist)[
   which(design$order == 1 & design$habitat != "water"), 
   which(design$order == 1 & design$habitat != "water")])
-mainstem.dist.sed.tax <- as.dist(as.matrix(RC.hel.dist)[
+mainstem.dist.sed.tax <- as.dist(as.matrix(RC.bray.dist)[
   which(design$order != 1 & design$habitat != "water"), 
   which(design$order != 1 & design$habitat != "water")])
-headwaters.dist.water.tax <- as.dist(as.matrix(RC.hel.dist)[
+headwaters.dist.water.tax <- as.dist(as.matrix(RC.bray.dist)[
   which(design$order == 1 & design$habitat == "water"), 
   which(design$order == 1 & design$habitat == "water")])
-mainstem.dist.water.tax <- as.dist(as.matrix(RC.hel.dist)[
+mainstem.dist.water.tax <- as.dist(as.matrix(RC.bray.dist)[
   which(design$order != 1 & design$habitat == "water"), 
   which(design$order != 1 & design$habitat == "water")])
 
@@ -865,10 +880,10 @@ downstream.dist.sed.water.phy <- as.matrix(bNTI.dist)[
   which(design$order != 1 & design$habitat != "water"), 
   which(design$order != 1 & design$habitat == "water")]
 
-headwaters.dist.sed.water.tax <- as.matrix(RC.hel.dist)[
+headwaters.dist.sed.water.tax <- as.matrix(RC.bray.dist)[
   which(design$order == 1 & design$habitat != "water"), 
   which(design$order == 1 & design$habitat == "water")]
-downstream.dist.sed.water.tax <- as.matrix(RC.hel.dist)[
+downstream.dist.sed.water.tax <- as.matrix(RC.bray.dist)[
   which(design$order != 1 & design$habitat != "water"), 
   which(design$order != 1 & design$habitat == "water")]
 
@@ -964,19 +979,19 @@ dsst$position <- "Downstream"
 dswt$position <- "Downstream"
 dsswt$position <- "Downstream"
 
-hwsp$habitat <- "Sediment"
+hwsp$habitat <- "Benthic"
 hwwp$habitat <- "Planktonic"
-hwswp$habitat <- "Planktonic-Sediment"
-hwst$habitat <- "Sediment"
+hwswp$habitat <- "Planktonic-Benthic"
+hwst$habitat <- "Benthic"
 hwwt$habitat <- "Planktonic"
-hwswt$habitat <- "Planktonic-Sediment"
+hwswt$habitat <- "Planktonic-Benthic"
 
-dssp$habitat <- "Sediment"
+dssp$habitat <- "Benthic"
 dswp$habitat <- "Planktonic"
-dsswp$habitat <- "Planktonic-Sediment"
-dsst$habitat <- "Sediment"
+dsswp$habitat <- "Planktonic-Benthic"
+dsst$habitat <- "Benthic"
 dswt$habitat <- "Planktonic"
-dsswt$habitat <- "Planktonic-Sediment"
+dsswt$habitat <- "Planktonic-Benthic"
 
 assembly.by.position <- bind_rows(
   full_join(hwsp, hwst),
@@ -1004,7 +1019,7 @@ assembly.position.grouped <- assembly.position.grouped %>%
   full_join(unique(expand.grid(assembly.position.grouped[,1:3])), fill = 0) %>% 
   mutate(proportion = ifelse(is.na(proportion),0, proportion))
 
-assembly.position.grouped$habitat <- factor(assembly.position.grouped$habitat, levels = c("Sediment", "Planktonic", "Planktonic-Sediment"))
+assembly.position.grouped$habitat <- factor(assembly.position.grouped$habitat, levels = c("Planktonic", "Benthic", "Planktonic-Benthic"))
 
 assembly.position.grouped %>% 
   mutate(position = factor(position, levels = c("Headwater", "Downstream"))) %>% 
@@ -1044,15 +1059,18 @@ hja.assembly %>%
   scale_fill_manual(values=c(my.colors, "#688c45", my.colors,	"#688c45"))
 
 hja.ddr.fig <- hja.assembly %>% left_join(simba::liste(den.dists, entry = "unconnected_dists")) %>% 
-  ggplot(aes(x = unconnected_dists +1, y = hel, color = habitat, fill = habitat, shape = habitat)) +
+  ggplot(aes(x = unconnected_dists +1, y = bray, color = habitat, fill = habitat, shape = habitat)) +
   geom_point(alpha = 0.25) +
   geom_smooth(method = "lm") +
-  scale_x_log10() +
+  scale_x_log10(lim = c(1, 50000)) +
   scale_color_manual(values=colorspace::darken(c(my.colors, "#688c45"),0.4)) +
   scale_fill_manual(values=c(my.colors, "#688c45", my.colors,	"#688c45")) +
   labs(x = "Dendritic distance (m)",
        y = "Community dissimilarity") +
   theme(legend.position = "none") +
+  annotate("text", x = 45000, y = 0.75, label = "Benthic-\nPlanktonic", size = 1.5, color = darken("#688c45")) +
+  annotate("text", x = 45000, y = 0.67, label = "Planktonic", size = 1.5, color = darken("#3a4f6a")) +
+  annotate("text", x = 45000, y = 0.62, label = "Benthic", size = 1.5, color = darken("#d5ba94",.4)) +
   ggsave("figures/ddr-taxa.pdf", width = 8, height = 8*3/4, units = "cm") +
   ggsave("figures/ddr-taxa.png", width = 8, height = 8*3/4, units = "cm", dpi = 600)
 hja.ddr.fig
@@ -1063,13 +1081,14 @@ plot_grid(hja.rda.fig, hja.ddr.fig, labels = "AUTO") +
 
 ddr_formod <- hja.assembly %>% left_join(simba::liste(den.dists, entry = "unconnected_dists")) %>% mutate(unconnected_dists = unconnected_dists + 1)
 
-ddr_envdist_mod <- lm(hel ~ unconnected_dists * habitat + env, data = ddr_formod)
-ddr_dist_mod <- lm(hel ~ unconnected_dists * habitat, data = ddr_formod)
+ddr_envdist_mod <- lm(bray ~ log10(unconnected_dists+1) * habitat + env, data = ddr_formod)
+ddr_dist_mod <- lm(bray ~ log10(unconnected_dists+1) * habitat, data = ddr_formod)
 AIC(ddr_envdist_mod)
 AIC(ddr_dist_mod)
 plot(ddr_envdist_mod)
 summary(ddr_envdist_mod)
-summary(ddr_dist_mod)
+mod_sum<-summary(ddr_dist_mod)
+mod_sum
 ```
 
 ```{r}
