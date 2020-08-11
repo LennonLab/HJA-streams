@@ -1071,6 +1071,20 @@ plot(mantel.correlog(water.dist, water.den.dists))
 plot(mantel.correlog(sed.dist, sed.den.dists))
 ```
 
+```{r}
+HF00402_v12 <- read_csv("data/HF00402_v12.csv")
+
+HF00402_v12 %>% 
+  filter(SITECODE == "GSLOOK") %>% 
+  filter(lubridate::year(DATE) == "2015") %>% 
+  ggplot(aes(x = DATE, y = MEAN_Q)) + 
+  geom_line() +
+  theme(panel.grid.major = element_line(size = .2, color = "gray90"),
+        panel.grid.minor = element_line(size = .1, color = "gray90")) +
+  labs(x="", y = "Mean discharge (cfs)", subtitle = "Annual hydrograph for Lookout Creek watershed, H.J. Andrews LTER") +
+  ggsave("figures/annual_discharge.pdf", height = 5, width = 4/3*5)
+    
+```
 
 \newpage
 # Appendix: Session Info
