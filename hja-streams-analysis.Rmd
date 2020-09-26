@@ -731,7 +731,7 @@ assembly.by.position.process %>%
 ```{r}
 hja.assembly$hel <- vegdist(OTUsREL.hel, method = "euc")
 hja.assembly$bray <- vegdist(OTUsREL, method = "bray")
-
+my.colors <- c("#3a4f6a", "#d5ba94")
 hja.assembly %>% left_join(simba::liste(den.dists, entry = "unconnected_dists")) %>% 
   ggplot(aes(x = unconnected_dists +1, y = bray, color = habitat, fill = habitat, shape = habitat)) +
   geom_point(alpha = 0.25) +
@@ -739,6 +739,7 @@ hja.assembly %>% left_join(simba::liste(den.dists, entry = "unconnected_dists"))
   scale_x_log10(lim = c(1, 50000)) +
   scale_color_manual(values=colorspace::darken(c(my.colors, "#688c45"),0.4)) +
   scale_fill_manual(values=c(my.colors, "#688c45", my.colors,	"#688c45")) +
+  scale_shape_manual(values=c(17, 16, 15)) +
   labs(x = "Dendritic distance (m)",
        y = "Community dissimilarity") +
   theme(legend.position = "none") +
@@ -770,9 +771,4 @@ HF00402_v12 %>%
     
 ```
 
-\newpage
-# Appendix: Session Info
-```{r}
-sessionInfo()
-```
 
